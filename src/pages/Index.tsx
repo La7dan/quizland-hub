@@ -7,6 +7,8 @@ import DatabaseActions from '@/components/DatabaseActions';
 import SQLExecuteDialog from '@/components/SQLExecuteDialog';
 import UserManagement from '@/components/UserManagement';
 import SQLViewerDialog from '@/components/SQLViewerDialog';
+import QuizManagement from '@/components/QuizManagement';
+import QuizAttempts from '@/components/QuizAttempts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Index() {
@@ -38,9 +40,11 @@ export default function Index() {
 
       <div className="mt-2">
         <Tabs defaultValue="tables" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="tables">Database Tables</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
+            <TabsTrigger value="attempts">Quiz Attempts</TabsTrigger>
           </TabsList>
           
           <TabsContent value="tables" className="space-y-4">
@@ -54,6 +58,14 @@ export default function Index() {
           
           <TabsContent value="users">
             <UserManagement />
+          </TabsContent>
+
+          <TabsContent value="quizzes">
+            <QuizManagement onRefresh={handleRefresh} />
+          </TabsContent>
+
+          <TabsContent value="attempts">
+            <QuizAttempts onRefresh={handleRefresh} />
           </TabsContent>
         </Tabs>
       </div>
