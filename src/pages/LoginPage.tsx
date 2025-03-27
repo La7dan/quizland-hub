@@ -110,8 +110,8 @@ const LoginPage = () => {
               </Button>
             </CardFooter>
           </form>
-        </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };
