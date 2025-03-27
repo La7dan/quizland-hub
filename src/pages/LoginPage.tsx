@@ -47,7 +47,8 @@ const LoginPage = () => {
       if (success) {
         navigate(from, { replace: true });
       } else {
-        setLoginError('Invalid username or password');
+        // Login will display its own toast, but we also set this for form validation
+        setLoginError('Login failed. Please check your credentials.');
       }
     } catch (error) {
       setLoginError('An error occurred during login');

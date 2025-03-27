@@ -45,12 +45,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      // Use parameterized query to prevent SQL injection
-      // We're using $1, $2 placeholders which will be replaced by actual values in a safe manner
+      // First check if user exists and get user data including password
+      // Escape single quotes to prevent SQL injection
+      const safeUsername = username.replace(/'/g, "''");
+      
       const query = `
-        SELECT id, username, email, role 
+        SELECT id, username, email, role, password 
         FROM users 
-        WHERE username = '${username}' 
+        WHERE username = '${safeUsername}' 
         LIMIT 1
       `;
       
@@ -58,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const result = await executeSql(query);
       console.log('Login query result:', result);
       
+      // Check if user exists
       if (!result.success || !result.rows || result.rows.length === 0) {
         toast({
           title: "Login Failed",
@@ -69,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const userData = result.rows[0];
       
-      // Now verify the password separately
+      // Verify the password
       if (userData.password !== password) {
         toast({
           title: "Login Failed",
@@ -79,14 +82,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
       
-      // Remove password from the userData before storing
-      delete userData.password;
+      // Create a clean user object without the password
+      const cleanUserData = {
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        role: userData.role
+      };
       
-      setUser(userData);
-      localStorage.setItem('quiz_user', JSON.stringify(userData));
+      setUser(cleanUserData);
+      localStorage.setItem('quiz_user', JSON.stringify(cleanUserData));
       toast({
         title: "Login Successful",
-        description: `Welcome back, ${userData.username}`,
+        description: `Welcome back, ${cleanUserData.username}`,
       });
       return true;
     } catch (error) {
