@@ -15,7 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-interface DatabaseActionsProps {
+export interface DatabaseActionsProps {
   onRefresh: () => void;
   onCreateTable: () => void;
   onExecuteSQL: () => void;

@@ -32,7 +32,11 @@ export default function Index() {
           </TabsList>
           
           <TabsContent value="tables" className="space-y-4">
-            <DatabaseActions onRefresh={handleRefresh} />
+            <DatabaseActions 
+              onRefresh={handleRefresh}
+              onCreateTable={() => setIsCreateTableDialogOpen(true)}
+              onExecuteSQL={() => setIsSQLDialogOpen(true)}
+            />
             <TableList onRefresh={handleRefresh} />
           </TabsContent>
           

@@ -4,7 +4,12 @@ import { checkConnection } from '@/services/dbService';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Database, ServerOff } from 'lucide-react';
 
-const DBHeader = () => {
+interface DBHeaderProps {
+  onOpenCreateTable: () => void;
+  onOpenSQLDialog: () => void;
+}
+
+const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
   const [statusMessage, setStatusMessage] = useState('Checking connection...');
 
