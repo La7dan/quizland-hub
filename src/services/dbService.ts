@@ -1,6 +1,10 @@
 
-// API base URL - adjust if your server is running on a different port
-const API_BASE_URL = 'http://localhost:5000/api';
+// API base URL - dynamically determine the backend URL
+const API_BASE_URL = import.meta.env.PROD 
+  ? window.location.origin.includes('localhost') 
+    ? 'http://localhost:5000/api'
+    : `${window.location.origin}/api` 
+  : 'http://localhost:5000/api';
 
 export interface TableColumn {
   name: string;
@@ -15,6 +19,7 @@ export interface DBTable {
 // Check database connection
 export const checkConnection = async (): Promise<{ success: boolean; message: string }> => {
   try {
+    console.log(`Connecting to: ${API_BASE_URL}/check-connection`);
     const response = await fetch(`${API_BASE_URL}/check-connection`);
     const data = await response.json();
     return data;

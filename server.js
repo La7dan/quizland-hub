@@ -1,8 +1,12 @@
-
 import express from 'express';
 import pg from 'pg';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const { Pool } = pg;
 const app = express();
@@ -11,6 +15,11 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
+
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'dist')));
+}
 
 // Database connection configuration
 const pool = new Pool({
@@ -24,8 +33,10 @@ const pool = new Pool({
 // Test database connection
 app.get('/api/check-connection', async (req, res) => {
   try {
+    console.log('Attempting database connection...');
     const client = await pool.connect();
     client.release();
+    console.log('Database connection successful');
     res.json({ success: true, message: 'Database connection successful' });
   } catch (error) {
     console.error('Database connection error:', error);
@@ -160,6 +171,13 @@ app.post('/api/execute-sql', async (req, res) => {
     });
   }
 });
+
+// Serve index.html for any routes not matched in production
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  });
+}
 
 // Start the server
 app.listen(PORT, () => {
