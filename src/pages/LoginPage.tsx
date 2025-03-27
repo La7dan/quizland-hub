@@ -6,13 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Shield, LogIn } from 'lucide-react';
+import { Shield, LogIn, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import Navigation from '@/components/Navigation';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState('');
   const { login, isAuthenticated, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,15 +36,22 @@ const LoginPage = () => {
     e.preventDefault();
     
     if (!username || !password) {
+      setLoginError('Username and password are required');
       return;
     }
     
+    setLoginError('');
     setIsLoggingIn(true);
     try {
       const success = await login(username, password);
       if (success) {
         navigate(from, { replace: true });
+      } else {
+        setLoginError('Invalid username or password');
       }
+    } catch (error) {
+      setLoginError('An error occurred during login');
+      console.error('Login error:', error);
     } finally {
       setIsLoggingIn(false);
     }
@@ -64,6 +73,12 @@ const LoginPage = () => {
           </CardHeader>
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
+              {loginError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{loginError}</AlertDescription>
+                </Alert>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
                 <Input 

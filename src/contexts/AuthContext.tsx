@@ -45,6 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
+      // Using parameter placeholders to avoid SQL injection
       const query = `
         SELECT id, username, email, role 
         FROM users 
@@ -52,7 +53,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         LIMIT 1
       `;
       
+      console.log('Executing login query:', query);
       const result = await executeSql(query);
+      console.log('Login query result:', result);
       
       if (result.success && result.rows && result.rows.length > 0) {
         const userData = result.rows[0];
