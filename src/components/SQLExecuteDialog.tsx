@@ -56,7 +56,15 @@ const SQLExecuteDialog = ({ open, onOpenChange, onExecuted }: SQLExecuteDialogPr
           title: "Success",
           description: response.message,
         });
+        
+        // Call onExecuted to refresh the table list and reflect changes in the UI
         onExecuted();
+        
+        // If it's a data modification statement (INSERT, UPDATE, DELETE, CREATE, DROP, etc.)
+        // we want to clear the SQL input for a new query
+        if (/^\s*(INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|TRUNCATE)/i.test(sql)) {
+          setSql('');
+        }
       } else {
         setResult({
           error: response.message
@@ -79,8 +87,20 @@ const SQLExecuteDialog = ({ open, onOpenChange, onExecuted }: SQLExecuteDialogPr
     }
   };
 
+  // Reset form when dialog is closed
+  const handleDialogChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      // Only reset if the dialog is closing and we're not in the middle of executing
+      if (!executing) {
+        setSql('');
+        setResult(null);
+      }
+    }
+    onOpenChange(newOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -88,7 +108,7 @@ const SQLExecuteDialog = ({ open, onOpenChange, onExecuted }: SQLExecuteDialogPr
             Execute SQL
           </DialogTitle>
           <DialogDescription>
-            Run custom SQL queries against your database.
+            Run custom SQL queries against your database. Changes will be immediately reflected in the database.
           </DialogDescription>
         </DialogHeader>
 
