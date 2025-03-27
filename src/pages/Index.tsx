@@ -10,82 +10,115 @@ import SQLViewerDialog from '@/components/SQLViewerDialog';
 import QuizManagement from '@/components/QuizManagement';
 import QuizAttempts from '@/components/QuizAttempts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Navigation from '@/components/Navigation';
+import QuizzesList from '@/components/QuizzesList';
 
 export default function Index() {
   const [isCreateTableDialogOpen, setIsCreateTableDialogOpen] = useState(false);
   const [isSQLDialogOpen, setIsSQLDialogOpen] = useState(false);
   const [isSQLViewerOpen, setIsSQLViewerOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isAdminView, setIsAdminView] = useState(false);
 
   const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-6xl">
-      <DBHeader 
-        onOpenCreateTable={() => setIsCreateTableDialogOpen(true)}
-        onOpenSQLDialog={() => setIsSQLDialogOpen(true)}
-      />
-
-      <div className="flex justify-end mb-2">
-        <button
-          onClick={() => setIsSQLViewerOpen(true)}
-          className="text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-md transition-colors flex items-center gap-2"
-        >
-          <span className="hidden sm:inline">View SQL Setup File</span>
-          <span className="sm:hidden">SQL Setup</span>
-        </button>
-      </div>
-
-      <div className="mt-2">
-        <Tabs defaultValue="tables" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="tables">Database Tables</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
-            <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
-            <TabsTrigger value="attempts">Quiz Attempts</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="tables" className="space-y-4">
-            <DatabaseActions 
-              onRefresh={handleRefresh}
-              onCreateTable={() => setIsCreateTableDialogOpen(true)}
-              onExecuteSQL={() => setIsSQLDialogOpen(true)}
-            />
-            <TableList onRefresh={handleRefresh} />
-          </TabsContent>
-          
-          <TabsContent value="users">
-            <UserManagement />
-          </TabsContent>
-
-          <TabsContent value="quizzes">
-            <QuizManagement onRefresh={handleRefresh} />
-          </TabsContent>
-
-          <TabsContent value="attempts">
-            <QuizAttempts onRefresh={handleRefresh} />
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      <CreateTableDialog
-        open={isCreateTableDialogOpen}
-        onOpenChange={setIsCreateTableDialogOpen}
-        onTableCreated={handleRefresh}
-      />
+    <div>
+      <Navigation />
       
-      <SQLExecuteDialog
-        open={isSQLDialogOpen}
-        onOpenChange={setIsSQLDialogOpen}
-        onExecuted={handleRefresh}
-      />
+      <div className="container mx-auto p-4 max-w-6xl">
+        {isAdminView ? (
+          <>
+            <div className="flex justify-between items-center mb-4">
+              <DBHeader 
+                onOpenCreateTable={() => setIsCreateTableDialogOpen(true)}
+                onOpenSQLDialog={() => setIsSQLDialogOpen(true)}
+              />
+              <button
+                onClick={() => setIsAdminView(false)}
+                className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md transition-colors"
+              >
+                Switch to User View
+              </button>
+            </div>
 
-      <SQLViewerDialog
-        open={isSQLViewerOpen}
-        onOpenChange={setIsSQLViewerOpen}
-      />
+            <div className="flex justify-end mb-2">
+              <button
+                onClick={() => setIsSQLViewerOpen(true)}
+                className="text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-md transition-colors flex items-center gap-2"
+              >
+                <span className="hidden sm:inline">View SQL Setup File</span>
+                <span className="sm:hidden">SQL Setup</span>
+              </button>
+            </div>
+
+            <div className="mt-2">
+              <Tabs defaultValue="tables" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="tables">Database Tables</TabsTrigger>
+                  <TabsTrigger value="users">User Management</TabsTrigger>
+                  <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
+                  <TabsTrigger value="attempts">Quiz Attempts</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="tables" className="space-y-4">
+                  <DatabaseActions 
+                    onRefresh={handleRefresh}
+                    onCreateTable={() => setIsCreateTableDialogOpen(true)}
+                    onExecuteSQL={() => setIsSQLDialogOpen(true)}
+                  />
+                  <TableList onRefresh={handleRefresh} />
+                </TabsContent>
+                
+                <TabsContent value="users">
+                  <UserManagement />
+                </TabsContent>
+
+                <TabsContent value="quizzes">
+                  <QuizManagement onRefresh={handleRefresh} />
+                </TabsContent>
+
+                <TabsContent value="attempts">
+                  <QuizAttempts onRefresh={handleRefresh} />
+                </TabsContent>
+              </Tabs>
+            </div>
+          </>
+        ) : (
+          <div className="my-8">
+            <div className="flex justify-between items-center mb-8">
+              <h1 className="text-3xl font-bold">Available Quizzes</h1>
+              <button
+                onClick={() => setIsAdminView(true)}
+                className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded-md transition-colors"
+              >
+                Admin Panel
+              </button>
+            </div>
+            
+            <QuizzesList />
+          </div>
+        )}
+
+        <CreateTableDialog
+          open={isCreateTableDialogOpen}
+          onOpenChange={setIsCreateTableDialogOpen}
+          onTableCreated={handleRefresh}
+        />
+        
+        <SQLExecuteDialog
+          open={isSQLDialogOpen}
+          onOpenChange={setIsSQLDialogOpen}
+          onExecuted={handleRefresh}
+        />
+
+        <SQLViewerDialog
+          open={isSQLViewerOpen}
+          onOpenChange={setIsSQLViewerOpen}
+        />
+      </div>
     </div>
   );
 }
