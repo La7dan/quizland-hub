@@ -1,4 +1,3 @@
-
 // API base URL - always pointing to the database server IP
 const API_BASE_URL = 'http://209.74.89.41:5000/api';
 
@@ -79,6 +78,29 @@ export const clearAllTables = async (): Promise<{ success: boolean; message: str
   } catch (error) {
     console.error('Clear all tables error:', error);
     return { success: false, message: 'Failed to clear all tables' };
+  }
+};
+
+// Delete a table
+export const deleteTable = async (tableName: string): Promise<{ success: boolean; message: string }> => {
+  try {
+    console.log(`Deleting table: ${tableName}`);
+    const response = await fetch(`${API_BASE_URL}/tables/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tableName }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Delete table response:', data);
+    return data;
+  } catch (error) {
+    console.error(`Delete table error for ${tableName}:`, error);
+    return { success: false, message: `Failed to delete table ${tableName}` };
   }
 };
 

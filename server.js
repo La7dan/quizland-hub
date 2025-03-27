@@ -109,6 +109,25 @@ app.post('/api/tables/clear-all', async (req, res) => {
   }
 });
 
+// Delete a table
+app.post('/api/tables/delete', async (req, res) => {
+  const { tableName } = req.body;
+  
+  if (!tableName) {
+    return res.status(400).json({ success: false, message: 'Table name is required' });
+  }
+
+  try {
+    const client = await pool.connect();
+    await client.query(`DROP TABLE IF EXISTS "${tableName}" CASCADE;`);
+    client.release();
+    res.json({ success: true, message: `Table ${tableName} deleted successfully` });
+  } catch (error) {
+    console.error(`Error deleting table ${tableName}:`, error);
+    res.status(500).json({ success: false, message: `Failed to delete table ${tableName}`, error: error.message });
+  }
+});
+
 // Create a table
 app.post('/api/tables/create', async (req, res) => {
   const { tableName, columns } = req.body;

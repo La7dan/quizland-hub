@@ -1,8 +1,19 @@
 
 import { useState, useEffect } from 'react';
-import { getTables, clearTable, DBTable } from '@/services/dbService';
-import { Trash2, RefreshCw, TableProperties } from 'lucide-react';
+import { getTables, clearTable, deleteTable, DBTable } from '@/services/dbService';
+import { Trash2, RefreshCw, TableProperties, X } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface TableListProps {
   onRefresh: () => void;
@@ -12,6 +23,7 @@ const TableList = ({ onRefresh }: TableListProps) => {
   const [tables, setTables] = useState<DBTable[]>([]);
   const [loading, setLoading] = useState(true);
   const [clearingTable, setClearingTable] = useState<string | null>(null);
+  const [deletingTable, setDeletingTable] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchTables = async () => {
@@ -80,6 +92,41 @@ const TableList = ({ onRefresh }: TableListProps) => {
     }
   };
 
+  const handleDeleteTable = async (tableName: string) => {
+    setDeletingTable(tableName);
+    try {
+      console.log(`Deleting table: ${tableName}`);
+      const result = await deleteTable(tableName);
+      console.log(`Delete table result for ${tableName}:`, result);
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: `Table ${tableName} deleted successfully`,
+        });
+        // Refresh the table list to reflect changes
+        await fetchTables();
+        // Also call the parent's refresh function
+        onRefresh();
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || `Failed to delete table ${tableName}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error(`Error deleting table ${tableName}:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to delete table ${tableName}`,
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingTable(null);
+    }
+  };
+
   return (
     <div className="bg-white shadow-md rounded-lg p-4">
       <div className="flex justify-between items-center mb-4">
@@ -124,15 +171,15 @@ const TableList = ({ onRefresh }: TableListProps) => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{table.table_name}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                  <td className="px-6 py-4 whitespace-nowrap text-right space-x-4">
                     <button
                       onClick={() => handleClearTable(table.table_name)}
-                      disabled={clearingTable === table.table_name}
-                      className="inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-800 transition"
+                      disabled={clearingTable === table.table_name || deletingTable === table.table_name}
+                      className="inline-flex items-center gap-1 text-sm text-orange-600 hover:text-orange-800 transition"
                     >
                       {clearingTable === table.table_name ? (
                         <>
-                          <div className="h-4 w-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                          <div className="h-4 w-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
                           Clearing...
                         </>
                       ) : (
@@ -142,6 +189,45 @@ const TableList = ({ onRefresh }: TableListProps) => {
                         </>
                       )}
                     </button>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button
+                          disabled={clearingTable === table.table_name || deletingTable === table.table_name}
+                          className="inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-800 transition"
+                        >
+                          {deletingTable === table.table_name ? (
+                            <>
+                              <div className="h-4 w-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <X className="h-4 w-4" />
+                              Delete
+                            </>
+                          )}
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Table</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete the table "{table.table_name}"? 
+                            This action cannot be undone and will permanently remove the table and all of its data.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteTable(table.table_name)}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </td>
                 </tr>
               ))}
