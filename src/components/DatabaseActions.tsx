@@ -28,17 +28,21 @@ const DatabaseActions = ({ onRefresh, onCreateTable, onExecuteSQL }: DatabaseAct
   const handleClearAllTables = async () => {
     setClearingAll(true);
     try {
+      console.log('Clearing all tables...');
       const result = await clearAllTables();
+      console.log('Clear all tables result:', result);
+      
       if (result.success) {
         toast({
           title: "Success",
           description: "All tables cleared successfully",
         });
+        // Explicitly trigger a refresh to update the UI
         onRefresh();
       } else {
         toast({
           title: "Error",
-          description: result.message,
+          description: result.message || "Failed to clear all tables",
           variant: "destructive",
         });
       }

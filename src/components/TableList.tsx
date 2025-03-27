@@ -17,7 +17,9 @@ const TableList = ({ onRefresh }: TableListProps) => {
   const fetchTables = async () => {
     setLoading(true);
     try {
+      console.log('Fetching tables...');
       const result = await getTables();
+      console.log('Fetch tables result:', result);
       if (result.success) {
         setTables(result.tables);
       } else {
@@ -46,17 +48,23 @@ const TableList = ({ onRefresh }: TableListProps) => {
   const handleClearTable = async (tableName: string) => {
     setClearingTable(tableName);
     try {
+      console.log(`Clearing table: ${tableName}`);
       const result = await clearTable(tableName);
+      console.log(`Clear table result for ${tableName}:`, result);
+      
       if (result.success) {
         toast({
           title: "Success",
           description: `Table ${tableName} cleared successfully`,
         });
+        // Refresh the table list to reflect changes
+        await fetchTables();
+        // Also call the parent's refresh function
         onRefresh();
       } else {
         toast({
           title: "Error",
-          description: result.message,
+          description: result.message || `Failed to clear table ${tableName}`,
           variant: "destructive",
         });
       }
