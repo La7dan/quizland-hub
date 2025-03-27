@@ -6,11 +6,13 @@ import TableList from '@/components/TableList';
 import DatabaseActions from '@/components/DatabaseActions';
 import SQLExecuteDialog from '@/components/SQLExecuteDialog';
 import UserManagement from '@/components/UserManagement';
+import SQLViewerDialog from '@/components/SQLViewerDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Index() {
   const [isCreateTableDialogOpen, setIsCreateTableDialogOpen] = useState(false);
   const [isSQLDialogOpen, setIsSQLDialogOpen] = useState(false);
+  const [isSQLViewerOpen, setIsSQLViewerOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleRefresh = () => {
@@ -24,7 +26,17 @@ export default function Index() {
         onOpenSQLDialog={() => setIsSQLDialogOpen(true)}
       />
 
-      <div className="mt-6">
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={() => setIsSQLViewerOpen(true)}
+          className="text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-md transition-colors flex items-center gap-2"
+        >
+          <span className="hidden sm:inline">View SQL Setup File</span>
+          <span className="sm:hidden">SQL Setup</span>
+        </button>
+      </div>
+
+      <div className="mt-2">
         <Tabs defaultValue="tables" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="tables">Database Tables</TabsTrigger>
@@ -56,6 +68,11 @@ export default function Index() {
         open={isSQLDialogOpen}
         onOpenChange={setIsSQLDialogOpen}
         onExecuted={handleRefresh}
+      />
+
+      <SQLViewerDialog
+        open={isSQLViewerOpen}
+        onOpenChange={setIsSQLViewerOpen}
       />
     </div>
   );
