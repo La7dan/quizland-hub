@@ -1,58 +1,58 @@
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import DBHeader from '@/components/DBHeader';
+import CreateTableDialog from '@/components/CreateTableDialog';
 import TableList from '@/components/TableList';
 import DatabaseActions from '@/components/DatabaseActions';
-import CreateTableDialog from '@/components/CreateTableDialog';
 import SQLExecuteDialog from '@/components/SQLExecuteDialog';
+import UserManagement from '@/components/UserManagement';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const Index = () => {
-  const [createTableOpen, setCreateTableOpen] = useState(false);
-  const [sqlExecuteOpen, setSqlExecuteOpen] = useState(false);
+export default function Index() {
+  const [isCreateTableDialogOpen, setIsCreateTableDialogOpen] = useState(false);
+  const [isSQLDialogOpen, setIsSQLDialogOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
-  }, []);
-
-  const handleCreateTable = useCallback(() => {
-    setCreateTableOpen(true);
-  }, []);
-
-  const handleExecuteSQL = useCallback(() => {
-    setSqlExecuteOpen(true);
-  }, []);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <DBHeader />
-        
-        <DatabaseActions 
-          onRefresh={handleRefresh}
-          onCreateTable={handleCreateTable}
-          onExecuteSQL={handleExecuteSQL}
-        />
-        
-        <TableList 
-          key={refreshTrigger} 
-          onRefresh={handleRefresh} 
-        />
-        
-        <CreateTableDialog 
-          open={createTableOpen}
-          onOpenChange={setCreateTableOpen}
-          onTableCreated={handleRefresh}
-        />
-        
-        <SQLExecuteDialog 
-          open={sqlExecuteOpen}
-          onOpenChange={setSqlExecuteOpen}
-          onExecuted={handleRefresh}
-        />
+    <div className="container mx-auto p-4 max-w-6xl">
+      <DBHeader 
+        onOpenCreateTable={() => setIsCreateTableDialogOpen(true)}
+        onOpenSQLDialog={() => setIsSQLDialogOpen(true)}
+      />
+
+      <div className="mt-6">
+        <Tabs defaultValue="tables" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="tables">Database Tables</TabsTrigger>
+            <TabsTrigger value="users">User Management</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="tables" className="space-y-4">
+            <DatabaseActions onRefresh={handleRefresh} />
+            <TableList onRefresh={handleRefresh} />
+          </TabsContent>
+          
+          <TabsContent value="users">
+            <UserManagement />
+          </TabsContent>
+        </Tabs>
       </div>
+
+      <CreateTableDialog
+        open={isCreateTableDialogOpen}
+        onOpenChange={setIsCreateTableDialogOpen}
+        onTableCreated={handleRefresh}
+      />
+      
+      <SQLExecuteDialog
+        open={isSQLDialogOpen}
+        onOpenChange={setIsSQLDialogOpen}
+        onExecuted={handleRefresh}
+      />
     </div>
   );
-};
-
-export default Index;
+}
