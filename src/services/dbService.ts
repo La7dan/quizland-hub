@@ -1,10 +1,5 @@
-
-// API base URL - dynamically determine the backend URL
-const API_BASE_URL = import.meta.env.PROD 
-  ? window.location.origin.includes('localhost') 
-    ? 'http://localhost:5000/api'
-    : `${window.location.origin}/api` 
-  : 'http://localhost:5000/api';
+// API base URL - always pointing to the database server IP
+const API_BASE_URL = 'http://209.74.89.41:5000/api';
 
 export interface TableColumn {
   name: string;
