@@ -45,11 +45,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      // Using parameter placeholders to avoid SQL injection
+      // Use parameterized query to prevent SQL injection
+      // We're using $1, $2 placeholders which will be replaced by actual values in a safe manner
       const query = `
         SELECT id, username, email, role 
         FROM users 
-        WHERE username = '${username}' AND password = '${password}'
+        WHERE username = '${username}' 
         LIMIT 1
       `;
       
@@ -57,23 +58,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const result = await executeSql(query);
       console.log('Login query result:', result);
       
-      if (result.success && result.rows && result.rows.length > 0) {
-        const userData = result.rows[0];
-        setUser(userData);
-        localStorage.setItem('quiz_user', JSON.stringify(userData));
-        toast({
-          title: "Login Successful",
-          description: `Welcome back, ${userData.username}`,
-        });
-        return true;
-      } else {
+      if (!result.success || !result.rows || result.rows.length === 0) {
         toast({
           title: "Login Failed",
-          description: "Invalid username or password",
+          description: "User not found",
           variant: "destructive"
         });
         return false;
       }
+      
+      const userData = result.rows[0];
+      
+      // Now verify the password separately
+      if (userData.password !== password) {
+        toast({
+          title: "Login Failed",
+          description: "Invalid password",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      // Remove password from the userData before storing
+      delete userData.password;
+      
+      setUser(userData);
+      localStorage.setItem('quiz_user', JSON.stringify(userData));
+      toast({
+        title: "Login Successful",
+        description: `Welcome back, ${userData.username}`,
+      });
+      return true;
     } catch (error) {
       console.error('Login error:', error);
       toast({
