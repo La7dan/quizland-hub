@@ -56,6 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for authentication cookie on app load
     const checkAuth = async () => {
       try {
+        console.log('Checking authentication status...');
         const response = await fetch('/api/auth/check', {
           credentials: 'include', // Important for cookies
           headers: {
@@ -65,9 +66,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (response.ok) {
           const data = await response.json();
+          console.log('Auth check response:', data);
           if (data.authenticated && data.user) {
             setUser(data.user);
           }
+        } else {
+          console.log('Auth check failed with status:', response.status);
         }
       } catch (error) {
         console.error('Error checking authentication:', error);
@@ -95,6 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       const result = await response.json();
+      console.log('Login response:', result);
       
       if (response.ok && result.success) {
         console.log('Login successful', result.user);
@@ -136,10 +141,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       // Call logout API endpoint to clear the cookie
-      await fetch('/api/auth/logout', {
+      const response = await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include'
       });
+      
+      console.log('Logout response:', await response.json());
       
       setUser(null);
       

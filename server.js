@@ -90,17 +90,12 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const client = await pool.connect();
     
-    // Escape single quotes to prevent SQL injection
-    const safeUsername = username.replace(/'/g, "''");
+    // Query the users table with prepared statement to prevent SQL injection
+    const result = await client.query(
+      'SELECT id, username, email, role, password FROM users WHERE username = $1 LIMIT 1',
+      [username]
+    );
     
-    const query = `
-      SELECT id, username, email, role, password 
-      FROM users 
-      WHERE username = '${safeUsername}' 
-      LIMIT 1
-    `;
-    
-    const result = await client.query(query);
     client.release();
     
     if (result.rows.length === 0) {
@@ -109,7 +104,7 @@ app.post('/api/auth/login', async (req, res) => {
     
     const userData = result.rows[0];
     
-    // Verify password
+    // Verify password (in a production app, this would use bcrypt)
     if (userData.password !== password) {
       return res.status(401).json({ success: false, message: 'Invalid password' });
     }
