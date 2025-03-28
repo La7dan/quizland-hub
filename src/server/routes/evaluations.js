@@ -194,7 +194,7 @@ router.post('/upload-file', upload.single('file'), (req, res) => {
   }
 });
 
-// Upload evaluation record - now checks for existing pending evaluations
+// Upload evaluation record - modified to check for existing evaluations with the same date
 router.post('/upload', requireAuth, async (req, res) => {
   const { member_id, evaluation_date, file_url, coach_id } = req.body;
   
@@ -208,17 +208,17 @@ router.post('/upload', requireAuth, async (req, res) => {
   try {
     const client = await pool.connect();
     
-    // Check if member already has a pending evaluation
+    // Check if member already has an evaluation for this date
     const checkResult = await client.query(`
       SELECT COUNT(*) FROM evaluations
-      WHERE member_id = $1 AND status = 'pending'
-    `, [member_id]);
+      WHERE member_id = $1 AND evaluation_date = $2
+    `, [member_id, evaluation_date]);
     
     if (checkResult.rows[0].count > 0) {
       client.release();
       return res.status(400).json({
         success: false,
-        message: 'Member already has a pending evaluation'
+        message: 'Member already has an evaluation for this date'
       });
     }
     

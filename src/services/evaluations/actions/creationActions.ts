@@ -31,6 +31,15 @@ export const createBulkEvaluations = async (
     }
     
     const count = result.rows[0]?.count || 0;
+    
+    // If count is 0, it means all members already had evaluations for this date
+    if (count === 0) {
+      return {
+        success: false,
+        message: 'All selected members already have evaluations scheduled for this date'
+      };
+    }
+    
     return {
       success: true,
       message: `Created ${count} pending evaluations successfully`

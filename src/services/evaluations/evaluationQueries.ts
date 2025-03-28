@@ -34,7 +34,7 @@ export const disapproveEvaluationQuery = async (evaluationId: number, reason: st
   `);
 };
 
-// Create bulk evaluations query - now checks for existing pending evaluations
+// Modified to check for existing evaluations with the same date only
 export const createBulkEvaluationsQuery = async (memberIds: number[], evaluationDate: string, coachId: number) => {
   const memberIdsStr = memberIds.join(',');
   return await executeSql(`
@@ -45,7 +45,7 @@ export const createBulkEvaluationsQuery = async (memberIds: number[], evaluation
       AND NOT EXISTS (
         SELECT 1 FROM evaluations 
         WHERE member_id = members.id 
-        AND status = 'pending'
+        AND evaluation_date = ${sqlEscape.string(evaluationDate)}
       )
     ),
     inserted_evaluations AS (
@@ -58,25 +58,28 @@ export const createBulkEvaluationsQuery = async (memberIds: number[], evaluation
   `);
 };
 
-// For testing and development - creates a sample pending evaluation
+// Modified to check for existing evaluations with the same date
 export const createSampleEvaluationQuery = async (memberId: number, coachId: number) => {
-  // First check if there's already a pending evaluation
+  // Get the current date in YYYY-MM-DD format for comparison
+  const currentDate = new Date().toISOString().split('T')[0];
+  
+  // First check if there's already an evaluation with the same date
   const checkResult = await executeSql(`
     SELECT COUNT(*) as count 
     FROM evaluations 
-    WHERE member_id = ${memberId} AND status = 'pending'
+    WHERE member_id = ${memberId} AND evaluation_date = '${currentDate}'
   `);
   
   if (checkResult.rows[0].count > 0) {
     return {
       success: false,
-      message: 'Member already has a pending evaluation'
+      message: 'Member already has an evaluation for this date'
     };
   }
   
   return await executeSql(`
-    INSERT INTO evaluations (member_id, status, nominated_at, coach_id)
-    VALUES (${memberId}, 'pending', NOW(), ${coachId})
+    INSERT INTO evaluations (member_id, status, nominated_at, coach_id, evaluation_date)
+    VALUES (${memberId}, 'pending', NOW(), ${coachId}, '${currentDate}')
     RETURNING id;
   `);
 };
