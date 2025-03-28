@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, CheckCircle } from 'lucide-react';
@@ -13,7 +14,7 @@ interface EvaluationActionsProps {
   showAll?: boolean;
 }
 
-const API_BASE_URL = 'http://209.74.89.41';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:8080';
 
 const EvaluationActions: React.FC<EvaluationActionsProps> = ({ 
   evaluationId, 

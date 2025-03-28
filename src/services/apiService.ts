@@ -1,5 +1,6 @@
-// API base URL - always pointing to the database server IP
-const API_BASE_URL = 'http://209.74.89.41/api';
+
+// API base URL - use environment variable or default to localhost in development
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 // Base API call function
 export const callApi = async <T>(
