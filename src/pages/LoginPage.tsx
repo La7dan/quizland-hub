@@ -6,7 +6,8 @@ import Navigation from '@/components/Navigation';
 import LoginCard from '@/components/login/LoginCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Info, LogIn } from 'lucide-react';
 
 const LoginPage = () => {
   const {
@@ -23,7 +24,8 @@ const LoginPage = () => {
     isAuthenticated,
     isSuperAdmin,
     user,
-    from
+    from,
+    loginWithAdminCredentials
   } = useLoginForm();
   
   const isMobile = useIsMobile();
@@ -54,8 +56,20 @@ const LoginPage = () => {
         <div className="flex flex-col w-full max-w-md space-y-4">
           <Alert variant="info" className="mb-4">
             <Info className="h-4 w-4" />
-            <AlertDescription>
-              Default admin credentials: username: <strong>admin</strong>, password: <strong>admin123</strong>
+            <AlertDescription className="flex flex-col gap-2">
+              <div>
+                Default admin credentials: username: <strong>admin</strong>, password: <strong>admin123</strong>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full mt-1 border-blue-300 hover:bg-blue-50"
+                onClick={loginWithAdminCredentials}
+                disabled={isLoggingIn}
+              >
+                <LogIn className="mr-2 h-4 w-4" />
+                Quick Login as Admin
+              </Button>
             </AlertDescription>
           </Alert>
           

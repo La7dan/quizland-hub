@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,6 +30,7 @@ export interface UseLoginFormReturn {
   isSuperAdmin: boolean;
   user: User | null;
   from: string;
+  loginWithAdminCredentials: () => Promise<void>;
 }
 
 export const useLoginForm = (): UseLoginFormReturn => {
@@ -194,6 +194,39 @@ export const useLoginForm = (): UseLoginFormReturn => {
     }
   };
 
+  const loginWithAdminCredentials = async (): Promise<void> => {
+    try {
+      setLoginError(null);
+      
+      // Check if account is locked out
+      if (lockoutTime !== null) {
+        setLoginError(`Account is temporarily locked. Please try again in ${lockoutTime} seconds.`);
+        return;
+      }
+      
+      setIsLoggingIn(true);
+      
+      console.log('Attempting quick login with admin credentials');
+      
+      const success = await login('admin', 'admin123', rememberMe);
+      
+      console.log('Admin login result:', success ? 'success' : 'failed');
+      
+      if (success) {
+        handleLoginSuccess();
+        // Login was successful - the redirect will happen automatically 
+        // when the AuthContext sets the user state
+      } else {
+        handleLoginFailure();
+      }
+    } catch (error) {
+      console.error('Admin login error:', error);
+      setLoginError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
   return {
     register,
     handleSubmit,
@@ -208,6 +241,7 @@ export const useLoginForm = (): UseLoginFormReturn => {
     isAuthenticated,
     isSuperAdmin,
     user,
-    from
+    from,
+    loginWithAdminCredentials
   };
 };
