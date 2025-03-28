@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { executeSql } from '@/services/apiService';
@@ -10,8 +9,9 @@ import { UploadCloud } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EvaluationUploadFormData } from './types';
 import { getSelectedMemberCode } from './utils';
+import { ENV } from '@/config/env';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://209.74.89.41:8080';
+const API_BASE_URL = ENV.API_BASE_URL.replace('/api', '');
 
 interface EvaluationUploadTabProps {
   onUploadSuccess: () => void;
@@ -27,7 +27,6 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const { toast } = useToast();
 
-  // Fetch members for the dropdown
   const { data: membersData } = useQuery({
     queryKey: ['members-dropdown'],
     queryFn: async () => {
@@ -56,16 +55,13 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
       setIsUploading(true);
       setUploadProgress(10);
       
-      // Get member code (SH number) for file naming
       const memberCode = getSelectedMemberCode(selectedMemberId, membersData);
       if (!memberCode) {
         throw new Error("Could not retrieve member code");
       }
       
-      // Create formatted date for filename (YYYY-MM-DD)
       const formattedDate = evaluationDate.replace(/\//g, '-');
       
-      // Create form data for file upload
       const formData = new FormData();
       formData.append('file', pdfFile);
       formData.append('memberCode', memberCode);
@@ -73,7 +69,6 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
       
       setUploadProgress(30);
       
-      // Upload file to server
       const uploadResponse = await fetch(`${API_BASE_URL}/api/evaluations/upload-file`, {
         method: 'POST',
         body: formData,
@@ -88,7 +83,6 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
       
       const uploadResult = await uploadResponse.json();
       
-      // Now create the evaluation record in the database
       const result = await executeSql(`
         INSERT INTO evaluations (member_id, status, nominated_at, evaluation_date, evaluation_pdf, coach_id)
         VALUES (
@@ -110,7 +104,6 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
           description: "Evaluation uploaded successfully",
         });
         
-        // Reset form
         setFormData({
           selectedMemberId: '',
           evaluationDate: '',
@@ -118,7 +111,6 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
         });
         setUploadProgress(0);
         
-        // Notify parent to refresh evaluations list
         onUploadSuccess();
       } else {
         throw new Error(result.message);

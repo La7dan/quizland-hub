@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, CheckCircle } from 'lucide-react';
@@ -14,6 +15,7 @@ interface EvaluationActionsProps {
   showAll?: boolean;
 }
 
+// Get API_BASE_URL without the "/api" part for file uploads
 const API_BASE_URL = ENV.API_BASE_URL.replace('/api', '');
 
 const EvaluationActions: React.FC<EvaluationActionsProps> = ({ 

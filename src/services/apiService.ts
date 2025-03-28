@@ -20,8 +20,11 @@ export const callApi = async <T>(
       options.body = JSON.stringify(body);
     }
 
-    console.log(`Making ${method} request to: ${API_BASE_URL}/${endpoint}`);
-    const response = await fetch(`${API_BASE_URL}/${endpoint}`, options);
+    // Ensure endpoint doesn't start with a slash to avoid double slashes
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+    
+    console.log(`Making ${method} request to: ${API_BASE_URL}/${cleanEndpoint}`);
+    const response = await fetch(`${API_BASE_URL}/${cleanEndpoint}`, options);
     
     if (!response.ok) {
       throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
