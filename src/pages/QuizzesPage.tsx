@@ -6,9 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { ArrowDown, ArrowUp, Moon, Sun } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { getQuizLevels } from '@/services/quizService';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function QuizzesPage() {
   const [sortBy, setSortBy] = useState<string>("default");
@@ -16,6 +16,7 @@ export default function QuizzesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [levels, setLevels] = useState<any[]>([]);
   const { theme, setTheme } = useTheme();
+  const isMobile = useIsMobile();
   
   const toggleSortOrder = () => {
     setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -38,8 +39,8 @@ export default function QuizzesPage() {
       
       <div className="container mx-auto p-4 max-w-6xl">
         <div className="my-8">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">Explore All Quizzes</h1>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold">Explore All Quizzes</h1>
             
             <Toggle
               aria-label="Toggle theme"
@@ -51,11 +52,11 @@ export default function QuizzesPage() {
             </Toggle>
           </div>
           
-          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Sort by:</span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <span className="text-sm font-medium whitespace-nowrap">Sort by:</span>
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue placeholder="Default order" />
                 </SelectTrigger>
                 <SelectContent>
@@ -66,14 +67,14 @@ export default function QuizzesPage() {
               </Select>
             </div>
             
-            <Button variant="outline" size="icon" onClick={toggleSortOrder}>
+            <Button variant="outline" size="icon" onClick={toggleSortOrder} className="w-10 h-10 sm:w-10 sm:h-10">
               {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
             </Button>
             
-            <div className="flex items-center gap-2 ml-auto">
-              <span className="text-sm font-medium">Filter by Level:</span>
+            <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
+              <span className="text-sm font-medium whitespace-nowrap">Filter by Level:</span>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue placeholder="All Levels" />
                 </SelectTrigger>
                 <SelectContent>
