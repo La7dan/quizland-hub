@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getQuizzes } from '@/services/quiz';
+import { getQuizzes, getQuizLevels } from '@/services/quiz';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,9 +43,25 @@ export default function QuizzesList({
   const [error, setError] = useState<string | null>(propError ? propError.message || "An error occurred" : null);
   const [deleteQuizId, setDeleteQuizId] = useState<number | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [levelCodes, setLevelCodes] = useState<{[key: number]: string}>({});
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
+
+  const fetchLevelCodes = async () => {
+    try {
+      const response = await getQuizLevels();
+      if (response && response.success) {
+        const levelsMap: {[key: number]: string} = {};
+        response.levels.forEach((level: any) => {
+          levelsMap[level.id] = level.code;
+        });
+        setLevelCodes(levelsMap);
+      }
+    } catch (error) {
+      console.error('Error loading quiz levels:', error);
+    }
+  };
 
   const fetchQuizzes = async () => {
     if (quizzesData && !propIsLoading) {
@@ -97,6 +114,9 @@ export default function QuizzesList({
   };
 
   useEffect(() => {
+    // Fetch level codes first
+    fetchLevelCodes();
+    
     if (propIsLoading !== undefined) {
       setLoading(propIsLoading);
     }
@@ -247,7 +267,7 @@ export default function QuizzesList({
               </div>
               <CardDescription>
                 <Badge variant="outline" className="mt-1">
-                  Level: {quiz.level_id}
+                  Level: {levelCodes[quiz.level_id] || quiz.level_id}
                 </Badge>
                 {!quiz.is_visible && (
                   <Badge variant="outline" className="mt-1 ml-2 text-red-500 border-red-500">
@@ -263,8 +283,6 @@ export default function QuizzesList({
               </p>
               <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                 <span>{quiz.question_count || 0} Questions</span>
-                <span>•</span>
-                <span>Passing Score: {quiz.passing_percentage}%</span>
               </div>
             </CardContent>
             <CardFooter className="pt-2 flex gap-2">

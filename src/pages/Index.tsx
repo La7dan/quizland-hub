@@ -18,11 +18,14 @@ export default function Index() {
   const navigate = useNavigate();
   
   // Fetch quizzes from database when app loads with improved error handling
-  const { data: quizzesData, isLoading, error } = useQuery({
+  const { data: quizzesData, isLoading, error, refetch } = useQuery({
     queryKey: ['quizzes'],
     queryFn: getQuizzes,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 2, // Retry failed requests up to 2 times
+    retry: 3, // Retry failed requests up to 3 times
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
     meta: {
       onError: (error) => {
         console.error('Failed to fetch quizzes:', error);
@@ -72,7 +75,11 @@ export default function Index() {
             </Toggle>
           </div>
           
-          <QuizzesList isLoading={isLoading} error={error} quizzesData={quizzesData} />
+          <QuizzesList 
+            isLoading={isLoading} 
+            error={error} 
+            quizzesData={quizzesData} 
+          />
         </div>
       </div>
     </div>
