@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { executeSql, initializeDatabase } from '@/services/dbService';
