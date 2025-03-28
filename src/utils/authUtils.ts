@@ -9,6 +9,8 @@ export const AUTH_API_URL = `${ENV.API_BASE_URL}/auth`;
 export const checkAuthStatus = async (): Promise<{ authenticated: boolean; user: User | null }> => {
   try {
     console.log('Checking authentication status...');
+    console.log('Using auth API URL:', AUTH_API_URL);
+    
     const response = await fetch(`${AUTH_API_URL}/check`, {
       credentials: 'include', // Important for cookies
       headers: {
@@ -16,6 +18,10 @@ export const checkAuthStatus = async (): Promise<{ authenticated: boolean; user:
         'Accept': 'application/json'
       }
     });
+    
+    // Log response details for debugging
+    console.log('Auth check response status:', response.status);
+    console.log('Auth check response headers:', [...response.headers.entries()]);
     
     // Check if the request was successful
     if (response.status === 401 || response.status === 403) {
