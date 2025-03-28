@@ -1,13 +1,15 @@
 
 import { useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { executeSql } from '@/services/apiService';
+import { executeSql, initializeDatabase } from '@/services/dbService';
 import { toast } from 'sonner';
 import { ENV } from '@/config/env';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const useDatabaseSetup = () => {
   const { toast: uiToast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
+  const queryClient = useQueryClient();
   
   useEffect(() => {
     const setupDatabase = async () => {
@@ -28,6 +30,21 @@ export const useDatabaseSetup = () => {
         
         if (result.success) {
           console.log('Database setup completed successfully');
+          
+          // Initialize the database and prefetch quiz data
+          const initResult = await initializeDatabase();
+          if (initResult.success) {
+            // Prefetch quizzes data
+            queryClient.prefetchQuery({
+              queryKey: ['quizzes'],
+              queryFn: async () => {
+                const { getQuizzes } = await import('@/services/quizService');
+                return getQuizzes();
+              }
+            });
+            
+            console.log('Quiz data initialized and prefetched');
+          }
         } else {
           console.error('Database setup failed:', result.message);
           // Only show toast if it's a real error, not just a warning about tables already existing
@@ -50,7 +67,7 @@ export const useDatabaseSetup = () => {
     } else {
       console.warn("No API URL configured. Database setup skipped.");
     }
-  }, []);
+  }, [queryClient]);
   
   return { isConnecting };
 };

@@ -24,12 +24,22 @@ interface QuizzesListProps {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   categoryFilter?: string;
+  isLoading?: boolean;
+  error?: any;
+  quizzesData?: any;
 }
 
-export default function QuizzesList({ sortBy = "default", sortOrder = "asc", categoryFilter = "all" }: QuizzesListProps) {
+export default function QuizzesList({ 
+  sortBy = "default", 
+  sortOrder = "asc", 
+  categoryFilter = "all",
+  isLoading: propIsLoading,
+  error: propError,
+  quizzesData
+}: QuizzesListProps) {
   const [quizzes, setQuizzes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(propIsLoading !== undefined ? propIsLoading : true);
+  const [error, setError] = useState<string | null>(propError ? propError.message || "An error occurred" : null);
   const [deleteQuizId, setDeleteQuizId] = useState<number | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const navigate = useNavigate();
@@ -37,37 +47,17 @@ export default function QuizzesList({ sortBy = "default", sortOrder = "asc", cat
   const { user, isAuthenticated } = useAuth();
 
   const fetchQuizzes = async () => {
+    // If quizzes are provided through props, use them instead of fetching
+    if (quizzesData && !propIsLoading) {
+      processQuizzes(quizzesData);
+      return;
+    }
+
     try {
       setError(null);
       setLoading(true);
       const response = await getQuizzes();
-      if (response.success) {
-        // Filter quizzes based on user role
-        let filteredQuizzes = response.quizzes || [];
-        
-        // For non-admin users, only show visible quizzes
-        if (!isAuthenticated || (user && user.role !== 'super_admin' && user.role !== 'admin')) {
-          filteredQuizzes = filteredQuizzes.filter((quiz: any) => quiz.is_visible);
-        }
-        
-        // Apply category filter if selected
-        if (categoryFilter !== "all") {
-          filteredQuizzes = filteredQuizzes.filter((quiz: any) => 
-            String(quiz.level_id) === categoryFilter
-          );
-        }
-        
-        // Sort quizzes
-        const sortedQuizzes = sortQuizzes(filteredQuizzes, sortBy, sortOrder);
-        setQuizzes(sortedQuizzes);
-      } else {
-        setError(response.message || "Failed to load quizzes");
-        toast({
-          title: "Error",
-          description: response.message || "Failed to load quizzes",
-          variant: "destructive",
-        });
-      }
+      processQuizzes(response);
     } catch (error) {
       console.error('Error loading quizzes:', error);
       setError("Unable to connect to the quiz server. Please try again later.");
@@ -81,9 +71,54 @@ export default function QuizzesList({ sortBy = "default", sortOrder = "asc", cat
     }
   };
 
+  const processQuizzes = (response: any) => {
+    if (response.success) {
+      // Filter quizzes based on user role
+      let filteredQuizzes = response.quizzes || [];
+      
+      // For non-admin users, only show visible quizzes
+      if (!isAuthenticated || (user && user.role !== 'super_admin' && user.role !== 'admin')) {
+        filteredQuizzes = filteredQuizzes.filter((quiz: any) => quiz.is_visible);
+      }
+      
+      // Apply category filter if selected
+      if (categoryFilter !== "all") {
+        filteredQuizzes = filteredQuizzes.filter((quiz: any) => 
+          String(quiz.level_id) === categoryFilter
+        );
+      }
+      
+      // Sort quizzes
+      const sortedQuizzes = sortQuizzes(filteredQuizzes, sortBy, sortOrder);
+      setQuizzes(sortedQuizzes);
+    } else {
+      setError(response.message || "Failed to load quizzes");
+      toast({
+        title: "Error",
+        description: response.message || "Failed to load quizzes",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
-    fetchQuizzes();
-  }, [toast, sortBy, sortOrder, categoryFilter, isAuthenticated, user]);
+    // Update loading state if prop changes
+    if (propIsLoading !== undefined) {
+      setLoading(propIsLoading);
+    }
+    
+    // Update error state if prop changes
+    if (propError) {
+      setError(propError.message || "An error occurred");
+    }
+    
+    // Process quizzes data if provided
+    if (quizzesData) {
+      processQuizzes(quizzesData);
+    } else {
+      fetchQuizzes();
+    }
+  }, [toast, sortBy, sortOrder, categoryFilter, isAuthenticated, user, propIsLoading, propError, quizzesData]);
 
   const sortQuizzes = (quizzesArray: any[], sortByField: string, order: "asc" | "desc") => {
     if (sortByField === "default") return quizzesArray;

@@ -8,11 +8,20 @@ import QuizzesList from '@/components/QuizzesList';
 import { Toggle } from '@/components/ui/toggle';
 import { useEffect } from 'react';
 import { cleanDummyData } from '@/services/dbService';
+import { useQuery } from '@tanstack/react-query';
+import { getQuizzes } from '@/services/quizService';
 
 export default function Index() {
   const { isAuthenticated } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  
+  // Fetch quizzes from database when app loads
+  const { data: quizzesData, isLoading, error } = useQuery({
+    queryKey: ['quizzes'],
+    queryFn: getQuizzes,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
   
   // Clean dummy data when the app starts
   useEffect(() => {
@@ -52,7 +61,7 @@ export default function Index() {
             </Toggle>
           </div>
           
-          <QuizzesList />
+          <QuizzesList isLoading={isLoading} error={error} quizzesData={quizzesData} />
         </div>
       </div>
     </div>
