@@ -1,4 +1,3 @@
-
 import { executeSql } from '../apiService';
 import { Member } from './types';
 
@@ -7,8 +6,7 @@ export const fetchMembersQuery = async () => {
   return await executeSql(`
     SELECT m.id, m.member_id, m.name, m.classes_count, m.coach_id, m.created_at, 
            l.id AS level_id, l.name AS level_name, l.code AS level_code,
-           u.username AS coach_name,
-           (SELECT MAX(approved_at) FROM evaluations e WHERE e.member_id = m.id AND e.status = 'approved') AS evaluation_date
+           u.username AS coach_name
     FROM members m
     LEFT JOIN quiz_levels l ON m.level_id = l.id
     LEFT JOIN users u ON m.coach_id = u.id

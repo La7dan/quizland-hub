@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import CoachDashboardHeader from '@/components/coach/CoachDashboardHeader';
 import EvaluationsCard from '@/components/coach/EvaluationsCard';
-import { fetchPendingEvaluations } from '@/services/dbService';
+import { fetchPendingEvaluations } from '@/services/evaluations/evaluationService';
 // Import User type from AuthContext instead of userService
 import type { User as AuthUser } from '@/contexts/AuthContext';
 
@@ -49,6 +49,7 @@ const CoachDashboard = () => {
             isLoading={isLoading}
             error={error as Error | null}
             evaluations={data?.evaluations}
+            coachId={user?.id!}
           />
         </div>
       </div>

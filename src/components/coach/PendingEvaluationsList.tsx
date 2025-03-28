@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { CheckCircle, XCircle, FileText } from 'lucide-react';
+import { CheckCircle, XCircle, FileText, Edit } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,15 +26,17 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Evaluation } from '@/services/evaluations/types';
-import { approveEvaluation, disapproveEvaluation } from '@/services/dbService';
+import { approveEvaluation, disapproveEvaluation } from '@/services/evaluations/evaluationService';
+import { Badge } from '@/components/ui/badge';
 
 interface PendingEvaluationsListProps {
   evaluations: Evaluation[];
+  showAll?: boolean;
 }
 
 const API_BASE_URL = 'http://209.74.89.41:8080';
 
-const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({ evaluations }) => {
+const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({ evaluations, showAll = false }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [disapprovalReason, setDisapprovalReason] = useState('');
@@ -50,6 +52,7 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({ evaluat
           description: result.message,
         });
         queryClient.invalidateQueries({ queryKey: ['pendingEvaluations'] });
+        queryClient.invalidateQueries({ queryKey: ['allEvaluations'] });
       } else {
         toast({
           title: "Error",
@@ -72,6 +75,7 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({ evaluat
         });
         setDisapprovalReason('');
         queryClient.invalidateQueries({ queryKey: ['pendingEvaluations'] });
+        queryClient.invalidateQueries({ queryKey: ['allEvaluations'] });
       } else {
         toast({
           title: "Error",
@@ -112,6 +116,17 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({ evaluat
     window.open(`${API_BASE_URL}/files/${pdfFileName}`, '_blank');
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Approved</Badge>;
+      case 'disapproved':
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Disapproved</Badge>;
+      default:
+        return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">Pending</Badge>;
+    }
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -119,6 +134,7 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({ evaluat
           <TableHead>Member ID</TableHead>
           <TableHead>Name</TableHead>
           <TableHead>Nominated On</TableHead>
+          {showAll && <TableHead>Status</TableHead>}
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -132,6 +148,11 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({ evaluat
                 ? format(new Date(evaluation.nominated_at), 'MMM dd, yyyy')
                 : 'N/A'}
             </TableCell>
+            {showAll && (
+              <TableCell>
+                {getStatusBadge(evaluation.status)}
+              </TableCell>
+            )}
             <TableCell className="text-right">
               <div className="flex justify-end gap-2">
                 {evaluation.evaluation_pdf && (
@@ -145,66 +166,70 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({ evaluat
                     PDF
                   </Button>
                 )}
-              
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1"
-                  onClick={() => handleApprove(evaluation.id!)}
-                  disabled={approveMutation.isPending}
-                >
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  Approve
-                </Button>
                 
-                <Dialog>
-                  <DialogTrigger asChild>
+                {(showAll || evaluation.status === 'pending') && (
+                  <>
                     <Button
                       variant="outline"
                       size="sm"
                       className="flex items-center gap-1"
-                      onClick={() => setSelectedEvaluationId(evaluation.id!)}
+                      onClick={() => handleApprove(evaluation.id!)}
+                      disabled={approveMutation.isPending}
                     >
-                      <XCircle className="h-4 w-4 text-red-500" />
-                      Disapprove
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      {showAll && evaluation.status === 'approved' ? 'Approved' : 'Approve'}
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Disapprove Evaluation</DialogTitle>
-                      <DialogDescription>
-                        Please provide a reason for disapproving this evaluation.
-                        This will be recorded in the database.
-                      </DialogDescription>
-                    </DialogHeader>
                     
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="reason">Reason for disapproval</Label>
-                        <Textarea
-                          id="reason"
-                          placeholder="Enter your reason"
-                          value={disapprovalReason}
-                          onChange={(e) => setDisapprovalReason(e.target.value)}
-                          rows={4}
-                        />
-                      </div>
-                    </div>
-                    
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button variant="outline">Cancel</Button>
-                      </DialogClose>
-                      <Button 
-                        onClick={handleDisapprove}
-                        disabled={disapproveMutation.isPending || !disapprovalReason.trim()}
-                        variant="destructive"
-                      >
-                        {disapproveMutation.isPending ? 'Submitting...' : 'Submit'}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-1"
+                          onClick={() => setSelectedEvaluationId(evaluation.id!)}
+                        >
+                          <XCircle className="h-4 w-4 text-red-500" />
+                          {showAll && evaluation.status === 'disapproved' ? 'Disapproved' : 'Disapprove'}
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Disapprove Evaluation</DialogTitle>
+                          <DialogDescription>
+                            Please provide a reason for disapproving this evaluation.
+                            This will be recorded in the database.
+                          </DialogDescription>
+                        </DialogHeader>
+                        
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="reason">Reason for disapproval</Label>
+                            <Textarea
+                              id="reason"
+                              placeholder="Enter your reason"
+                              value={disapprovalReason}
+                              onChange={(e) => setDisapprovalReason(e.target.value)}
+                              rows={4}
+                            />
+                          </div>
+                        </div>
+                        
+                        <DialogFooter>
+                          <DialogClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                          </DialogClose>
+                          <Button 
+                            onClick={handleDisapprove}
+                            disabled={disapproveMutation.isPending || !disapprovalReason.trim()}
+                            variant="destructive"
+                          >
+                            {disapproveMutation.isPending ? 'Submitting...' : 'Submit'}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </>
+                )}
               </div>
             </TableCell>
           </TableRow>
