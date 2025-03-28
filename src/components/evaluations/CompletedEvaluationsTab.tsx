@@ -15,6 +15,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import LoadingEvaluationState from './LoadingEvaluationState';
 
 interface CompletedEvaluationsTabProps {
   refreshTrigger?: number;
@@ -45,7 +46,9 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
       
       query += ` ORDER BY e.evaluation_date DESC NULLS LAST`;
       
+      console.log("Executing completed evaluations query:", query);
       const result = await executeSql(query);
+      console.log("Completed evaluations result:", result);
       return result.rows || [];
     }
   });
@@ -129,10 +132,7 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
       </div>
       
       {isLoading ? (
-        <div className="text-center py-8">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-          <p className="mt-2 text-sm text-muted-foreground">Loading evaluations...</p>
-        </div>
+        <LoadingEvaluationState />
       ) : completedEvaluations && completedEvaluations.length > 0 ? (
         <>
           <div className="border rounded-md">

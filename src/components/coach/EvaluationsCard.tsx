@@ -22,7 +22,6 @@ import ApprovedEvaluationsTab from './tabs/ApprovedEvaluationsTab';
 import DisapprovedEvaluationsTab from './tabs/DisapprovedEvaluationsTab';
 import CompletedEvaluationsTab from './tabs/CompletedEvaluationsTab';
 import PassedEvaluationsTab from './tabs/PassedEvaluationsTab';
-import AllEvaluationsTab from './tabs/AllEvaluationsTab';
 
 interface EvaluationsCardProps {
   isLoading: boolean;
@@ -67,7 +66,9 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
   const completedEvaluations = allEvaluations?.filter(e => e.evaluation_pdf) || [];
   const approvedEvaluations = allEvaluations?.filter(e => e.status === 'approved') || [];
   const disapprovedEvaluations = allEvaluations?.filter(e => e.status === 'disapproved') || [];
-  const passedEvaluations = allEvaluations?.filter(e => e.evaluation_result === 'passed') || [];
+  
+  // Get all evaluations with result (passed and not passed)
+  const evaluationsWithResults = allEvaluations?.filter(e => e.evaluation_result) || [];
   
   // Set up filters for completed tab
   const {
@@ -81,19 +82,6 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
     filteredEvaluations: filteredCompletedEvaluations,
     clearFilters
   } = useEvaluationFilters(completedEvaluations);
-
-  // Set up filters for passed tab
-  const {
-    searchTerm: passedSearchTerm,
-    setSearchTerm: setPassedSearchTerm,
-    sortField: passedSortField,
-    sortOrder: passedSortOrder,
-    filters: passedFilters,
-    setFilters: setPassedFilters,
-    toggleSort: togglePassedSort,
-    filteredEvaluations: filteredPassedEvaluations,
-    clearFilters: clearPassedFilters
-  } = useEvaluationFilters(passedEvaluations);
   
   // Check for database connection errors
   const hasConnectionError = error?.message?.includes('Failed to fetch') || 
@@ -117,11 +105,11 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
           </Alert>
         )}
 
-        {passedEvaluations && passedEvaluations.length > 0 && (
+        {evaluationsWithResults && evaluationsWithResults.length > 0 && (
           <div className="mb-4 bg-green-50 border border-green-200 rounded-md p-3 flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-green-600" />
             <p className="text-green-800">
-              You have <strong>{passedEvaluations.length}</strong> passed evaluations. Click the "Passed" tab to view them.
+              You have <strong>{evaluationsWithResults.length}</strong> evaluations with results. Check the "Results" tab to view passed and not ready evaluations.
             </p>
           </div>
         )}
@@ -133,9 +121,8 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
             <TabsTrigger value="disapproved">Disapproved</TabsTrigger>
             <TabsTrigger value="completed">Completed</TabsTrigger>
             <TabsTrigger value="passed" className="bg-green-50 data-[state=active]:bg-green-100 data-[state=active]:text-green-800">
-              Passed {passedEvaluations?.length ? `(${passedEvaluations.length})` : ''}
+              Results {evaluationsWithResults?.length ? `(${evaluationsWithResults.length})` : ''}
             </TabsTrigger>
-            <TabsTrigger value="all">All</TabsTrigger>
           </TabsList>
           
           <TabsContent value="pending">
@@ -164,7 +151,7 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
           <TabsContent value="passed">
             <PassedEvaluationsTab 
               allEvaluationsLoading={allEvaluationsLoading}
-              passedEvaluations={passedEvaluations}
+              passedEvaluations={evaluationsWithResults}
             />
           </TabsContent>
           
@@ -183,14 +170,6 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
               clearFilters={clearFilters}
               renderResultBadge={renderResultBadge}
               renderSortIndicator={renderSortIndicator}
-            />
-          </TabsContent>
-          
-          <TabsContent value="all">
-            <AllEvaluationsTab 
-              allEvaluationsLoading={allEvaluationsLoading}
-              allEvaluations={allEvaluations}
-              hasConnectionError={hasConnectionError}
             />
           </TabsContent>
         </Tabs>
