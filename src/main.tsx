@@ -15,6 +15,9 @@ logEnvironment();
 // Output API URL in development for debugging
 if (ENV.DEBUG) {
   console.log('🌐 API URL:', ENV.API_BASE_URL);
+  console.log('⚠️ Important: This application requires a backend server to handle API requests.');
+  console.log('📋 To run the backend server: node server.js');
+  console.log('   - Make sure the server is running at the correct port (default: 8080)');
 }
 
 // Create a QueryClient

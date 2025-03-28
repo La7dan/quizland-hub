@@ -5,8 +5,16 @@
 
 // Set default API URL based on environment
 const getDevelopmentApiUrl = () => {
-  // Use the server IP address with port and path
-  return 'http://209.74.89.41:8080/api';
+  // In development, we can use the relative path which will work both locally
+  // and when deployed if the server is on the same origin
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    // For local development
+    return 'http://localhost:8080/api';
+  }
+  
+  // For development on the project domain or when deployed, use relative URL
+  // which avoids CORS issues and works when frontend/backend are on same origin
+  return '/api';
 };
 
 // Environment variables with fallbacks
