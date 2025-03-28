@@ -18,13 +18,17 @@ import BulkMarkAsPassedButton from './BulkMarkAsPassedButton';
 import EvaluationItem from './EvaluationItem';
 import { useAuth } from '@/contexts/AuthContext';
 
-const EvaluationListTab: React.FC = () => {
+interface EvaluationListTabProps {
+  refreshTrigger?: number;
+}
+
+const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger }) => {
   const { user } = useAuth();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
   const { data: evaluations, isLoading } = useQuery({
-    queryKey: ['allEvaluations'],
+    queryKey: ['allEvaluations', refreshTrigger],
     queryFn: async () => {
       const result = await executeSql(`
         SELECT e.*, m.name as member_name, m.member_id as member_code
@@ -38,7 +42,7 @@ const EvaluationListTab: React.FC = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked && evaluations) {
-      setSelectedIds(evaluations.map(eval => eval.id));
+      setSelectedIds(evaluations.map(evaluation => evaluation.id));
     } else {
       setSelectedIds([]);
     }

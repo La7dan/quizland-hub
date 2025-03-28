@@ -1,15 +1,7 @@
-
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { executeSql } from '@/services/apiService';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, FileCheck, Download, FileText } from 'lucide-react';
-import { EvaluationDisplayItem } from './types';
-import EvaluationItem from './EvaluationItem';
+import React from 'react';
 
 interface CompletedEvaluationsTabProps {
-  refreshTrigger: number;
+  refreshTrigger?: number;
 }
 
 const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refreshTrigger }) => {
@@ -75,7 +67,7 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
   };
 
   return (
-    <>
+    <div>
       <div className="flex items-center justify-between space-x-2 pb-4">
         <div className="flex items-center space-x-2">
           <Input
@@ -132,7 +124,7 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
           </p>
         </div>
       )}
-    </>
+    </div>
   );
 };
 
