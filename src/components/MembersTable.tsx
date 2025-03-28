@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { getMembers, Member, deleteMember } from '@/services/memberService';
+import { getMembers, Member, deleteMember } from '@/services/members/memberService';
 import { useToast } from '@/components/ui/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 

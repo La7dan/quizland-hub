@@ -1,35 +1,16 @@
 
-import { executeSql } from './dbService';
+import { 
+  fetchMembersQuery,
+  createMemberQuery,
+  updateMemberQuery,
+  deleteMemberQuery,
+  importMemberQuery
+} from './memberQueries';
+import { Member, MemberResponse, MemberActionResponse, MemberImportResponse } from './types';
 
-export interface Member {
-  id?: number;
-  member_id: string;
-  name: string;
-  level_id?: number;
-  level_code?: string;
-  level_name?: string;
-  classes_count?: number;
-  coach_id?: number;
-  coach_name?: string;
-  created_at?: string;
-}
-
-export const getMembers = async (): Promise<{
-  success: boolean;
-  members?: Member[];
-  message?: string;
-}> => {
+export const getMembers = async (): Promise<MemberResponse> => {
   try {
-    console.log('Fetching members from database...');
-    const result = await executeSql(`
-      SELECT m.id, m.member_id, m.name, m.classes_count, m.coach_id, m.created_at, 
-             l.id AS level_id, l.name AS level_name, l.code AS level_code,
-             u.username AS coach_name
-      FROM members m
-      LEFT JOIN quiz_levels l ON m.level_id = l.id
-      LEFT JOIN users u ON m.coach_id = u.id
-      ORDER BY m.name;
-    `);
+    const result = await fetchMembersQuery();
     
     if (result.success) {
       console.log(`Found ${result.rows?.length || 0} members`);
@@ -53,11 +34,7 @@ export const getMembers = async (): Promise<{
   }
 };
 
-export const createMember = async (member: Member): Promise<{
-  success: boolean;
-  id?: number;
-  message?: string;
-}> => {
+export const createMember = async (member: Member): Promise<MemberActionResponse> => {
   try {
     // Validate member data
     if (!member.member_id || !member.name) {
@@ -67,11 +44,7 @@ export const createMember = async (member: Member): Promise<{
       };
     }
 
-    const result = await executeSql(`
-      INSERT INTO members (member_id, name, level_id, classes_count, coach_id)
-      VALUES ('${member.member_id}', '${member.name}', ${member.level_id || 'NULL'}, ${member.classes_count || 0}, ${member.coach_id || 'NULL'})
-      RETURNING id;
-    `);
+    const result = await createMemberQuery(member);
 
     if (result.success && result.rows && result.rows.length > 0) {
       return {
@@ -93,10 +66,7 @@ export const createMember = async (member: Member): Promise<{
   }
 };
 
-export const updateMember = async (member: Member): Promise<{
-  success: boolean;
-  message?: string;
-}> => {
+export const updateMember = async (member: Member): Promise<MemberActionResponse> => {
   try {
     // Validate member data
     if (!member.id || !member.member_id || !member.name) {
@@ -106,15 +76,7 @@ export const updateMember = async (member: Member): Promise<{
       };
     }
 
-    const result = await executeSql(`
-      UPDATE members
-      SET member_id = '${member.member_id}',
-          name = '${member.name}',
-          level_id = ${member.level_id || 'NULL'},
-          classes_count = ${member.classes_count || 0},
-          coach_id = ${member.coach_id || 'NULL'}
-      WHERE id = ${member.id};
-    `);
+    const result = await updateMemberQuery(member);
 
     if (result.success) {
       return {
@@ -135,15 +97,9 @@ export const updateMember = async (member: Member): Promise<{
   }
 };
 
-export const deleteMember = async (id: number): Promise<{
-  success: boolean;
-  message?: string;
-}> => {
+export const deleteMember = async (id: number): Promise<MemberActionResponse> => {
   try {
-    const result = await executeSql(`
-      DELETE FROM members
-      WHERE id = ${id};
-    `);
+    const result = await deleteMemberQuery(id);
 
     if (result.success) {
       return {
@@ -164,13 +120,7 @@ export const deleteMember = async (id: number): Promise<{
   }
 };
 
-export const importMembers = async (members: Member[]): Promise<{
-  success: boolean;
-  successCount?: number;
-  errorCount?: number;
-  errors?: string[];
-  message?: string;
-}> => {
+export const importMembers = async (members: Member[]): Promise<MemberImportResponse> => {
   if (!members || members.length === 0) {
     return {
       success: false,
@@ -190,15 +140,7 @@ export const importMembers = async (members: Member[]): Promise<{
           throw new Error('Member ID and name are required');
         }
 
-        const result = await executeSql(`
-          INSERT INTO members (member_id, name, level_id, classes_count, coach_id)
-          VALUES ('${member.member_id}', '${member.name}', ${member.level_id || 'NULL'}, ${member.classes_count || 0}, ${member.coach_id || 'NULL'})
-          ON CONFLICT (member_id) DO UPDATE
-          SET name = EXCLUDED.name,
-              level_id = EXCLUDED.level_id,
-              classes_count = EXCLUDED.classes_count,
-              coach_id = EXCLUDED.coach_id;
-        `);
+        const result = await importMemberQuery(member);
 
         if (result.success) {
           successCount++;
@@ -226,3 +168,6 @@ export const importMembers = async (members: Member[]): Promise<{
     };
   }
 };
+
+// Re-export types
+export type { Member, MemberResponse, MemberActionResponse, MemberImportResponse };

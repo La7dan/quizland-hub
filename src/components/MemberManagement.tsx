@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, CheckCircle, Download, FileText, Trash, Upload, User, Users, UserMinus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getMembers, createMember, updateMember, deleteMember, importMembers, Member } from '@/services/memberService';
+import { getMembers, createMember, updateMember, deleteMember, importMembers, Member } from '@/services/members/memberService';
 import { getQuizLevels } from '@/services/quizService';
 import { getUsers } from '@/services/dbService';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -41,28 +40,23 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
     }
   });
 
-  // Fetch members data
   const { data: membersData, isLoading: membersLoading } = useQuery({
     queryKey: ['members'],
     queryFn: getMembers
   });
 
-  // Fetch quiz levels for dropdown
   const { data: levelsData } = useQuery({
     queryKey: ['quizLevels'],
     queryFn: getQuizLevels
   });
 
-  // Fetch coaches (users with coach role) for dropdown
   const { data: usersData } = useQuery({
     queryKey: ['users'],
     queryFn: getUsers
   });
 
-  // Filter coaches (users with coach role)
   const coaches = usersData?.users?.filter(user => user.role === 'coach' || user.role === 'admin') || [];
 
-  // Create member mutation
   const createMemberMutation = useMutation({
     mutationFn: createMember,
     onSuccess: () => {
@@ -83,7 +77,6 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
     }
   });
 
-  // Update member mutation
   const updateMemberMutation = useMutation({
     mutationFn: updateMember,
     onSuccess: () => {
@@ -104,7 +97,6 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
     }
   });
 
-  // Delete member mutation
   const deleteMemberMutation = useMutation({
     mutationFn: deleteMember,
     onSuccess: () => {
@@ -124,10 +116,8 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
     }
   });
 
-  // Bulk delete members mutation
   const bulkDeleteMembersMutation = useMutation({
     mutationFn: async (ids: number[]) => {
-      // Process each deletion sequentially
       for (const id of ids) {
         await deleteMember(id);
       }
@@ -151,7 +141,6 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
     }
   });
 
-  // Import members mutation
   const importMembersMutation = useMutation({
     mutationFn: importMembers,
     onSuccess: (data) => {
@@ -296,7 +285,6 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
     }
 
     try {
-      // Parse CSV data
       const lines = csvData.trim().split('\n');
       const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
       
@@ -476,7 +464,6 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
         </div>
       )}
 
-      {/* Add/Edit Member Dialog */}
       <Dialog open={isAddMemberDialogOpen} onOpenChange={setIsAddMemberDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -529,7 +516,6 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {/* Note: Using null value isn't allowed, so we use a non-empty string */}
                         <SelectItem value="none">None</SelectItem>
                         {levelsData?.levels?.map((level) => (
                           <SelectItem key={level.id} value={level.id.toString()}>
@@ -578,7 +564,6 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {/* Note: Using null value isn't allowed, so we use a non-empty string */}
                         <SelectItem value="none">None</SelectItem>
                         {coaches.map((coach) => (
                           <SelectItem key={coach.id} value={coach.id!.toString()}>
@@ -605,7 +590,6 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
         </DialogContent>
       </Dialog>
 
-      {/* Import Members Dialog */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
