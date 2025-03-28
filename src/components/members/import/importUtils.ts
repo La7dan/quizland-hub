@@ -1,0 +1,188 @@
+
+import * as XLSX from 'xlsx';
+import { Member } from '@/services/members/memberService';
+import { toast } from '@/hooks/use-toast';
+
+// CSV import functionality
+export const parseCSVData = (csvData: string, levelsData: any, coaches: any[]): { members: Member[], error?: string } => {
+  try {
+    const lines = csvData.trim().split('\n');
+    if (lines.length === 0) {
+      return { members: [], error: 'CSV data is empty' };
+    }
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    
+    const memberIdIndex = headers.indexOf('member_id');
+    const nameIndex = headers.indexOf('name');
+    const levelCodeIndex = headers.indexOf('level_code');
+    const classesCountIndex = headers.indexOf('classes_count');
+    const coachIndex = headers.indexOf('coach');
+    
+    if (memberIdIndex === -1 || nameIndex === -1) {
+      return { 
+        members: [], 
+        error: 'CSV must include at least member_id and name columns' 
+      };
+    }
+    
+    const members: Member[] = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      
+      const values = lines[i].split(',').map(v => v.trim());
+      
+      const member: Member = {
+        member_id: values[memberIdIndex],
+        name: values[nameIndex]
+      };
+      
+      if (levelCodeIndex !== -1 && values[levelCodeIndex]) {
+        const level = levelsData?.levels?.find((l: any) => l.code === values[levelCodeIndex]);
+        if (level) {
+          member.level_id = level.id;
+        }
+      }
+      
+      if (classesCountIndex !== -1 && values[classesCountIndex]) {
+        member.classes_count = parseInt(values[classesCountIndex]) || 0;
+      }
+      
+      if (coachIndex !== -1 && values[coachIndex]) {
+        const coach = coaches.find(c => c.username === values[coachIndex]);
+        if (coach) {
+          member.coach_id = coach.id;
+        }
+      }
+      
+      members.push(member);
+    }
+    
+    if (members.length === 0) {
+      return { members: [], error: 'No valid members found in CSV data' };
+    }
+    
+    return { members };
+  } catch (error) {
+    return { 
+      members: [], 
+      error: `Failed to parse CSV data: ${error instanceof Error ? error.message : 'Unknown error'}` 
+    };
+  }
+};
+
+// Excel import functionality
+export const parseExcelFile = (file: File, levelsData: any, coaches: any[]): Promise<{ members: Member[], error?: string }> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        
+        // Convert to JSON
+        const excelData = XLSX.utils.sheet_to_json(worksheet);
+        
+        if (excelData.length === 0) {
+          resolve({ members: [], error: 'Excel file is empty or has no valid data' });
+          return;
+        }
+        
+        // Process members from Excel data
+        const members: Member[] = [];
+        
+        for (const row of excelData) {
+          const rowData = row as Record<string, any>;
+          
+          // Check for required fields
+          if (!rowData.member_id || !rowData.name) {
+            continue;
+          }
+          
+          const member: Member = {
+            member_id: String(rowData.member_id),
+            name: String(rowData.name)
+          };
+          
+          // Match level code if provided
+          if (rowData.level_code) {
+            const level = levelsData?.levels?.find((l: any) => l.code === rowData.level_code);
+            if (level) {
+              member.level_id = level.id;
+            }
+          }
+          
+          // Set classes count if provided
+          if (rowData.classes_count !== undefined) {
+            member.classes_count = parseInt(String(rowData.classes_count)) || 0;
+          }
+          
+          // Match coach if provided
+          if (rowData.coach) {
+            const coach = coaches.find(c => c.username === rowData.coach);
+            if (coach) {
+              member.coach_id = coach.id;
+            }
+          }
+          
+          members.push(member);
+        }
+        
+        if (members.length === 0) {
+          resolve({ members: [], error: 'No valid members found in Excel data' });
+          return;
+        }
+        
+        resolve({ members });
+      } catch (error) {
+        resolve({ 
+          members: [], 
+          error: `Failed to parse Excel file: ${error instanceof Error ? error.message : 'Unknown error'}` 
+        });
+      }
+    };
+    
+    reader.onerror = () => {
+      resolve({ members: [], error: 'Failed to read Excel file' });
+    };
+    
+    reader.readAsBinaryString(file);
+  });
+};
+
+// Sample data generation
+export const generateSampleCSV = (): string => {
+  return 'member_id,name,level_code,classes_count,coach\nSH123456,John Smith,B1,10,coach\nSH654321,Jane Doe,I2,15,admin';
+};
+
+export const generateSampleExcel = (): void => {
+  // Create workbook and worksheet
+  const wb = XLSX.utils.book_new();
+  const wsData = [
+    ['member_id', 'name', 'level_code', 'classes_count', 'coach'],
+    ['SH123456', 'John Smith', 'B1', 10, 'coach'],
+    ['SH654321', 'Jane Doe', 'I2', 15, 'admin']
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wb, ws, 'Members');
+  
+  // Generate Excel file and download
+  XLSX.writeFile(wb, 'sample_members.xlsx');
+};
+
+// Download sample CSV
+export const downloadSampleCSV = (): void => {
+  const sampleData = generateSampleCSV();
+  const blob = new Blob([sampleData], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'sample_members.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
