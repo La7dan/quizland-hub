@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Shield, LogIn, AlertCircle, Clock, MapPin } from 'lucide-react';
+import { Shield, LogIn, AlertCircle, Clock, MapPin, Lock } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import Navigation from '@/components/Navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -17,6 +18,9 @@ const LoginPage = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [lastLogin, setLastLogin] = useState<{ time: string, location: string } | null>(null);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [lockoutTime, setLockoutTime] = useState<number | null>(null);
   const { login, isAuthenticated, isSuperAdmin, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,7 +33,7 @@ const LoginPage = () => {
   
   console.log('LoginPage - Auth status:', { isAuthenticated, userRole: user?.role, from });
   
-  // Fetch last login info from localStorage on component mount
+  // Fetch last login info and login attempts from localStorage on component mount
   useEffect(() => {
     const storedLoginHistory = localStorage.getItem('loginHistory');
     if (storedLoginHistory) {
@@ -38,6 +42,43 @@ const LoginPage = () => {
         setLastLogin(parsedHistory);
       } catch (error) {
         console.error('Error parsing login history:', error);
+      }
+    }
+    
+    // Get stored login attempts and lockout time
+    const storedAttempts = localStorage.getItem('loginAttempts');
+    const storedLockoutTime = localStorage.getItem('lockoutUntil');
+    
+    if (storedAttempts) {
+      setLoginAttempts(parseInt(storedAttempts));
+    }
+    
+    if (storedLockoutTime) {
+      const lockoutUntil = parseInt(storedLockoutTime);
+      const now = Date.now();
+      
+      if (lockoutUntil > now) {
+        // Still in lockout period
+        setLockoutTime(Math.ceil((lockoutUntil - now) / 1000));
+        
+        // Set timer to update remaining lockout time
+        const timer = setInterval(() => {
+          setLockoutTime(prev => {
+            if (prev && prev > 1) {
+              return prev - 1;
+            } else {
+              clearInterval(timer);
+              localStorage.removeItem('lockoutUntil');
+              return null;
+            }
+          });
+        }, 1000);
+        
+        return () => clearInterval(timer);
+      } else {
+        // Lockout period has expired
+        localStorage.removeItem('lockoutUntil');
+        setLockoutTime(null);
       }
     }
   }, []);
@@ -64,18 +105,30 @@ const LoginPage = () => {
   const onSubmit = async (data: any) => {
     try {
       setLoginError(null);
+      
+      // Check if account is locked out
+      if (lockoutTime !== null) {
+        setLoginError(`Account is temporarily locked. Please try again in ${lockoutTime} seconds.`);
+        return;
+      }
+      
       setIsLoggingIn(true);
       
       console.log('Login form submitted:', {
         username: data.username,
-        password: '********' // Don't log the actual password
+        password: '********', // Don't log the actual password
+        rememberMe
       });
       
-      const success = await login(data.username, data.password);
+      const success = await login(data.username, data.password, rememberMe);
       
       console.log('Login result:', success ? 'success' : 'failed');
       
       if (success) {
+        // Reset login attempts on successful login
+        setLoginAttempts(0);
+        localStorage.removeItem('loginAttempts');
+        
         // Store login time and approximate location on successful login
         const now = new Date().toLocaleString();
         // In a real app, you might use a geolocation API here
@@ -89,8 +142,24 @@ const LoginPage = () => {
         // Login was successful - the redirect will happen automatically 
         // when the AuthContext sets the user state
       } else {
-        // Login will display its own toast, but we also set this for form validation
-        setLoginError('Login failed. Please check your credentials.');
+        // Increment failed login attempts
+        const newAttempts = loginAttempts + 1;
+        setLoginAttempts(newAttempts);
+        localStorage.setItem('loginAttempts', newAttempts.toString());
+        
+        // Check if we should lock the account (after 3 failed attempts)
+        if (newAttempts >= 3) {
+          const lockoutDuration = 30; // seconds
+          const lockoutUntil = Date.now() + (lockoutDuration * 1000);
+          
+          localStorage.setItem('lockoutUntil', lockoutUntil.toString());
+          setLockoutTime(lockoutDuration);
+          
+          setLoginError(`Too many failed login attempts. Your account is locked for ${lockoutDuration} seconds.`);
+        } else {
+          // Login will display its own toast, but we also set this for form validation
+          setLoginError(`Login failed. Please check your credentials. ${3 - newAttempts} attempts remaining.`);
+        }
       }
     } catch (error) {
       console.error('Login submission error:', error);
@@ -131,9 +200,18 @@ const LoginPage = () => {
                 </div>
               )}
               
+              {lockoutTime !== null && (
+                <Alert variant="destructive">
+                  <Lock className="h-4 w-4" />
+                  <AlertDescription>
+                    Account is temporarily locked. Please try again in {lockoutTime} seconds.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               
-              {loginError && (
+              {loginError && lockoutTime === null && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{loginError}</AlertDescription>
@@ -148,6 +226,7 @@ const LoginPage = () => {
                   placeholder="Enter your username"
                   className="h-9 sm:h-10 text-sm sm:text-base"
                   {...register("username", { required: true })}
+                  disabled={lockoutTime !== null}
                 />
                 {errors.username && (
                   <p className="text-xs sm:text-sm text-red-500">Username is required</p>
@@ -164,13 +243,35 @@ const LoginPage = () => {
                   placeholder="Enter your password"
                   className="h-9 sm:h-10 text-sm sm:text-base"
                   {...register("password", { required: true })}
+                  disabled={lockoutTime !== null}
                 />
                 {errors.password && (
                   <p className="text-xs sm:text-sm text-red-500">Password is required</p>
                 )}
               </div>
               
-              <Button type="submit" className="w-full mt-2" disabled={isLoggingIn}>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="rememberMe" 
+                  checked={rememberMe} 
+                  onCheckedChange={(checked) => {
+                    setRememberMe(checked === true);
+                  }}
+                  disabled={lockoutTime !== null}
+                />
+                <Label 
+                  htmlFor="rememberMe" 
+                  className="text-sm cursor-pointer select-none"
+                >
+                  Remember me for 30 days
+                </Label>
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full mt-2" 
+                disabled={isLoggingIn || lockoutTime !== null}
+              >
                 {isLoggingIn ? (
                   <>
                     <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>

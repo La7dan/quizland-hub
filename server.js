@@ -1,3 +1,4 @@
+
 import express from 'express';
 import pg from 'pg';
 import cors from 'cors';
@@ -19,6 +20,7 @@ const PORT = process.env.PORT || 8080;
 // Environment variables or defaults
 const SESSION_SECRET = process.env.SESSION_SECRET || 'quiz-app-secret-key-change-in-production';
 const COOKIE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+const EXTENDED_COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 days for "Remember Me"
 
 // Middleware
 app.use(cors({
@@ -36,7 +38,7 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
     httpOnly: true, // Prevent client-side JS from reading the cookie
-    maxAge: COOKIE_MAX_AGE
+    maxAge: COOKIE_MAX_AGE // Default is 24 hours
   }
 }));
 
@@ -132,7 +134,7 @@ const requireAuth = async (req, res, next) => {
 
 // Authentication routes
 app.post('/api/auth/login', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, rememberMe } = req.body;
   
   if (!username || !password) {
     return res.status(400).json({ success: false, message: 'Username and password are required' });
@@ -162,6 +164,12 @@ app.post('/api/auth/login', async (req, res) => {
     
     // Set user ID in session
     req.session.userId = userData.id;
+    
+    // If "Remember Me" is checked, extend the session/cookie lifetime
+    if (rememberMe) {
+      req.session.cookie.maxAge = EXTENDED_COOKIE_MAX_AGE; // 30 days
+      console.log(`Extended session lifetime to 30 days for user ${username}`);
+    }
     
     // Create a clean user object without the password
     const cleanUserData = {
