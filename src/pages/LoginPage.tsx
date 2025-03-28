@@ -5,8 +5,6 @@ import { useLoginForm } from '@/hooks/useLoginForm';
 import Navigation from '@/components/Navigation';
 import LoginCard from '@/components/login/LoginCard';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from 'lucide-react';
 
 const LoginPage = () => {
   const {
@@ -52,13 +50,6 @@ const LoginPage = () => {
       <Navigation />
       <div className="container flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-4 sm:px-6">
         <div className="flex flex-col w-full max-w-md space-y-4">
-          <Alert variant="info" className="mb-4">
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              Default admin credentials: username: <strong>admin</strong>, password: <strong>admin123</strong>
-            </AlertDescription>
-          </Alert>
-          
           <LoginCard
             lastLogin={lastLogin}
             register={register}
