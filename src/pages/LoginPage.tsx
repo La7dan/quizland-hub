@@ -46,10 +46,15 @@ const LoginPage = () => {
   }
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/5">
       <Navigation />
-      <div className="container flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-4 sm:px-6">
-        <div className="flex flex-col w-full max-w-md space-y-4">
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold tracking-tight">Welcome Back</h1>
+            <p className="text-muted-foreground mt-1">Sign in to your account to continue</p>
+          </div>
+          
           <LoginCard
             lastLogin={lastLogin}
             register={register}
@@ -61,9 +66,13 @@ const LoginPage = () => {
             setRememberMe={setRememberMe}
             onSubmit={handleSubmit(onSubmit)}
           />
+          
+          <div className="mt-6 text-center text-sm text-muted-foreground">
+            <p>Default admin account: username "admin" password "admin123"</p>
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

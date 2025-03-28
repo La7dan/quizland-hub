@@ -1,6 +1,7 @@
 
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 
 interface ImportResultsProps {
   errors: string[];
@@ -14,7 +15,7 @@ export const ImportResults = ({ errors, success, result }: ImportResultsProps) =
   }
 
   return (
-    <>
+    <div className="space-y-3">
       {errors.length > 0 && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -32,13 +33,25 @@ export const ImportResults = ({ errors, success, result }: ImportResultsProps) =
       {success && (
         <Alert variant={result === 'not_ready' ? "destructive" : "default"}>
           <CheckCircle className="h-4 w-4" />
-          <AlertDescription>
-            {result === 'not_ready' 
-              ? "Member marked as Not Ready successfully!" 
-              : "Member marked as Passed successfully!"}
+          <AlertDescription className="flex items-center gap-2">
+            <span>
+              {result === 'not_ready' 
+                ? "Member marked as Not Ready successfully!" 
+                : "Member marked as Passed successfully!"}
+            </span>
+            {result && (
+              <Badge 
+                variant={result === 'not_ready' ? "outline" : "outline"}
+                className={result === 'not_ready' 
+                  ? "bg-red-100 text-red-800 border-red-200" 
+                  : "bg-green-100 text-green-800 border-green-200"}
+              >
+                {result === 'not_ready' ? "Not Ready" : "Passed"}
+              </Badge>
+            )}
           </AlertDescription>
         </Alert>
       )}
-    </>
+    </div>
   );
 };

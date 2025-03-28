@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { 
@@ -30,12 +30,19 @@ export default function Navigation() {
   
   const handleLogout = () => {
     logout();
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+      duration: 3000,
+    });
     navigate('/');
     setIsOpen(false);
   };
 
+  const isCoach = user?.role === 'coach';
+
   return (
-    <div className="border-b bg-background">
+    <div className="border-b bg-background shadow-sm">
       <div className="container flex h-16 items-center px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2">
           <JumpingHorse className="h-6 w-6 text-primary" />
@@ -74,6 +81,16 @@ export default function Navigation() {
                       >
                         <Shield className="mr-1 h-4 w-4" />
                         Admin Panel
+                      </Link>
+                    )}
+                    {isCoach && (
+                      <Link 
+                        to="/coach" 
+                        className="text-sm font-medium transition-colors hover:text-primary px-2 py-1.5 flex items-center"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <User className="mr-1 h-4 w-4" />
+                        Coach Dashboard
                       </Link>
                     )}
                     <div className="flex items-center px-2 py-1.5">
@@ -128,6 +145,15 @@ export default function Navigation() {
                   >
                     <Shield className="mr-1 h-4 w-4" />
                     Admin Panel
+                  </Link>
+                )}
+                {isCoach && (
+                  <Link 
+                    to="/coach" 
+                    className="text-sm font-medium transition-colors hover:text-primary ml-4 flex items-center"
+                  >
+                    <User className="mr-1 h-4 w-4" />
+                    Coach Dashboard
                   </Link>
                 )}
                 <DropdownMenu>
