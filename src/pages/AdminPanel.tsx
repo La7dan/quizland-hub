@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
@@ -14,7 +13,7 @@ import MemberManagement from '@/components/MemberManagement';
 import MembersTable from '@/components/MembersTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DatabaseSetupButton from '@/components/DatabaseSetupButton';
-import EvaluationManagement from '@/components/EvaluationManagement';
+import EvaluationManagement from '@/components/evaluations/EvaluationManagement';
 
 export default function AdminPanel() {
   const { user } = useAuth();
