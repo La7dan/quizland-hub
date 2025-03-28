@@ -4,9 +4,15 @@ import { Badge } from '@/components/ui/badge';
 
 interface StatusBadgeProps {
   status: string;
+  hasResult?: boolean;
 }
 
-const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
+const StatusBadge: React.FC<StatusBadgeProps> = ({ status, hasResult = false }) => {
+  // If there's a result (passed/not ready), show as completed with black text
+  if (hasResult) {
+    return <Badge className="bg-gray-100 text-black hover:bg-gray-200 border border-gray-300">Completed</Badge>;
+  }
+
   switch (status) {
     case 'approved':
       return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Approved</Badge>;

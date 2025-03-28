@@ -4,10 +4,9 @@ import { TableCell, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trash } from 'lucide-react';
+import { Trash, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { EvaluationDisplayItem } from './types';
-import EvaluationItem from './EvaluationItem';
 
 interface EvaluationTableRowProps {
   evaluation: EvaluationDisplayItem;
@@ -17,6 +16,7 @@ interface EvaluationTableRowProps {
   hasLevels: boolean;
   hasCoaches: boolean;
   onDelete?: () => void;
+  onEdit?: () => void;
 }
 
 const EvaluationTableRow: React.FC<EvaluationTableRowProps> = ({
@@ -26,13 +26,15 @@ const EvaluationTableRow: React.FC<EvaluationTableRowProps> = ({
   onSelectOne,
   hasLevels,
   hasCoaches,
-  onDelete
+  onDelete,
+  onEdit
 }) => {
   // Format the approval status for display
   const getApprovalStatus = () => {
-    if (evaluation.evaluation_pdf) {
+    if (evaluation.evaluation_result) {
+      // For passed/not ready evaluations - show Completed in black
       return (
-        <Badge variant="success">
+        <Badge variant="outline" className="text-black border-gray-300 bg-gray-100">
           Completed
         </Badge>
       );
@@ -97,19 +99,44 @@ const EvaluationTableRow: React.FC<EvaluationTableRowProps> = ({
         <TableCell className="min-w-[150px]">{evaluation.coach_name || 'Not assigned'}</TableCell>
       )}
       <TableCell className="text-right min-w-[150px]">
-        <div className="flex flex-wrap justify-end items-center gap-2">
-          <EvaluationItem evaluation={evaluation} />
-          {isAdmin && onDelete && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onDelete}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        {isAdmin ? (
+          <div className="flex flex-wrap justify-end items-center gap-2">
+            {onEdit && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onEdit}
+                className="h-8 gap-1"
+              >
+                <Edit className="h-3 w-3" />
+                <span>Edit</span>
+              </Button>
+            )}
+            {onDelete && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onDelete}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-wrap justify-end items-center gap-2">
+            {evaluation.evaluation_pdf && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => window.open(evaluation.evaluation_pdf, '_blank')}
+                className="h-8 gap-1"
+              >
+                <span>View PDF</span>
+              </Button>
+            )}
+          </div>
+        )}
       </TableCell>
     </TableRow>
   );

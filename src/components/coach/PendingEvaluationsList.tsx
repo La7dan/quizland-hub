@@ -66,7 +66,10 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({
               {showAll && (
                 <>
                   <TableCell>
-                    <StatusBadge status={evaluation.status} />
+                    <StatusBadge 
+                      status={evaluation.status} 
+                      hasResult={!!evaluation.evaluation_result} 
+                    />
                   </TableCell>
                   <TableCell>
                     {renderResultBadge(evaluation.evaluation_result)}
