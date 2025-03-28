@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { executeSql } from '@/services/dbService';
@@ -22,7 +21,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Custom API URL for auth endpoints
-const AUTH_API_URL = 'http://209.74.89.41:8080/api/auth';
+const AUTH_API_URL = 'https://209.74.89.41:8080/api/auth';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
