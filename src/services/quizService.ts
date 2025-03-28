@@ -1,3 +1,4 @@
+
 import { executeSql } from './dbService';
 
 // Function to get all quizzes
@@ -369,6 +370,44 @@ export const deleteQuizAttempt = async (id: number) => {
     }
   } catch (error) {
     console.error('Error in deleteQuizAttempt:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error occurred'
+    };
+  }
+};
+
+// Function to delete multiple quiz attempts
+export const bulkDeleteQuizAttempts = async (ids: number[]) => {
+  try {
+    if (!ids.length) {
+      return {
+        success: false,
+        message: 'No attempts selected for deletion'
+      };
+    }
+
+    // Convert array to comma-separated string for SQL IN clause
+    const idList = ids.join(',');
+    
+    const result = await executeSql(`
+      DELETE FROM quiz_attempts
+      WHERE id IN (${idList});
+    `);
+
+    if (result.success) {
+      return {
+        success: true,
+        count: ids.length
+      };
+    } else {
+      return {
+        success: false,
+        message: result.message || 'Failed to delete quiz attempts'
+      };
+    }
+  } catch (error) {
+    console.error('Error in bulkDeleteQuizAttempts:', error);
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Unknown error occurred'

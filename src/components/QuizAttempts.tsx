@@ -1,7 +1,7 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { getQuizAttempts } from '@/services/quizService';
+import { getQuizAttempts, bulkDeleteQuizAttempts } from '@/services/quizService';
 import { 
   Table, 
   TableBody, 
@@ -21,13 +21,26 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from 'date-fns';
 import { 
   Download, 
   Search, 
   ArrowUp, 
   ArrowDown, 
-  FileText 
+  FileText,
+  Trash2,
+  Check
 } from 'lucide-react';
 
 interface QuizAttemptsProps {
@@ -43,6 +56,9 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
     key: 'attempt_date',
     direction: 'descending'
   });
+  const [selectedAttempts, setSelectedAttempts] = useState<number[]>([]);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -58,6 +74,8 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
     );
     
     setFilteredAttempts(filtered);
+    // Clear selections when filter changes
+    setSelectedAttempts([]);
   }, [searchTerm, attempts]);
 
   const loadData = async () => {
@@ -84,6 +102,7 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
       });
     } finally {
       setLoading(false);
+      setSelectedAttempts([]);
     }
   };
 
@@ -186,6 +205,79 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
     exportToCSV([attempt]);
   };
 
+  // Handle checkbox selection
+  const toggleSelection = (id: number) => {
+    setSelectedAttempts(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(item => item !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  // Handle "select all" checkbox
+  const toggleSelectAll = () => {
+    if (selectedAttempts.length === filteredAttempts.length) {
+      setSelectedAttempts([]);
+    } else {
+      setSelectedAttempts(filteredAttempts.map(attempt => attempt.id));
+    }
+  };
+
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedAttempts.length === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select at least one attempt to delete",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsConfirmDialogOpen(true);
+  };
+
+  // Confirm and execute bulk delete
+  const confirmBulkDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await bulkDeleteQuizAttempts(selectedAttempts);
+      
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: `${response.count} attempts deleted successfully`,
+        });
+        
+        // Refresh data
+        loadData();
+        
+        // Call onRefresh if provided
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to delete attempts",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting attempts:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setIsConfirmDialogOpen(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -222,6 +314,17 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
               <FileText className="h-4 w-4 mr-1" />
               Export PDF
             </Button>
+
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              onClick={handleBulkDelete}
+              disabled={selectedAttempts.length === 0}
+              className="whitespace-nowrap"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete Selected ({selectedAttempts.length})
+            </Button>
           </div>
         </div>
       </div>
@@ -242,6 +345,13 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
             <TableCaption>List of quiz attempts{searchTerm ? " (filtered)" : ""}</TableCaption>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox 
+                    checked={selectedAttempts.length === filteredAttempts.length && filteredAttempts.length > 0}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Select all attempts"
+                  />
+                </TableHead>
                 <TableHead className="cursor-pointer" onClick={() => handleSort('attempt_date')}>
                   Date {getSortIcon('attempt_date')}
                 </TableHead>
@@ -269,6 +379,13 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
             <TableBody>
               {filteredAttempts.map((attempt) => (
                 <TableRow key={attempt.id}>
+                  <TableCell>
+                    <Checkbox 
+                      checked={selectedAttempts.includes(attempt.id)}
+                      onCheckedChange={() => toggleSelection(attempt.id)}
+                      aria-label={`Select attempt by ${attempt.visitor_name}`}
+                    />
+                  </TableCell>
                   <TableCell>
                     {format(new Date(attempt.attempt_date), 'MMM d, yyyy h:mm a')}
                   </TableCell>
@@ -304,6 +421,39 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
           </Table>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedAttempts.length} selected attempts?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmBulkDelete} 
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
