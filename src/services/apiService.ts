@@ -40,7 +40,7 @@ export const callApi = async <T>(
 };
 
 // Check database connection
-export const checkConnection = async (): Promise<{ success: boolean; message: string }> => {
+export const checkConnection = async (): Promise<{ success: boolean; message: string; cached?: boolean }> => {
   try {
     console.log(`Connecting to: ${API_BASE_URL}/check-connection`);
     const response = await fetch(`${API_BASE_URL}/check-connection`);

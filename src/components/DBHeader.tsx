@@ -37,6 +37,7 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
       const result = await checkConnection();
       if (result.success) {
         setConnectionStatus('connected');
+        // Handle the case where cached property might not exist
         setStatusMessage(result.cached 
           ? 'Connected to database (cached status)' 
           : 'Connected to database');
