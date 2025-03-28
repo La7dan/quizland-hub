@@ -33,6 +33,7 @@ import BulkMarkAsPassedButton from './BulkMarkAsPassedButton';
 import EvaluationItem from './EvaluationItem';
 import { useAuth } from '@/contexts/AuthContext';
 import { exportToCSV } from './utils';
+import { EvaluationDisplayItem } from './types';
 
 interface EvaluationListTabProps {
   refreshTrigger?: number;
@@ -185,15 +186,15 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
   const handleExportCSV = () => {
     if (!filteredEvaluations || filteredEvaluations.length === 0) return;
     
-    const exportData = filteredEvaluations.map((eval: any) => ({
-      'Member Name': eval.member_name || 'N/A',
-      'Member ID': eval.member_code || 'N/A',
-      'Level': eval.member_level || 'N/A',
-      'Status': eval.status || 'N/A',
-      'Result': eval.evaluation_result || 'N/A',
-      'Coach': eval.coach_name || 'N/A',
-      'Nominated Date': eval.nominated_at ? format(new Date(eval.nominated_at), 'PP') : 'N/A',
-      'Evaluation Date': eval.evaluation_date ? format(new Date(eval.evaluation_date), 'PP') : 'N/A'
+    const exportData = filteredEvaluations.map((item: any) => ({
+      'Member Name': item.member_name || 'N/A',
+      'Member ID': item.member_code || 'N/A',
+      'Level': item.member_level || 'N/A',
+      'Status': item.status || 'N/A',
+      'Result': item.evaluation_result || 'N/A',
+      'Coach': item.coach_name || 'N/A',
+      'Nominated Date': item.nominated_at ? format(new Date(item.nominated_at), 'PP') : 'N/A',
+      'Evaluation Date': item.evaluation_date ? format(new Date(item.evaluation_date), 'PP') : 'N/A'
     }));
     
     exportToCSV(exportData, `evaluations_export_${new Date().toISOString().split('T')[0]}.csv`);

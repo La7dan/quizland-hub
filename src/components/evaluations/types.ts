@@ -2,11 +2,11 @@
 export interface EvaluationDisplayItem {
   id: number;
   member_id?: number;
-  status: 'pending' | 'approved' | 'disapproved'; // Updated to match the Evaluation type
+  status: 'pending' | 'approved' | 'disapproved'; // Match the Evaluation type
   nominated_at: string;
   evaluation_date?: string;
   evaluation_pdf?: string;
-  evaluation_result?: string;
+  evaluation_result?: 'passed' | 'not_ready'; // Fixed to match usage in EditEvaluationDialog
   member_name: string;
   member_code: string;
   coach_id?: number;

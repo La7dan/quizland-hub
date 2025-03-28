@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -27,14 +26,14 @@ const EditEvaluationDialog: React.FC<EditEvaluationDialogProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [evaluationResult, setEvaluationResult] = useState<'passed' | 'not_ready'>(
-    evaluation?.evaluation_result || 'passed'
+    (evaluation?.evaluation_result as 'passed' | 'not_ready') || 'passed'
   );
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   React.useEffect(() => {
     if (open && evaluation) {
-      setEvaluationResult(evaluation.evaluation_result || 'passed');
+      setEvaluationResult((evaluation.evaluation_result as 'passed' | 'not_ready') || 'passed');
       setPdfFile(null);
     }
   }, [open, evaluation]);
