@@ -4,6 +4,8 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cookieParser from 'cookie-parser';
+import session from 'express-session';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,9 +14,29 @@ const { Pool } = pg;
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Environment variables or defaults
+const SESSION_SECRET = process.env.SESSION_SECRET || 'quiz-app-secret-key-change-in-production';
+const COOKIE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true, // Allow the frontend origin
+  credentials: true // Allow cookies to be sent
+}));
+app.use(cookieParser());
 app.use(bodyParser.json());
+
+// Session configuration
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    httpOnly: true, // Prevent client-side JS from reading the cookie
+    maxAge: COOKIE_MAX_AGE
+  }
+}));
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
@@ -28,6 +50,104 @@ const pool = new Pool({
   password: 'Lal@13161',
   database: 'quiz',
   port: 5432,
+});
+
+// Authentication middleware
+const requireAuth = async (req, res, next) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ success: false, message: 'Authentication required' });
+  }
+  
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT id, username, email, role FROM users WHERE id = $1',
+      [req.session.userId]
+    );
+    client.release();
+    
+    if (result.rows.length === 0) {
+      req.session.destroy();
+      return res.status(401).json({ success: false, message: 'User not found' });
+    }
+    
+    req.user = result.rows[0];
+    next();
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// Authentication routes
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+  
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: 'Username and password are required' });
+  }
+  
+  try {
+    const client = await pool.connect();
+    
+    // Escape single quotes to prevent SQL injection
+    const safeUsername = username.replace(/'/g, "''");
+    
+    const query = `
+      SELECT id, username, email, role, password 
+      FROM users 
+      WHERE username = '${safeUsername}' 
+      LIMIT 1
+    `;
+    
+    const result = await client.query(query);
+    client.release();
+    
+    if (result.rows.length === 0) {
+      return res.status(401).json({ success: false, message: 'User not found' });
+    }
+    
+    const userData = result.rows[0];
+    
+    // Verify password
+    if (userData.password !== password) {
+      return res.status(401).json({ success: false, message: 'Invalid password' });
+    }
+    
+    // Set user ID in session
+    req.session.userId = userData.id;
+    
+    // Create a clean user object without the password
+    const cleanUserData = {
+      id: userData.id,
+      username: userData.username,
+      email: userData.email,
+      role: userData.role
+    };
+    
+    res.json({ success: true, user: cleanUserData });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ success: false, message: 'Server error during login' });
+  }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error('Logout error:', err);
+      return res.status(500).json({ success: false, message: 'Error during logout' });
+    }
+    res.clearCookie('connect.sid');
+    res.json({ success: true, message: 'Logged out successfully' });
+  });
+});
+
+app.get('/api/auth/check', requireAuth, (req, res) => {
+  res.json({ 
+    authenticated: true, 
+    user: req.user 
+  });
 });
 
 // Test database connection
@@ -45,7 +165,7 @@ app.get('/api/check-connection', async (req, res) => {
 });
 
 // Get all tables in the database
-app.get('/api/tables', async (req, res) => {
+app.get('/api/tables', requireAuth, async (req, res) => {
   try {
     const client = await pool.connect();
     const result = await client.query(`
@@ -63,7 +183,7 @@ app.get('/api/tables', async (req, res) => {
 });
 
 // Clear a specific table
-app.post('/api/tables/clear', async (req, res) => {
+app.post('/api/tables/clear', requireAuth, async (req, res) => {
   const { tableName } = req.body;
   
   if (!tableName) {
@@ -82,7 +202,7 @@ app.post('/api/tables/clear', async (req, res) => {
 });
 
 // Clear all tables
-app.post('/api/tables/clear-all', async (req, res) => {
+app.post('/api/tables/clear-all', requireAuth, async (req, res) => {
   try {
     const client = await pool.connect();
     const result = await client.query(`
@@ -110,7 +230,7 @@ app.post('/api/tables/clear-all', async (req, res) => {
 });
 
 // Delete a table
-app.post('/api/tables/delete', async (req, res) => {
+app.post('/api/tables/delete', requireAuth, async (req, res) => {
   const { tableName } = req.body;
   
   if (!tableName) {
@@ -129,7 +249,7 @@ app.post('/api/tables/delete', async (req, res) => {
 });
 
 // Create a table
-app.post('/api/tables/create', async (req, res) => {
+app.post('/api/tables/create', requireAuth, async (req, res) => {
   const { tableName, columns } = req.body;
   
   if (!tableName || !columns || !columns.length) {
@@ -163,7 +283,7 @@ app.post('/api/tables/create', async (req, res) => {
 });
 
 // Run custom SQL
-app.post('/api/execute-sql', async (req, res) => {
+app.post('/api/execute-sql', requireAuth, async (req, res) => {
   const { sql } = req.body;
   
   if (!sql) {
@@ -192,7 +312,7 @@ app.post('/api/execute-sql', async (req, res) => {
 });
 
 // Get all members
-app.get('/api/members', async (req, res) => {
+app.get('/api/members', requireAuth, async (req, res) => {
   try {
     const client = await pool.connect();
     const result = await client.query(`
@@ -213,7 +333,7 @@ app.get('/api/members', async (req, res) => {
 });
 
 // Create a member
-app.post('/api/members', async (req, res) => {
+app.post('/api/members', requireAuth, async (req, res) => {
   const { member_id, name, level_id, classes_count, coach_id } = req.body;
   
   if (!member_id || !name) {
@@ -245,7 +365,7 @@ app.post('/api/members', async (req, res) => {
 });
 
 // Update a member
-app.put('/api/members/:id', async (req, res) => {
+app.put('/api/members/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
   const { member_id, name, level_id, classes_count, coach_id } = req.body;
   
@@ -274,7 +394,7 @@ app.put('/api/members/:id', async (req, res) => {
 });
 
 // Delete a member
-app.delete('/api/members/:id', async (req, res) => {
+app.delete('/api/members/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -294,7 +414,7 @@ app.delete('/api/members/:id', async (req, res) => {
 });
 
 // Import members from CSV
-app.post('/api/members/import', async (req, res) => {
+app.post('/api/members/import', requireAuth, async (req, res) => {
   const { members } = req.body;
   
   if (!members || !Array.isArray(members) || members.length === 0) {

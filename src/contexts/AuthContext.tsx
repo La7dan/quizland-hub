@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { executeSql } from '@/services/dbService';
@@ -52,18 +53,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    // Check for saved user in localStorage on app load
-    const savedUser = localStorage.getItem('quiz_user');
-    if (savedUser) {
+    // Check for authentication cookie on app load
+    const checkAuth = async () => {
       try {
-        const userData = JSON.parse(savedUser);
-        setUser(userData);
+        const response = await fetch('/api/auth/check', {
+          credentials: 'include', // Important for cookies
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.authenticated && data.user) {
+            setUser(data.user);
+          }
+        }
       } catch (error) {
-        console.error('Failed to parse saved user data:', error);
-        localStorage.removeItem('quiz_user');
+        console.error('Error checking authentication:', error);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+    
+    checkAuth();
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
@@ -71,84 +84,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       console.log('Login attempt for user:', username);
       
-      // First check if user exists and get user data including password
-      // Escape single quotes to prevent SQL injection
-      const safeUsername = username.replace(/'/g, "''");
-      
-      const query = `
-        SELECT id, username, email, role, password 
-        FROM users 
-        WHERE username = '${safeUsername}' 
-        LIMIT 1
-      `;
-      
-      console.log('Executing login query');
-      const result = await executeSql(query);
-      console.log('Login query result received:', result);
-      
-      // Check if user exists and if the query was successful
-      if (!result.success) {
-        console.error('SQL execution failed:', result.message);
-        toast({
-          title: "Login Failed",
-          description: "Database error occurred: " + result.message,
-          variant: "destructive"
-        });
-        return false;
-      }
-      
-      if (!result.rows || result.rows.length === 0) {
-        console.log('No user found with username:', username);
-        toast({
-          title: "Login Failed",
-          description: "User not found",
-          variant: "destructive"
-        });
-        return false;
-      }
-      
-      const userData = result.rows[0];
-      console.log('User found, checking password');
-      
-      // Debug: Log password comparison (for development only, remove in production)
-      console.log('Input password:', password);
-      console.log('Stored password:', userData.password);
-      
-      // Verify the password
-      if (userData.password !== password) {
-        console.log('Password mismatch');
-        toast({
-          title: "Login Failed",
-          description: "Invalid password",
-          variant: "destructive"
-        });
-        return false;
-      }
-      
-      console.log('Password verified, login successful');
-      
-      // Create a clean user object without the password
-      const cleanUserData = {
-        id: userData.id,
-        username: userData.username,
-        email: userData.email,
-        role: userData.role
-      };
-      
-      setUser(cleanUserData);
-      localStorage.setItem('quiz_user', JSON.stringify(cleanUserData));
-      
-      // Show different message based on user role
-      let welcomeMsg = `Welcome back, ${cleanUserData.username}`;
-      if (cleanUserData.role === 'super_admin') {
-        welcomeMsg += ". You've been redirected to the admin panel.";
-      }
-      
-      toast({
-        title: "Login Successful",
-        description: welcomeMsg,
+      // Call the server's login API endpoint
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        credentials: 'include', // Important for cookies
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
       });
-      return true;
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        console.log('Login successful', result.user);
+        setUser(result.user);
+        
+        // Show different message based on user role
+        let welcomeMsg = `Welcome back, ${result.user.username}`;
+        if (result.user.role === 'super_admin') {
+          welcomeMsg += ". You've been redirected to the admin panel.";
+        }
+        
+        toast({
+          title: "Login Successful",
+          description: welcomeMsg,
+        });
+        return true;
+      } else {
+        console.log('Login failed:', result.message);
+        toast({
+          title: "Login Failed",
+          description: result.message || "Invalid credentials",
+          variant: "destructive"
+        });
+        return false;
+      }
     } catch (error) {
       console.error('Login error:', error);
       toast({
@@ -162,13 +133,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('quiz_user');
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out",
-    });
+  const logout = async () => {
+    try {
+      // Call logout API endpoint to clear the cookie
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      setUser(null);
+      
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out",
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if the API call fails, clear the user state
+      setUser(null);
+    }
   };
 
   const value = {
