@@ -112,9 +112,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setUser(cleanUserData);
       localStorage.setItem('quiz_user', JSON.stringify(cleanUserData));
+      
+      // Show different message based on user role
+      let welcomeMsg = `Welcome back, ${cleanUserData.username}`;
+      if (cleanUserData.role === 'super_admin') {
+        welcomeMsg += ". You've been redirected to the admin panel.";
+      }
+      
       toast({
         title: "Login Successful",
-        description: `Welcome back, ${cleanUserData.username}`,
+        description: welcomeMsg,
       });
       return true;
     } catch (error) {

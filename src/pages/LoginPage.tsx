@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Shield, LogIn, AlertCircle, Info } from 'lucide-react';
+import { Shield, LogIn, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Navigation from '@/components/Navigation';
 
@@ -19,8 +19,8 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get the redirect path from location state or default to home
-  const from = (location.state as any)?.from?.pathname || '/';
+  // Get the redirect path from location state or default to admin panel for superadmin
+  const from = (location.state as any)?.from?.pathname || (isSuperAdmin ? '/admin' : '/');
   
   // If already authenticated and trying to access admin panel
   if (isAuthenticated && from.includes('/admin') && !isSuperAdmin) {
@@ -29,6 +29,10 @@ const LoginPage = () => {
   
   // If already authenticated, redirect to the intended page
   if (isAuthenticated) {
+    // If super admin, redirect to admin panel
+    if (isSuperAdmin) {
+      return <Navigate to="/admin" replace />;
+    }
     return <Navigate to={from} replace />;
   }
 
@@ -49,7 +53,12 @@ const LoginPage = () => {
       console.log('Login result:', success ? 'success' : 'failed');
       
       if (success) {
-        navigate(from, { replace: true });
+        // If login is successful and user is super_admin, redirect to admin panel
+        if (isSuperAdmin) {
+          navigate('/admin', { replace: true });
+        } else {
+          navigate(from, { replace: true });
+        }
       } else {
         // Login will display its own toast, but we also set this for form validation
         setLoginError('Login failed. Please check your credentials.');
@@ -84,15 +93,6 @@ const LoginPage = () => {
                   <AlertDescription>{loginError}</AlertDescription>
                 </Alert>
               )}
-              
-              {/* Demo credentials info */}
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  Demo users: <strong>superadmin</strong>, <strong>admin</strong>, or <strong>coach</strong> 
-                  with password: <strong>password123</strong>
-                </AlertDescription>
-              </Alert>
               
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
