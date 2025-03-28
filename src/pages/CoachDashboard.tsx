@@ -7,6 +7,8 @@ import Navigation from '@/components/Navigation';
 import CoachDashboardHeader from '@/components/coach/CoachDashboardHeader';
 import EvaluationsCard from '@/components/coach/EvaluationsCard';
 import { fetchPendingEvaluations } from '@/services/dbService';
+// Import User type from AuthContext instead of userService
+import type { User as AuthUser } from '@/contexts/AuthContext';
 
 const CoachDashboard = () => {
   const { user, isAuthenticated, loading } = useAuth();
@@ -42,7 +44,7 @@ const CoachDashboard = () => {
       <Navigation />
       <div className="container py-8">
         <div className="flex flex-col gap-6">
-          <CoachDashboardHeader user={user} />
+          <CoachDashboardHeader user={user as AuthUser} />
           <EvaluationsCard 
             isLoading={isLoading}
             error={error as Error | null}

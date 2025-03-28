@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { User } from '@/services/userService';
+import type { User } from '@/contexts/AuthContext';
 
 interface CoachDashboardHeaderProps {
   user: User;
