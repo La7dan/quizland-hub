@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, CheckCircle } from 'lucide-react';
@@ -14,7 +13,7 @@ interface EvaluationActionsProps {
   showAll?: boolean;
 }
 
-const API_BASE_URL = 'http://209.74.89.41:8080';
+const API_BASE_URL = 'http://209.74.89.41';
 
 const EvaluationActions: React.FC<EvaluationActionsProps> = ({ 
   evaluationId, 

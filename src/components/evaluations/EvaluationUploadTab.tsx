@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EvaluationUploadFormData } from './types';
 import { getSelectedMemberCode } from './utils';
 
-const API_BASE_URL = 'http://209.74.89.41:8080';
+const API_BASE_URL = 'http://209.74.89.41';
 
 interface EvaluationUploadTabProps {
   onUploadSuccess: () => void;

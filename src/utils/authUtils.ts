@@ -2,7 +2,7 @@
 import { User } from '@/types/auth';
 
 // Custom API URL for auth endpoints - using HTTP as requested by the user
-export const AUTH_API_URL = 'http://209.74.89.41:8080/api/auth';
+export const AUTH_API_URL = 'http://209.74.89.41/api/auth';
 
 // Authentication utility functions
 export const checkAuthStatus = async (): Promise<{ authenticated: boolean; user: User | null }> => {

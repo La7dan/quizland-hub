@@ -1,5 +1,4 @@
-
-const API_BASE_URL = 'http://209.74.89.41:8080';
+const API_BASE_URL = 'http://209.74.89.41';
 
 export const getStatusIcon = (status: string) => {
   switch (status) {
