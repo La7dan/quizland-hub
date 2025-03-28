@@ -30,7 +30,7 @@ const queryClient = new QueryClient({
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="quiz-theme">
+      <ThemeProvider>
         <AuthProvider>
           <TabIcon />
           <Toaster />
