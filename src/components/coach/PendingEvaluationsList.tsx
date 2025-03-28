@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,6 +31,8 @@ import { approveEvaluation, disapproveEvaluation } from '@/services/dbService';
 interface PendingEvaluationsListProps {
   evaluations: Evaluation[];
 }
+
+const API_BASE_URL = 'http://209.74.89.41:8080';
 
 const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({ evaluations }) => {
   const { toast } = useToast();
@@ -104,6 +106,12 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({ evaluat
     });
   };
 
+  // Handle PDF download/view
+  const handleViewPdf = (pdfFileName: string) => {
+    if (!pdfFileName) return;
+    window.open(`${API_BASE_URL}/files/${pdfFileName}`, '_blank');
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -126,6 +134,18 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({ evaluat
             </TableCell>
             <TableCell className="text-right">
               <div className="flex justify-end gap-2">
+                {evaluation.evaluation_pdf && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1"
+                    onClick={() => handleViewPdf(evaluation.evaluation_pdf!)}
+                  >
+                    <FileText className="h-4 w-4 text-blue-500" />
+                    PDF
+                  </Button>
+                )}
+              
                 <Button
                   variant="outline"
                   size="sm"
