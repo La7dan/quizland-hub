@@ -9,7 +9,7 @@ import { Toggle } from '@/components/ui/toggle';
 import { useEffect } from 'react';
 import { cleanDummyData } from '@/services/dbService';
 import { useQuery } from '@tanstack/react-query';
-import { getQuizzes } from '@/services/quizService';
+import { getQuizzes } from '@/services/quiz';
 import { toast } from 'sonner';
 
 export default function Index() {
@@ -23,12 +23,14 @@ export default function Index() {
     queryFn: getQuizzes,
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 2, // Retry failed requests up to 2 times
-    onError: (err) => {
-      console.error('Failed to fetch quizzes:', err);
-      toast('Error loading quizzes', {
-        description: 'Unable to connect to the database. Please try again later.',
-        duration: 5000,
-      });
+    onSettled: (data, error) => {
+      if (error) {
+        console.error('Failed to fetch quizzes:', error);
+        toast('Error loading quizzes', {
+          description: 'Unable to connect to the database. Please try again later.',
+          duration: 5000,
+        });
+      }
     }
   });
   

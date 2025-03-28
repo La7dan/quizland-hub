@@ -5,7 +5,7 @@ export * from './userService';
 export * from './members/memberService';
 export * from './evaluations/evaluationService';
 export * from './cleanDatabaseService';
-export * from './quizService';
+export * from './quiz';
 
 // This file serves as a facade to maintain backward compatibility
 // while keeping the codebase modular and maintainable
