@@ -66,6 +66,10 @@ export const loginUser = async (
       body: JSON.stringify({ username, password, rememberMe })
     });
     
+    // Log complete response for debugging
+    console.log('Login response status:', response.status);
+    console.log('Login response headers:', [...response.headers.entries()]);
+    
     // Check the content type to avoid parsing HTML as JSON
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
@@ -83,6 +87,7 @@ export const loginUser = async (
       try {
         const errorData = await response.json();
         errorMessage = errorData.message || errorMessage;
+        console.log('Login error data:', errorData);
       } catch (e) {
         // If we can't parse JSON, use status text
         errorMessage = response.statusText || errorMessage;
@@ -95,7 +100,7 @@ export const loginUser = async (
         return { 
           success: false, 
           user: null, 
-          message: "Login failed. For the default admin account, try username: 'admin', password: 'admin123'"
+          message: "Login failed. For the default admin account, ensure the username is 'admin' and password is 'admin123'"
         };
       }
       

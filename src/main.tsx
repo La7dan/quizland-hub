@@ -43,13 +43,12 @@ const root = createRoot(rootElement);
 const showBackendReminder = () => {
   setTimeout(() => {
     if (ENV.DEBUG) {
-      // Using the correct API for sonner toast
-      Toaster.show({
-        title: "Backend Server Required",
+      // Using the correct toast API
+      const { toast } = require('sonner');
+      toast("Backend Server Required", {
         description: `This app requires a backend server at ${ENV.API_BASE_URL}. Run "node server.js" to start it.`,
         duration: 10000,
         icon: "⚠️",
-        style: { background: "#FEF3C7", color: "#92400E", border: "1px solid #F59E0B" }
       });
     }
   }, 2000);
