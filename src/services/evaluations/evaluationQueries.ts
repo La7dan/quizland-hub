@@ -1,11 +1,10 @@
-
 import { executeSql, sqlEscape } from '../apiService';
 import { Evaluation } from './types';
 
 export const fetchPendingEvaluationsQuery = async (coachId: number) => {
   console.log('Fetching pending evaluations for coach:', coachId);
   return await executeSql(`
-    SELECT e.id, e.member_id, e.status, e.nominated_at, e.coach_id, 
+    SELECT e.id, e.member_id, e.status, e.nominated_at, e.coach_id, e.evaluation_result,
            m.name as member_name, m.member_id as member_code, m.classes_count
     FROM evaluations e
     JOIN members m ON e.member_id = m.id
@@ -34,7 +33,6 @@ export const disapproveEvaluationQuery = async (evaluationId: number, reason: st
   `);
 };
 
-// Modified to check for existing evaluations with the same date only
 export const createBulkEvaluationsQuery = async (memberIds: number[], evaluationDate: string, coachId: number) => {
   const memberIdsStr = memberIds.join(',');
   return await executeSql(`
@@ -58,12 +56,9 @@ export const createBulkEvaluationsQuery = async (memberIds: number[], evaluation
   `);
 };
 
-// Modified to check for existing evaluations with the same date
 export const createSampleEvaluationQuery = async (memberId: number, coachId: number) => {
-  // Get the current date in YYYY-MM-DD format for comparison
   const currentDate = new Date().toISOString().split('T')[0];
   
-  // First check if there's already an evaluation with the same date
   const checkResult = await executeSql(`
     SELECT COUNT(*) as count 
     FROM evaluations 
@@ -84,7 +79,6 @@ export const createSampleEvaluationQuery = async (memberId: number, coachId: num
   `);
 };
 
-// Query to get evaluation by ID with member details
 export const getEvaluationByIdQuery = async (evaluationId: number) => {
   return await executeSql(`
     SELECT e.*, m.name as member_name, m.member_id as member_code
@@ -94,9 +88,7 @@ export const getEvaluationByIdQuery = async (evaluationId: number) => {
   `);
 };
 
-// Update database schema if evaluation_result column doesn't exist
 export const ensureEvaluationResultColumnQuery = async () => {
-  // Check if column exists first
   const columnCheck = await executeSql(`
     SELECT column_name
     FROM information_schema.columns
@@ -105,7 +97,6 @@ export const ensureEvaluationResultColumnQuery = async () => {
   `);
   
   if (columnCheck.rows.length === 0) {
-    // Column doesn't exist, add it
     return await executeSql(`
       ALTER TABLE evaluations
       ADD COLUMN evaluation_result VARCHAR(20) CHECK (evaluation_result IN ('passed', 'not_ready')),
@@ -114,4 +105,13 @@ export const ensureEvaluationResultColumnQuery = async () => {
   }
   
   return { success: true, message: 'Column already exists' };
+};
+
+export const updateEvaluationResultQuery = async (evaluationId: number, result: 'passed' | 'not_ready') => {
+  return await executeSql(`
+    UPDATE evaluations
+    SET evaluation_result = ${sqlEscape.string(result)}, updated_at = NOW()
+    WHERE id = ${evaluationId}
+    RETURNING id;
+  `);
 };

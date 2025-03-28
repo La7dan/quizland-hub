@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { Evaluation } from '@/services/evaluations/types';
 import StatusBadge from './StatusBadge';
 import EvaluationActions from './EvaluationActions';
@@ -22,6 +23,15 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({
   evaluations, 
   showAll = false 
 }) => {
+  // Helper function to render evaluation result badge
+  const renderResultBadge = (result?: string) => {
+    if (!result) return <span className="text-muted-foreground">Not set</span>;
+    
+    return result === 'passed' ? 
+      <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Passed</Badge> : 
+      <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">Not Ready</Badge>;
+  };
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -31,7 +41,12 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({
             <TableHead className="min-w-[180px]">Name</TableHead>
             <TableHead className="min-w-[150px]">Nominated On</TableHead>
             <TableHead className="min-w-[120px]">Classes Count</TableHead>
-            {showAll && <TableHead className="min-w-[100px]">Status</TableHead>}
+            {showAll && (
+              <>
+                <TableHead className="min-w-[100px]">Status</TableHead>
+                <TableHead className="min-w-[100px]">Result</TableHead>
+              </>
+            )}
             <TableHead className="text-right min-w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -49,9 +64,14 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({
               </TableCell>
               <TableCell>{evaluation.classes_count || 0}</TableCell>
               {showAll && (
-                <TableCell>
-                  <StatusBadge status={evaluation.status} />
-                </TableCell>
+                <>
+                  <TableCell>
+                    <StatusBadge status={evaluation.status} />
+                  </TableCell>
+                  <TableCell>
+                    {renderResultBadge(evaluation.evaluation_result)}
+                  </TableCell>
+                </>
               )}
               <TableCell className="text-right">
                 <EvaluationActions 
