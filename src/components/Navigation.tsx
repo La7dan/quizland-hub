@@ -153,10 +153,6 @@ export default function Navigation() {
                       )}
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>Profile</DropdownMenuItem>
-                    <DropdownMenuItem>Dashboard</DropdownMenuItem>
-                    <DropdownMenuItem>Settings</DropdownMenuItem>
-                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="text-red-600 flex items-center">
                       <LogOut className="mr-2 h-4 w-4" />
                       Logout

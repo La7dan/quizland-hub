@@ -175,39 +175,37 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
         </div>
       )}
       
-      <div className="rounded-md border overflow-hidden">
+      <div className="rounded-md border">
         <div className="overflow-x-auto">
-          <div style={{ minWidth: hasCoaches && hasLevels ? '1000px' : hasCoaches || hasLevels ? '900px' : '800px' }}>
-            <Table>
-              <EvaluationTableHeader
-                isAdmin={isAdmin}
-                sortField={sortField}
-                sortOrder={sortOrder}
-                toggleSort={toggleSort}
-                onSelectAll={handleSelectAll}
-                hasLevels={hasLevels}
-                hasCoaches={hasCoaches}
-                allSelected={allSelected}
-              />
-              
-              <TableBody>
-                {filteredEvaluations.map(evaluation => (
-                  <EvaluationTableRow
-                    key={evaluation.id}
-                    evaluation={evaluation}
-                    isAdmin={isAdmin}
-                    isSelected={isSelected(evaluation.id)}
-                    onSelectOne={handleSelectOne}
-                    hasLevels={hasLevels}
-                    hasCoaches={hasCoaches}
-                    onDelete={isAdmin ? () => {
-                      deleteMutation.mutate([evaluation.id]);
-                    } : undefined}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <Table>
+            <EvaluationTableHeader
+              isAdmin={isAdmin}
+              sortField={sortField}
+              sortOrder={sortOrder}
+              toggleSort={toggleSort}
+              onSelectAll={handleSelectAll}
+              hasLevels={hasLevels}
+              hasCoaches={hasCoaches}
+              allSelected={allSelected}
+            />
+            
+            <TableBody>
+              {filteredEvaluations.map(evaluation => (
+                <EvaluationTableRow
+                  key={evaluation.id}
+                  evaluation={evaluation}
+                  isAdmin={isAdmin}
+                  isSelected={isSelected(evaluation.id)}
+                  onSelectOne={handleSelectOne}
+                  hasLevels={hasLevels}
+                  hasCoaches={hasCoaches}
+                  onDelete={isAdmin ? () => {
+                    deleteMutation.mutate([evaluation.id]);
+                  } : undefined}
+                />
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </div>
 

@@ -30,7 +30,7 @@ export const ImportResults = ({ errors, success, result }: ImportResultsProps) =
       )}
       
       {success && (
-        <Alert variant={result === 'not_ready' ? "warning" : "success"}>
+        <Alert variant={result === 'not_ready' ? "destructive" : "default"}>
           <CheckCircle className="h-4 w-4" />
           <AlertDescription>
             {result === 'not_ready' 
