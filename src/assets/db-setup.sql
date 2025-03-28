@@ -83,21 +83,6 @@ FROM quizzes q
 LEFT JOIN questions qn ON q.id = qn.quiz_id
 GROUP BY q.id, q.title;
 
--- Insert sample super admin user
-INSERT INTO users (username, password, email, role)
-VALUES ('superadmin', 'password123', 'superadmin@example.com', 'super_admin')
-ON CONFLICT (username) DO NOTHING;
-
--- Insert sample admin user
-INSERT INTO users (username, password, email, role)
-VALUES ('admin', 'password123', 'admin@example.com', 'admin')
-ON CONFLICT (username) DO NOTHING;
-
--- Insert sample coach user
-INSERT INTO users (username, password, email, role)
-VALUES ('coach', 'password123', 'coach@example.com', 'coach')
-ON CONFLICT (username) DO NOTHING;
-
 -- Insert quiz levels
 INSERT INTO quiz_levels (code, name, description)
 VALUES 
