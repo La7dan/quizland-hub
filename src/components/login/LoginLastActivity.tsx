@@ -1,13 +1,17 @@
 
 import React from 'react';
 import { Clock, MapPin } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LoginLastActivityProps {
   lastLogin: { time: string, location: string } | null;
 }
 
 const LoginLastActivity: React.FC<LoginLastActivityProps> = ({ lastLogin }) => {
-  if (!lastLogin) return null;
+  const { user, isSuperAdmin } = useAuth();
+  
+  // Only show last login activity to super admins
+  if (!lastLogin || !isSuperAdmin) return null;
   
   return (
     <div className="text-sm text-muted-foreground mb-4 border border-border rounded-md p-3 bg-secondary/20">
