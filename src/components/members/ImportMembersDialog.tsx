@@ -53,27 +53,7 @@ export const ImportMembersDialog = ({
 
   const coaches = usersData?.users?.filter(user => user.role === 'coach' || user.role === 'admin') || [];
 
-  // Set up progress updates during import
-  useEffect(() => {
-    if (importMembersMutation.isPending) {
-      let progress = 10;
-      const interval = setInterval(() => {
-        // Simulate progress, capping at 95% until completely done
-        progress = Math.min(progress + 5, 95);
-        setProcessingProgress(progress);
-      }, 500);
-      
-      return () => clearInterval(interval);
-    } else if (importMembersMutation.isSuccess) {
-      setProcessingProgress(100);
-      // Reset after success
-      const timer = setTimeout(() => setProcessingProgress(0), 2000);
-      return () => clearTimeout(timer);
-    } else {
-      setProcessingProgress(0);
-    }
-  }, [importMembersMutation.isPending, importMembersMutation.isSuccess]);
-
+  // Define importMembersMutation BEFORE using it in the useEffect below
   const importMembersMutation = useMutation({
     mutationFn: importMembers,
     onSuccess: (data) => {
@@ -110,6 +90,27 @@ export const ImportMembersDialog = ({
       });
     }
   });
+  
+  // Set up progress updates during import
+  useEffect(() => {
+    if (importMembersMutation.isPending) {
+      let progress = 10;
+      const interval = setInterval(() => {
+        // Simulate progress, capping at 95% until completely done
+        progress = Math.min(progress + 5, 95);
+        setProcessingProgress(progress);
+      }, 500);
+      
+      return () => clearInterval(interval);
+    } else if (importMembersMutation.isSuccess) {
+      setProcessingProgress(100);
+      // Reset after success
+      const timer = setTimeout(() => setProcessingProgress(0), 2000);
+      return () => clearTimeout(timer);
+    } else {
+      setProcessingProgress(0);
+    }
+  }, [importMembersMutation.isPending, importMembersMutation.isSuccess]);
 
   const closeImportDialog = () => {
     setIsOpen(false);
