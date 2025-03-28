@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, CheckCircle, Download, FileText, Trash, Upload, User, Users } from 'lucide-react';
+import { AlertCircle, CheckCircle, Download, FileText, Trash, Upload, User, Users, UserMinus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getMembers, createMember, updateMember, deleteMember, importMembers, Member } from '@/services/memberService';
 import { getQuizLevels } from '@/services/quizService';
@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function MemberManagement({ onRefresh }: { onRefresh?: () => void }) {
   const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
@@ -25,6 +26,7 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
   const [csvData, setCsvData] = useState('');
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [importSuccess, setImportSuccess] = useState(false);
+  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -117,6 +119,33 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
       toast({
         title: 'Error',
         description: `Failed to delete member: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Bulk delete members mutation
+  const bulkDeleteMembersMutation = useMutation({
+    mutationFn: async (ids: number[]) => {
+      // Process each deletion sequentially
+      for (const id of ids) {
+        await deleteMember(id);
+      }
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      toast({
+        title: 'Success',
+        description: `${selectedMembers.length} members deleted successfully`,
+      });
+      setSelectedMembers([]);
+      if (onRefresh) onRefresh();
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: `Failed to delete members: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive',
       });
     }
@@ -218,6 +247,41 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
   const handleDeleteMember = (id: number) => {
     if (window.confirm('Are you sure you want to delete this member?')) {
       deleteMemberMutation.mutate(id);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedMembers.length === 0) {
+      toast({
+        title: 'Error',
+        description: 'No members selected',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (window.confirm(`Are you sure you want to delete ${selectedMembers.length} members?`)) {
+      bulkDeleteMembersMutation.mutate(selectedMembers);
+    }
+  };
+
+  const toggleMemberSelection = (id: number) => {
+    setSelectedMembers(prevSelected => {
+      if (prevSelected.includes(id)) {
+        return prevSelected.filter(memberId => memberId !== id);
+      } else {
+        return [...prevSelected, id];
+      }
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (membersData?.members) {
+      if (selectedMembers.length === membersData.members.length) {
+        setSelectedMembers([]);
+      } else {
+        setSelectedMembers(membersData.members.map(member => member.id!));
+      }
     }
   };
 
@@ -332,6 +396,12 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
             <Upload className="h-4 w-4 mr-2" />
             Import CSV
           </Button>
+          {selectedMembers.length > 0 && (
+            <Button onClick={handleBulkDelete} variant="destructive" size="sm">
+              <UserMinus className="h-4 w-4 mr-2" />
+              Delete Selected ({selectedMembers.length})
+            </Button>
+          )}
         </div>
       </div>
 
@@ -342,6 +412,13 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox 
+                    checked={membersData?.members && membersData.members.length > 0 && selectedMembers.length === membersData.members.length}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Select all members"
+                  />
+                </TableHead>
                 <TableHead>Member ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Level</TableHead>
@@ -353,7 +430,14 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
             <TableBody>
               {membersData?.members && membersData.members.length > 0 ? (
                 membersData.members.map((member) => (
-                  <TableRow key={member.id}>
+                  <TableRow key={member.id} className={selectedMembers.includes(member.id!) ? "bg-muted/50" : ""}>
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedMembers.includes(member.id!)}
+                        onCheckedChange={() => toggleMemberSelection(member.id!)}
+                        aria-label={`Select ${member.name}`}
+                      />
+                    </TableCell>
                     <TableCell>{member.member_id}</TableCell>
                     <TableCell>{member.name}</TableCell>
                     <TableCell>{member.level_code ? `${member.level_code} - ${member.level_name}` : 'Not assigned'}</TableCell>
@@ -382,7 +466,7 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-4">
+                  <TableCell colSpan={7} className="text-center py-4">
                     No members found
                   </TableCell>
                 </TableRow>
@@ -436,7 +520,7 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
                   <FormItem>
                     <FormLabel>Level</FormLabel>
                     <Select
-                      value={field.value}
+                      value={field.value || undefined}
                       onValueChange={field.onChange}
                     >
                       <FormControl>
@@ -445,7 +529,8 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        {/* Note: Using null value isn't allowed, so we use a non-empty string */}
+                        <SelectItem value="none">None</SelectItem>
                         {levelsData?.levels?.map((level) => (
                           <SelectItem key={level.id} value={level.id.toString()}>
                             {level.code} - {level.name}
@@ -484,7 +569,7 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
                   <FormItem>
                     <FormLabel>Coach</FormLabel>
                     <Select
-                      value={field.value}
+                      value={field.value || undefined}
                       onValueChange={field.onChange}
                     >
                       <FormControl>
@@ -493,7 +578,8 @@ export default function MemberManagement({ onRefresh }: { onRefresh?: () => void
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        {/* Note: Using null value isn't allowed, so we use a non-empty string */}
+                        <SelectItem value="none">None</SelectItem>
                         {coaches.map((coach) => (
                           <SelectItem key={coach.id} value={coach.id!.toString()}>
                             {coach.username} ({coach.role})

@@ -84,10 +84,10 @@ const QuizFormDialog = ({
   const onSubmit = async (data: any) => {
     setSaving(true);
     try {
-      // Convert level_id to number
+      // Convert level_id to number if it's not "none"
       const formattedData = {
         ...data,
-        level_id: parseInt(data.level_id),
+        level_id: data.level_id && data.level_id !== "none" ? parseInt(data.level_id) : null,
       };
 
       let response;
@@ -178,8 +178,7 @@ const QuizFormDialog = ({
                   <FormLabel>Quiz Level</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                    value={field.value}
+                    value={field.value || undefined}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -187,6 +186,7 @@ const QuizFormDialog = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
                       {levels.map((level) => (
                         <SelectItem key={level.id} value={String(level.id)}>
                           {level.code} - {level.name}
