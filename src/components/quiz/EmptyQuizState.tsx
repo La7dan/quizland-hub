@@ -14,8 +14,8 @@ export function EmptyQuizState() {
       <h2 className="text-xl font-semibold mb-2">No Quizzes Available</h2>
       <p className="text-muted-foreground mb-6">
         {isAdmin
-          ? "Start by creating your first quiz." 
-          : "Check back later for new quizzes."}
+          ? "There are no quizzes yet. Start by creating your first quiz." 
+          : "There are no quizzes available yet. Please check back later."}
       </p>
       
       {isAdmin && (

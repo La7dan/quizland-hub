@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { getQuizzes, getQuizLevels } from '@/services/quiz';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useQuizzes({ 
   sortBy = "default", 
@@ -23,6 +24,7 @@ export function useQuizzes({
   const [error, setError] = useState<string | null>(propError ? propError.message || "An error occurred" : null);
   const [levelCodes, setLevelCodes] = useState<{[key: number]: string}>({});
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
 
   const fetchLevelCodes = async () => {
     try {
@@ -103,7 +105,6 @@ export function useQuizzes({
 
   // Check if current user is admin
   const isUserAdmin = () => {
-    const { user, isAuthenticated } = require('@/contexts/AuthContext').useAuth();
     return isAuthenticated && user && (user.role === 'super_admin' || user.role === 'admin');
   };
 
