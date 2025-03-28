@@ -5,9 +5,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 interface ImportResultsProps {
   errors: string[];
   success: boolean;
+  result?: 'passed' | 'not_ready';
 }
 
-export const ImportResults = ({ errors, success }: ImportResultsProps) => {
+export const ImportResults = ({ errors, success, result }: ImportResultsProps) => {
   if (errors.length === 0 && !success) {
     return null;
   }
@@ -29,10 +30,12 @@ export const ImportResults = ({ errors, success }: ImportResultsProps) => {
       )}
       
       {success && (
-        <Alert>
+        <Alert variant={result === 'not_ready' ? "warning" : "success"}>
           <CheckCircle className="h-4 w-4" />
           <AlertDescription>
-            Members imported successfully!
+            {result === 'not_ready' 
+              ? "Member marked as Not Ready successfully!" 
+              : "Member marked as Passed successfully!"}
           </AlertDescription>
         </Alert>
       )}
