@@ -202,15 +202,15 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Select
-                        value={filters.result || ''}
-                        onValueChange={(value) => setFilters({ ...filters, result: value || undefined })}
+                        value={filters.result || 'all'}
+                        onValueChange={(value) => setFilters({ ...filters, result: value === 'all' ? undefined : value })}
                       >
                         <SelectTrigger className="w-[140px]">
                           <Filter className="h-4 w-4 mr-2" />
                           <span>{filters.result ? `Result: ${filters.result}` : 'Filter Result'}</span>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All Results</SelectItem>
+                          <SelectItem value="all">All Results</SelectItem>
                           <SelectItem value="passed">Passed</SelectItem>
                           <SelectItem value="not_ready">Not Ready</SelectItem>
                         </SelectContent>
