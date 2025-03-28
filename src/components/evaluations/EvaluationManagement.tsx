@@ -17,6 +17,7 @@ const EvaluationManagement: React.FC<EvaluationManagementProps> = ({ onRefresh }
 
   // Function to trigger refresh after operations
   const handleRefresh = () => {
+    console.log('Refreshing evaluation data...');
     setRefreshTrigger(prev => prev + 1);
     // If there's an onRefresh prop, call it too
     if (onRefresh) onRefresh();

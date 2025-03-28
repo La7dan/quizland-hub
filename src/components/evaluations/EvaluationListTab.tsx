@@ -58,9 +58,11 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
+  // Fetch all evaluation data including coach and member level information
   const { data, isLoading } = useQuery({
     queryKey: ['allEvaluations', refreshTrigger],
     queryFn: async () => {
+      console.log('Fetching all evaluations...');
       const result = await executeSql(`
         SELECT e.*, 
                m.name as member_name, 
@@ -72,10 +74,12 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
         LEFT JOIN users u ON e.coach_id = u.id
         ORDER BY e.nominated_at DESC
       `);
+      console.log('Evaluations fetch result:', result);
       return result.rows || [];
     }
   });
 
+  // Fetch unique coaches and levels for filters
   const { data: filterOptions } = useQuery({
     queryKey: ['evaluationFilterOptions'],
     queryFn: async () => {
@@ -106,17 +110,22 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
     }
   });
 
+  // Apply search, filtering and sorting
   const filteredEvaluations = useMemo(() => {
     if (!data) return [];
     
+    console.log('Processing evaluations data:', data.length, 'records');
+    
     return data
       .filter((evaluation: any) => {
+        // Search functionality
         const searchLower = searchTerm.toLowerCase();
         const matchesSearch = !searchTerm || 
           (evaluation.member_name && evaluation.member_name.toLowerCase().includes(searchLower)) ||
           (evaluation.member_code && evaluation.member_code.toLowerCase().includes(searchLower)) ||
           (evaluation.coach_name && evaluation.coach_name.toLowerCase().includes(searchLower));
         
+        // Filter functionality
         const matchesStatus = !filters.status || evaluation.status === filters.status;
         const matchesLevel = !filters.level || evaluation.member_level === filters.level;
         const matchesCoach = !filters.coach || evaluation.coach_id?.toString() === filters.coach;
@@ -124,18 +133,22 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
         return matchesSearch && matchesStatus && matchesLevel && matchesCoach;
       })
       .sort((a: any, b: any) => {
+        // Apply sorting
         let valA = a[sortField];
         let valB = b[sortField];
         
+        // Handle dates
         if (sortField === 'nominated_at' || sortField === 'evaluation_date') {
           valA = valA ? new Date(valA).getTime() : 0;
           valB = valB ? new Date(valB).getTime() : 0;
         } 
+        // Handle strings
         else if (typeof valA === 'string' && typeof valB === 'string') {
           valA = valA.toLowerCase();
           valB = valB.toLowerCase();
         }
         
+        // Handle null/undefined values
         if (valA === null || valA === undefined) return sortOrder === 'asc' ? -1 : 1;
         if (valB === null || valB === undefined) return sortOrder === 'asc' ? 1 : -1;
         
@@ -200,17 +213,37 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
     exportToCSV(exportData, `evaluations_export_${new Date().toISOString().split('T')[0]}.csv`);
   };
 
+  console.log('Rendering evaluation list with:', {
+    dataLength: data?.length || 0,
+    filteredLength: filteredEvaluations?.length || 0,
+    isLoading
+  });
+
   if (isLoading) {
     return <div className="py-8 text-center">Loading evaluations...</div>;
   }
 
   if (!data || data.length === 0) {
-    return <div className="py-8 text-center">No evaluations found.</div>;
+    return <div className="py-8 text-center">No evaluations found in the database.</div>;
+  }
+
+  if (filteredEvaluations.length === 0) {
+    return <div className="py-8 text-center">
+      No evaluations match the current filters.
+      {Object.keys(filters).length > 0 && (
+        <div className="mt-2">
+          <Button variant="outline" size="sm" onClick={() => setFilters({})}>
+            Clear Filters
+          </Button>
+        </div>
+      )}
+    </div>;
   }
 
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 mb-6">
+        {/* Search box */}
         <div className="flex items-center space-x-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -223,6 +256,7 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
           </div>
         </div>
 
+        {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center space-x-2">
             <Select 
