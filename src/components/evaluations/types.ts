@@ -11,3 +11,9 @@ export interface EvaluationDisplayItem {
   member_id?: number;
   coach_id?: number;
 }
+
+export interface EvaluationUploadFormData {
+  selectedMemberId: string;
+  evaluationDate: string;
+  pdfFile: File | null;
+}
