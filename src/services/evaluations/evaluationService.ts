@@ -1,4 +1,3 @@
-
 import { Evaluation, EvaluationResponse, EvaluationActionResponse } from './types';
 import { 
   fetchPendingEvaluationsQuery, 
@@ -81,7 +80,6 @@ export const disapproveEvaluation = async (evaluationId: number, reason: string)
   }
 };
 
-// Create bulk evaluations
 export const createBulkEvaluations = async (
   memberIds: number[], 
   evaluationDate: string, 
@@ -124,7 +122,6 @@ export const createBulkEvaluations = async (
   }
 };
 
-// For testing and development - creates a sample pending evaluation
 export const createSampleEvaluation = async (memberId: number, coachId: number): Promise<EvaluationActionResponse> => {
   try {
     const result = await createSampleEvaluationQuery(memberId, coachId);
@@ -147,7 +144,6 @@ export const createSampleEvaluation = async (memberId: number, coachId: number):
   }
 };
 
-// New function to update evaluation with result and PDF
 export const updateEvaluationResult = async (
   evaluationId: number,
   result: 'passed' | 'not_ready',
@@ -188,6 +184,46 @@ export const updateEvaluationResult = async (
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Failed to update evaluation'
+    };
+  }
+};
+
+export const bulkMarkEvaluationsAsPassed = async (
+  evaluationIds: number[]
+): Promise<EvaluationActionResponse> => {
+  try {
+    if (!evaluationIds.length) {
+      return {
+        success: false,
+        message: 'No evaluations selected'
+      };
+    }
+
+    const query = `
+      UPDATE evaluations
+      SET 
+        status = 'approved',
+        evaluation_result = 'passed',
+        updated_at = NOW()
+      WHERE id IN (${evaluationIds.join(',')})
+      RETURNING id;
+    `;
+    
+    const queryResult = await executeSql(query);
+    
+    if (!queryResult.success) {
+      throw new Error(queryResult.message);
+    }
+    
+    return {
+      success: true,
+      message: `${queryResult.rowCount} evaluations marked as passed successfully`
+    };
+  } catch (error) {
+    console.error('Error bulk marking evaluations as passed:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to update evaluations'
     };
   }
 };
