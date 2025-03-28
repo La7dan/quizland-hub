@@ -94,7 +94,13 @@ export const updateQuiz = async (quizData: Partial<Quiz> & { id: number }): Prom
 // Function to delete a quiz
 export const deleteQuiz = async (id: number): Promise<ServiceResponse> => {
   try {
-    // First delete associated answers
+    // First delete associated quiz attempts
+    await executeSql(`
+      DELETE FROM quiz_attempts
+      WHERE quiz_id = ${sqlEscape.number(id)};
+    `);
+    
+    // Then delete associated answers
     await executeSql(`
       DELETE FROM answers
       WHERE question_id IN (

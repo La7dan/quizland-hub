@@ -20,7 +20,13 @@ export function useQuizDeletion(onQuizDeleted: () => void) {
     try {
       setIsDeleting(true);
       
-      // First delete all answers associated with the quiz's questions
+      // First delete all quiz attempts associated with this quiz
+      await executeSql(`
+        DELETE FROM quiz_attempts 
+        WHERE quiz_id = ${deleteQuizId}
+      `);
+      
+      // Then delete all answers associated with the quiz's questions
       await executeSql(`
         DELETE FROM answers 
         WHERE question_id IN (
