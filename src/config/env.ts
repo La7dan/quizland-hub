@@ -5,8 +5,7 @@
 
 // Set default API URL based on environment
 const getDevelopmentApiUrl = () => {
-  // In development, we need to use the full server URL for the API
-  // Using the explicit server IP and port as provided in the error message
+  // Always use the explicit server IP and port as provided in the error message
   return 'http://209.74.89.41:8080/api';
 };
 
@@ -19,16 +18,14 @@ export const ENV = {
   NODE_ENV: import.meta.env.MODE || 'development',
   
   // Debug mode
-  DEBUG: import.meta.env.VITE_DEBUG === 'true' || false,
+  DEBUG: import.meta.env.VITE_DEBUG === 'true' || true, // Set to true to see more logs
 };
 
 // Export a function to log environment configuration (useful for debugging)
 export const logEnvironment = () => {
-  if (ENV.DEBUG) {
-    console.log('🔧 Environment Configuration:', {
-      API_BASE_URL: ENV.API_BASE_URL,
-      NODE_ENV: ENV.NODE_ENV,
-      DEBUG: ENV.DEBUG,
-    });
-  }
+  console.log('🔧 Environment Configuration:', {
+    API_BASE_URL: ENV.API_BASE_URL,
+    NODE_ENV: ENV.NODE_ENV,
+    DEBUG: ENV.DEBUG,
+  });
 };

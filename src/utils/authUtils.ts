@@ -1,4 +1,3 @@
-
 import { User } from '@/types/auth';
 import { ENV } from '@/config/env';
 
@@ -83,7 +82,7 @@ export const loginUser = async (
       return { 
         success: false, 
         user: null, 
-        message: "Server error: Received non-JSON response. Please ensure the backend server is running at " + ENV.API_BASE_URL
+        message: "Server error: Received non-JSON response. Please check server connection at " + AUTH_API_URL
       };
     }
     
@@ -125,7 +124,7 @@ export const loginUser = async (
     }
   } catch (error) {
     console.error('Login error:', error);
-    const errorMessage = "An error occurred during login. Please check that the backend server is running at " + ENV.API_BASE_URL;
+    const errorMessage = "An error occurred during login. Please verify the server is running at " + AUTH_API_URL;
     return { success: false, user: null, message: errorMessage };
   }
 };
