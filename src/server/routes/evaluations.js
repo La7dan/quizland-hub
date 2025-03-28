@@ -1,4 +1,3 @@
-
 import express from 'express';
 import pool from '../config/database.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -239,6 +238,55 @@ router.post('/upload', requireAuth, async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Failed to upload evaluation', 
+      error: error.message 
+    });
+  }
+});
+
+// Mark evaluation as completed when it's passed
+router.post('/:id/update-result', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const { result, pdfPath } = req.body;
+  
+  if (!result) {
+    return res.status(400).json({ success: false, message: 'Result is required' });
+  }
+  
+  try {
+    const client = await pool.connect();
+    
+    // If result is 'passed', also mark as 'completed'
+    const status = result === 'passed' ? 'completed' : 'pending';
+    
+    const updateQuery = pdfPath 
+      ? `UPDATE evaluations 
+         SET evaluation_result = $1, status = $2, evaluation_date = NOW(), evaluation_pdf = $3 
+         WHERE id = $4 RETURNING id;`
+      : `UPDATE evaluations 
+         SET evaluation_result = $1, status = $2, evaluation_date = NOW() 
+         WHERE id = $3 RETURNING id;`;
+         
+    const queryParams = pdfPath 
+      ? [result, status, pdfPath, id]
+      : [result, status, id];
+    
+    const queryResult = await client.query(updateQuery, queryParams);
+    client.release();
+    
+    if (queryResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Evaluation not found' });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: `Evaluation result updated to "${result}" and ${status === 'completed' ? 'marked as completed' : 'remains pending'}`
+    });
+    
+  } catch (error) {
+    console.error('Error updating evaluation result:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update evaluation result', 
       error: error.message 
     });
   }

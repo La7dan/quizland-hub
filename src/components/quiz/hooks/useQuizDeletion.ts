@@ -20,10 +20,20 @@ export function useQuizDeletion(onQuizDeleted: () => void) {
     try {
       setIsDeleting(true);
       
+      // First delete all answers associated with the quiz's questions
+      await executeSql(`
+        DELETE FROM answers 
+        WHERE question_id IN (
+          SELECT id FROM questions WHERE quiz_id = ${deleteQuizId}
+        )
+      `);
+      
+      // Then delete all questions for this quiz
       await executeSql(`
         DELETE FROM questions WHERE quiz_id = ${deleteQuizId}
       `);
       
+      // Finally delete the quiz itself
       await deleteQuiz(deleteQuizId);
       
       toast({
@@ -36,7 +46,7 @@ export function useQuizDeletion(onQuizDeleted: () => void) {
       console.error('Error deleting quiz:', error);
       toast({
         title: "Error",
-        description: "Failed to delete quiz",
+        description: "Failed to delete quiz: " + (error instanceof Error ? error.message : 'Unknown error'),
         variant: "destructive",
       });
     } finally {

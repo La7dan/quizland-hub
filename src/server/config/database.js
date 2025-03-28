@@ -9,6 +9,10 @@ const pool = new Pool({
   password: 'Lal@13161',
   database: 'quiz',
   port: 5432,
+  // Add connection timeouts and error handling
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000,
+  max: 20, // maximum number of clients in the pool
 });
 
 // Test the database connection immediately on startup
@@ -21,5 +25,10 @@ pool.connect()
   .catch(err => {
     console.error('Database connection failed:', err);
   });
+
+// Add error handling for the pool
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
+});
 
 export default pool;
