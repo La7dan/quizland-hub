@@ -59,14 +59,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log('Executing login query');
       const result = await executeSql(query);
-      console.log('Login query result received');
+      console.log('Login query result received:', result);
       
       // Check if user exists and if the query was successful
       if (!result.success) {
         console.error('SQL execution failed:', result.message);
         toast({
           title: "Login Failed",
-          description: "Database error occurred",
+          description: "Database error occurred: " + result.message,
           variant: "destructive"
         });
         return false;
@@ -87,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Debug: Log password comparison (for development only, remove in production)
       console.log('Input password:', password);
-      console.log('Stored password type:', typeof userData.password);
+      console.log('Stored password:', userData.password);
       
       // Verify the password
       if (userData.password !== password) {
