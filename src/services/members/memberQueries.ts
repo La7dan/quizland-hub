@@ -1,3 +1,4 @@
+
 import { executeSql, sqlEscape } from '../apiService';
 import { Member } from './types';
 
@@ -59,47 +60,63 @@ export const batchImportMemberQuery = async (members: Member[]) => {
   }
   
   try {
+    // First deduplicate members to avoid conflicts within the batch
     const uniqueMembers = deduplicateMembers(members);
     console.log(`Deduplicating ${members.length} members to ${uniqueMembers.length} unique members`);
     
-    const valuesClauses = uniqueMembers.map(member => `(
-      ${sqlEscape.string(member.member_id)}, 
-      ${sqlEscape.string(member.name)}, 
-      ${sqlEscape.number(member.level_id)}, 
-      ${sqlEscape.number(member.classes_count || 0)}, 
-      ${sqlEscape.number(member.coach_id)}
-    )`).join(',\n');
+    // If we have too many members, split into smaller batches
+    const maxBatchSize = 50; // Smaller batch size to reduce risk of errors
+    const results = {
+      success: true,
+      successCount: 0,
+      errorCount: 0,
+      errors: [] as string[]
+    };
     
-    const sql = `
-      WITH import_data AS (
-        INSERT INTO members (member_id, name, level_id, classes_count, coach_id)
-        VALUES ${valuesClauses}
-        ON CONFLICT (member_id) DO UPDATE
-        SET name = EXCLUDED.name,
-            level_id = EXCLUDED.level_id,
-            classes_count = EXCLUDED.classes_count,
-            coach_id = EXCLUDED.coach_id
-        RETURNING id
-      )
-      SELECT COUNT(*) AS success_count FROM import_data;
-    `;
-    
-    const result = await executeSql(sql, { timeout: 30000 });
-    
-    if (result.success && result.rows && result.rows.length > 0) {
-      const successCount = parseInt(result.rows[0].success_count) || 0;
-      return {
-        success: true,
-        successCount,
-        errorCount: uniqueMembers.length - successCount,
-        errors: successCount < uniqueMembers.length ? [`${uniqueMembers.length - successCount} records failed to import`] : []
-      };
-    } else {
-      return {
-        success: false,
-        message: result.message || 'Batch import failed'
-      };
+    // Process in smaller chunks to avoid SQL statement size limitations
+    for (let i = 0; i < uniqueMembers.length; i += maxBatchSize) {
+      const batch = uniqueMembers.slice(i, i + maxBatchSize);
+      console.log(`Processing sub-batch ${i / maxBatchSize + 1} with ${batch.length} members`);
+      
+      const valuesClauses = batch.map(member => `(
+        ${sqlEscape.string(member.member_id)}, 
+        ${sqlEscape.string(member.name)}, 
+        ${sqlEscape.number(member.level_id)}, 
+        ${sqlEscape.number(member.classes_count || 0)}, 
+        ${sqlEscape.number(member.coach_id)}
+      )`).join(',\n');
+      
+      const sql = `
+        WITH import_data AS (
+          INSERT INTO members (member_id, name, level_id, classes_count, coach_id)
+          VALUES ${valuesClauses}
+          ON CONFLICT (member_id) DO UPDATE
+          SET name = EXCLUDED.name,
+              level_id = EXCLUDED.level_id,
+              classes_count = EXCLUDED.classes_count,
+              coach_id = EXCLUDED.coach_id
+          RETURNING id
+        )
+        SELECT COUNT(*) AS success_count FROM import_data;
+      `;
+      
+      const result = await executeSql(sql, { timeout: 30000 });
+      
+      if (result.success && result.rows && result.rows.length > 0) {
+        const batchSuccessCount = parseInt(result.rows[0].success_count) || 0;
+        results.successCount += batchSuccessCount;
+        
+        if (batchSuccessCount < batch.length) {
+          results.errorCount += (batch.length - batchSuccessCount);
+          results.errors.push(`${batch.length - batchSuccessCount} records failed in batch ${i / maxBatchSize + 1}`);
+        }
+      } else {
+        results.errorCount += batch.length;
+        results.errors.push(`Batch ${i / maxBatchSize + 1} failed: ${result.message || 'Unknown error'}`);
+      }
     }
+    
+    return results;
   } catch (error) {
     console.error('Error in batchImportMemberQuery:', error);
     return {
