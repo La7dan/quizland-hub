@@ -5,3 +5,5 @@ export * from './EmptyQuizState';
 export * from './ErrorState';
 export * from './LoadingState';
 export * from './QuizzesList';
+export * from './QuizFilters';
+export * from './PageHeader';
