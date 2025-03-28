@@ -1,5 +1,5 @@
 
-import { executeSql } from '../apiService';
+import { executeSql, sqlEscape } from '../apiService';
 import { Evaluation } from './types';
 
 export const fetchPendingEvaluationsQuery = async (coachId: number) => {
@@ -28,9 +28,24 @@ export const disapproveEvaluationQuery = async (evaluationId: number, reason: st
     UPDATE evaluations
     SET status = 'disapproved', 
         disapproved_at = NOW(),
-        disapproval_reason = '${reason}'
+        disapproval_reason = ${sqlEscape.string(reason)}
     WHERE id = ${evaluationId}
     RETURNING id;
+  `);
+};
+
+// Create bulk evaluations query
+export const createBulkEvaluationsQuery = async (memberIds: number[], evaluationDate: string, coachId: number) => {
+  const memberIdsStr = memberIds.join(',');
+  return await executeSql(`
+    WITH inserted_evaluations AS (
+      INSERT INTO evaluations (member_id, status, nominated_at, evaluation_date, coach_id)
+      SELECT id, 'pending', NOW(), ${sqlEscape.string(evaluationDate)}, ${coachId}
+      FROM members
+      WHERE id IN (${memberIdsStr})
+      RETURNING id
+    )
+    SELECT COUNT(*) as count FROM inserted_evaluations
   `);
 };
 

@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EvaluationUploadTab from './EvaluationUploadTab';
 import EvaluationListTab from './EvaluationListTab';
 import CompletedEvaluationsTab from './CompletedEvaluationsTab';
+import BulkEvaluationTab from './BulkEvaluationTab';
 
 interface EvaluationManagementProps {
   onRefresh: () => void;
@@ -29,12 +30,17 @@ const EvaluationManagement: React.FC<EvaluationManagementProps> = ({ onRefresh }
           <Tabs defaultValue="upload">
             <TabsList className="mb-4">
               <TabsTrigger value="upload">Upload New Evaluation</TabsTrigger>
+              <TabsTrigger value="bulk">Bulk Evaluation Dates</TabsTrigger>
               <TabsTrigger value="list">View Evaluations</TabsTrigger>
               <TabsTrigger value="completed">Completed Evaluations</TabsTrigger>
             </TabsList>
             
             <TabsContent value="upload">
               <EvaluationUploadTab onUploadSuccess={handleUploadSuccess} />
+            </TabsContent>
+            
+            <TabsContent value="bulk">
+              <BulkEvaluationTab onSuccess={handleUploadSuccess} />
             </TabsContent>
             
             <TabsContent value="list">
