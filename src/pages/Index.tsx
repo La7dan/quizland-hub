@@ -6,11 +6,27 @@ import { useTheme } from '@/contexts/ThemeContext';
 import Navigation from '@/components/Navigation';
 import QuizzesList from '@/components/QuizzesList';
 import { Toggle } from '@/components/ui/toggle';
+import { useEffect } from 'react';
+import { cleanDummyData } from '@/services/dbService';
 
 export default function Index() {
   const { isAuthenticated } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  
+  // Clean dummy data when the app starts
+  useEffect(() => {
+    const cleanData = async () => {
+      try {
+        await cleanDummyData();
+        console.log('Cleaned dummy data on app startup');
+      } catch (error) {
+        console.error('Failed to clean dummy data:', error);
+      }
+    };
+    
+    cleanData();
+  }, []);
   
   return (
     <div>
