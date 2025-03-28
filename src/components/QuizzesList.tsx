@@ -5,47 +5,149 @@ import { getQuizzes } from '@/services/quizService';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { executeSql } from '@/services/dbService';
 
-export default function QuizzesList() {
+interface QuizzesListProps {
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+export default function QuizzesList({ sortBy = "default", sortOrder = "asc" }: QuizzesListProps) {
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [deleteQuizId, setDeleteQuizId] = useState<number | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
 
-  useEffect(() => {
-    const fetchQuizzes = async () => {
-      try {
-        const response = await getQuizzes();
-        if (response.success) {
-          // Only show visible quizzes to regular users
-          const visibleQuizzes = response.quizzes.filter((quiz: any) => quiz.is_visible);
-          setQuizzes(visibleQuizzes);
-        } else {
-          toast({
-            title: "Error",
-            description: "Failed to load quizzes",
-            variant: "destructive",
-          });
+  const fetchQuizzes = async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      const response = await getQuizzes();
+      if (response.success) {
+        // Filter quizzes based on user role
+        let filteredQuizzes = response.quizzes || [];
+        
+        // For non-admin users, only show visible quizzes
+        if (!isAuthenticated || (user && user.role !== 'super_admin' && user.role !== 'admin')) {
+          filteredQuizzes = filteredQuizzes.filter((quiz: any) => quiz.is_visible);
         }
-      } catch (error) {
-        console.error('Error loading quizzes:', error);
+        
+        // Sort quizzes
+        const sortedQuizzes = sortQuizzes(filteredQuizzes, sortBy, sortOrder);
+        setQuizzes(sortedQuizzes);
+      } else {
+        setError(response.message || "Failed to load quizzes");
         toast({
           title: "Error",
-          description: "Failed to load quizzes",
+          description: response.message || "Failed to load quizzes",
           variant: "destructive",
         });
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('Error loading quizzes:', error);
+      setError("Unable to connect to the quiz server. Please try again later.");
+      toast({
+        title: "Connection Error",
+        description: "Unable to connect to the quiz server. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchQuizzes();
-  }, [toast]);
+  }, [toast, sortBy, sortOrder, isAuthenticated, user]);
+
+  const sortQuizzes = (quizzesArray: any[], sortByField: string, order: "asc" | "desc") => {
+    if (sortByField === "default") return quizzesArray;
+    
+    return [...quizzesArray].sort((a, b) => {
+      let comparison = 0;
+      
+      if (sortByField === "level") {
+        comparison = a.level_id - b.level_id;
+      } else if (sortByField === "pass") {
+        comparison = a.passing_percentage - b.passing_percentage;
+      }
+      
+      return order === "asc" ? comparison : -comparison;
+    });
+  };
 
   const handleStartQuiz = (quizId: number) => {
     navigate(`/quiz/${quizId}`);
+  };
+
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    fetchQuizzes();
+    toast({
+      title: "Retrying",
+      description: "Attempting to reconnect to the quiz server...",
+    });
+  };
+
+  const confirmDeleteQuiz = (quizId: number) => {
+    setDeleteQuizId(quizId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteQuiz = async () => {
+    if (!deleteQuizId) return;
+    
+    try {
+      setLoading(true);
+      
+      // First delete related questions
+      await executeSql(`
+        DELETE FROM questions WHERE quiz_id = ${deleteQuizId}
+      `);
+      
+      // Then delete the quiz
+      await executeSql(`
+        DELETE FROM quizzes WHERE id = ${deleteQuizId}
+      `);
+      
+      toast({
+        title: "Success",
+        description: "Quiz deleted successfully",
+      });
+      
+      // Refresh the list
+      fetchQuizzes();
+    } catch (error) {
+      console.error('Error deleting quiz:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete quiz",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setDeleteQuizId(null);
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -53,6 +155,21 @@ export default function QuizzesList() {
       <div className="flex justify-center py-12">
         <div className="h-8 w-8 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Connection Error</AlertTitle>
+        <AlertDescription>
+          <p className="mb-4">{error}</p>
+          <Button onClick={handleRetry} variant="outline">
+            Retry Connection
+          </Button>
+        </AlertDescription>
+      </Alert>
     );
   }
 
@@ -66,37 +183,74 @@ export default function QuizzesList() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {quizzes.map((quiz) => (
-        <Card key={quiz.id} className="overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardTitle>{quiz.title}</CardTitle>
-            <CardDescription>
-              <Badge variant="outline" className="mt-1">
-                Level: {quiz.level_id}
-              </Badge>
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {quiz.description || "Take this quiz to test your knowledge."}
-            </p>
-            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{quiz.question_count || 0} Questions</span>
-              <span>•</span>
-              <span>Passing Score: {quiz.passing_percentage}%</span>
-            </div>
-          </CardContent>
-          <CardFooter className="pt-2">
-            <Button 
-              onClick={() => handleStartQuiz(quiz.id)}
-              className="w-full"
-            >
-              Start Quiz
-            </Button>
-          </CardFooter>
-        </Card>
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {quizzes.map((quiz) => (
+          <Card key={quiz.id} className="overflow-hidden">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
+                <CardTitle>{quiz.title}</CardTitle>
+                {(isAuthenticated && user && (user.role === 'super_admin' || user.role === 'admin')) && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-red-500 h-8 w-8" 
+                    onClick={() => confirmDeleteQuiz(quiz.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <CardDescription>
+                <Badge variant="outline" className="mt-1">
+                  Level: {quiz.level_id}
+                </Badge>
+                {!quiz.is_visible && (
+                  <Badge variant="outline" className="mt-1 ml-2 text-red-500 border-red-500">
+                    <EyeOff className="h-3 w-3 mr-1" />
+                    Hidden
+                  </Badge>
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                {quiz.description || "Take this quiz to test your knowledge."}
+              </p>
+              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{quiz.question_count || 0} Questions</span>
+                <span>•</span>
+                <span>Passing Score: {quiz.passing_percentage}%</span>
+              </div>
+            </CardContent>
+            <CardFooter className="pt-2">
+              <Button 
+                onClick={() => handleStartQuiz(quiz.id)}
+                className="w-full"
+              >
+                Start Quiz
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the quiz and all associated questions.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteQuiz} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

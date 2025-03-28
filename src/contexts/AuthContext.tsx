@@ -27,8 +27,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
-    // Remove hardcoded superadmin creation for security reasons
-    
     // Check for saved user in localStorage on app load
     const savedUser = localStorage.getItem('quiz_user');
     if (savedUser) {
