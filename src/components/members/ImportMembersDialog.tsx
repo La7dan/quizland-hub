@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CSVImport } from './import/CSVImport';
 import { ExcelImport } from './import/ExcelImport';
 import { ImportResults } from './import/ImportResults';
+import { Progress } from '@/components/ui/progress';
 
 interface ImportMembersDialogProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export const ImportMembersDialog = ({
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [importSuccess, setImportSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState('csv');
+  const [processingProgress, setProcessingProgress] = useState(0);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -51,13 +53,42 @@ export const ImportMembersDialog = ({
 
   const coaches = usersData?.users?.filter(user => user.role === 'coach' || user.role === 'admin') || [];
 
+  // Set up progress updates during import
+  useEffect(() => {
+    if (importMembersMutation.isPending) {
+      let progress = 10;
+      const interval = setInterval(() => {
+        // Simulate progress, capping at 95% until completely done
+        progress = Math.min(progress + 5, 95);
+        setProcessingProgress(progress);
+      }, 500);
+      
+      return () => clearInterval(interval);
+    } else if (importMembersMutation.isSuccess) {
+      setProcessingProgress(100);
+      // Reset after success
+      const timer = setTimeout(() => setProcessingProgress(0), 2000);
+      return () => clearTimeout(timer);
+    } else {
+      setProcessingProgress(0);
+    }
+  }, [importMembersMutation.isPending, importMembersMutation.isSuccess]);
+
   const importMembersMutation = useMutation({
     mutationFn: importMembers,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['members'] });
+      console.log('Import results:', data);
+      
       if (data.errors && data.errors.length > 0) {
         setImportErrors(data.errors);
-        setImportSuccess(false);
+        setImportSuccess(data.successCount && data.successCount > 0);
+        
+        toast({
+          title: 'Import Completed With Warnings',
+          description: `Imported ${data.successCount || 0} members with ${data.errorCount || 0} errors`,
+          variant: 'default',
+        });
       } else {
         setImportSuccess(true);
         setImportErrors([]);
@@ -65,11 +96,13 @@ export const ImportMembersDialog = ({
           title: 'Success',
           description: `Imported ${data.successCount} members successfully`,
         });
-        if (onRefresh) onRefresh();
       }
+      
+      if (onRefresh) onRefresh();
     },
     onError: (error) => {
       setImportSuccess(false);
+      setProcessingProgress(0);
       toast({
         title: 'Error',
         description: `Failed to import members: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -83,6 +116,7 @@ export const ImportMembersDialog = ({
     setImportErrors([]);
     setImportSuccess(false);
     setActiveTab('csv');
+    setProcessingProgress(0);
   };
 
   const handleImport = (members: Member[]) => {
@@ -95,8 +129,11 @@ export const ImportMembersDialog = ({
       return;
     }
     
+    // Start progress
+    setProcessingProgress(10);
+    
     // Log the members being imported to verify data
-    console.log('Importing members:', members);
+    console.log(`Importing ${members.length} members...`);
     
     importMembersMutation.mutate(members);
   };
@@ -110,6 +147,21 @@ export const ImportMembersDialog = ({
             Import Members
           </DialogTitle>
         </DialogHeader>
+        
+        {processingProgress > 0 && (
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Processing import...</span>
+              <span>{processingProgress}%</span>
+            </div>
+            <Progress value={processingProgress} className="h-2" />
+            {importMembersMutation.isPending && (
+              <p className="text-sm text-muted-foreground text-center">
+                This may take a while for large datasets...
+              </p>
+            )}
+          </div>
+        )}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
           <TabsList className="grid w-full grid-cols-2">
@@ -142,8 +194,8 @@ export const ImportMembersDialog = ({
         />
         
         <DialogFooter>
-          <Button variant="outline" onClick={closeImportDialog}>
-            Cancel
+          <Button variant="outline" onClick={closeImportDialog} disabled={importMembersMutation.isPending}>
+            {importSuccess ? 'Close' : 'Cancel'}
           </Button>
         </DialogFooter>
       </DialogContent>

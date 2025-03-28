@@ -1,4 +1,5 @@
-import { executeSql } from '../apiService';
+
+import { executeSql, sqlEscape } from '../apiService';
 import { Member } from './types';
 
 export const fetchMembersQuery = async () => {
@@ -51,4 +52,60 @@ export const importMemberQuery = async (member: Member) => {
         classes_count = EXCLUDED.classes_count,
         coach_id = EXCLUDED.coach_id;
   `);
+};
+
+// New function to handle batch imports more efficiently
+export const batchImportMemberQuery = async (members: Member[]) => {
+  if (members.length === 0) {
+    return { success: false, message: 'No members provided for batch import' };
+  }
+  
+  try {
+    // Build a SQL statement that handles multiple inserts at once
+    const valuesClauses = members.map(member => `(
+      ${sqlEscape.string(member.member_id)}, 
+      ${sqlEscape.string(member.name)}, 
+      ${sqlEscape.number(member.level_id)}, 
+      ${sqlEscape.number(member.classes_count || 0)}, 
+      ${sqlEscape.number(member.coach_id)}
+    )`).join(',\n');
+    
+    const sql = `
+      WITH import_data AS (
+        INSERT INTO members (member_id, name, level_id, classes_count, coach_id)
+        VALUES ${valuesClauses}
+        ON CONFLICT (member_id) DO UPDATE
+        SET name = EXCLUDED.name,
+            level_id = EXCLUDED.level_id,
+            classes_count = EXCLUDED.classes_count,
+            coach_id = EXCLUDED.coach_id
+        RETURNING id
+      )
+      SELECT COUNT(*) AS success_count FROM import_data;
+    `;
+    
+    // Set a longer timeout for large batches
+    const result = await executeSql(sql, { timeout: 30000 });
+    
+    if (result.success && result.rows && result.rows.length > 0) {
+      const successCount = parseInt(result.rows[0].success_count) || 0;
+      return {
+        success: true,
+        successCount,
+        errorCount: members.length - successCount,
+        errors: successCount < members.length ? [`${members.length - successCount} records failed to import`] : []
+      };
+    } else {
+      return {
+        success: false,
+        message: result.message || 'Batch import failed'
+      };
+    }
+  } catch (error) {
+    console.error('Error in batchImportMemberQuery:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error occurred'
+    };
+  }
 };

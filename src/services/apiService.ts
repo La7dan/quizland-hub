@@ -71,7 +71,8 @@ const sanitizeSqlString = (value: string): string => {
 
 // Execute custom SQL with improved error handling and input sanitization
 export const executeSql = async (
-  sql: string
+  sql: string,
+  options?: { timeout?: number }
 ): Promise<{ success: boolean; message: string; rows?: any[]; rowCount?: number }> => {
   try {
     console.log('Executing SQL on server:', API_BASE_URL);
@@ -80,35 +81,76 @@ export const executeSql = async (
     const truncatedSql = sql.length > 100 ? sql.substring(0, 100) + '...' : sql;
     console.log('SQL query (truncated):', truncatedSql);
     
-    const response = await fetch(`${API_BASE_URL}/execute-sql`, {
+    const fetchOptions: RequestInit = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include', // Include cookies for authentication
       body: JSON.stringify({ sql }),
-    });
+    };
     
-    if (!response.ok) {
-      // Check for authentication errors
-      if (response.status === 401) {
-        return { 
-          success: false, 
-          message: 'Authentication required. Please log in.' 
-        };
+    // Add timeout if provided
+    if (options?.timeout) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), options.timeout);
+      fetchOptions.signal = controller.signal;
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/execute-sql`, fetchOptions);
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          // Handle authentication errors
+          if (response.status === 401) {
+            return { 
+              success: false, 
+              message: 'Authentication required. Please log in.' 
+            };
+          }
+          
+          if (response.status === 403) {
+            return { 
+              success: false, 
+              message: 'Access denied. You do not have sufficient privileges.' 
+            };
+          }
+          
+          const errorText = await response.text();
+          throw new Error(`Server responded with status ${response.status}: ${errorText || 'Unknown error'}`);
+        }
+        
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        throw error;
+      }
+    } else {
+      // Regular fetch without timeout
+      const response = await fetch(`${API_BASE_URL}/execute-sql`, fetchOptions);
+      
+      if (!response.ok) {
+        // Handle authentication errors
+        if (response.status === 401) {
+          return { 
+            success: false, 
+            message: 'Authentication required. Please log in.' 
+          };
+        }
+        
+        if (response.status === 403) {
+          return { 
+            success: false, 
+            message: 'Access denied. You do not have sufficient privileges.' 
+          };
+        }
+        
+        const errorText = await response.text();
+        throw new Error(`Server responded with status ${response.status}: ${errorText || 'Unknown error'}`);
       }
       
-      if (response.status === 403) {
-        return { 
-          success: false, 
-          message: 'Access denied. You do not have sufficient privileges.' 
-        };
-      }
-      
-      const errorText = await response.text();
-      throw new Error(`Server responded with status ${response.status}: ${errorText || 'Unknown error'}`);
+      const data = await response.json();
+      return data;
     }
-    
-    const data = await response.json();
-    return data;
   } catch (error) {
     console.error('Execute SQL error:', error);
     return { success: false, message: String(error) };
