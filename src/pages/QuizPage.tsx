@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -8,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 
 const QuizPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +17,8 @@ const QuizPage = () => {
   const [quiz, setQuiz] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [name, setName] = useState('');
@@ -36,6 +37,8 @@ const QuizPage = () => {
 
   const loadQuiz = async (quizId: number) => {
     setLoading(true);
+    setConnectionError(false);
+    setError(null);
     try {
       const response = await getQuizById(quizId);
       
@@ -47,23 +50,33 @@ const QuizPage = () => {
         setQuiz(response.quiz);
         setQuestions(visibleQuestions);
       } else {
+        setError(response.message || "Quiz not found");
         toast({
           title: "Error",
-          description: response.message || "Failed to load quiz",
+          description: response.message || "Quiz not found or has been removed",
           variant: "destructive",
         });
-        navigate('/');
       }
     } catch (error) {
       console.error('Error loading quiz:', error);
+      setConnectionError(true);
       toast({
-        title: "Error",
-        description: "Failed to load quiz",
+        title: "Connection Error",
+        description: "Unable to connect to the quiz server. Please try again later.",
         variant: "destructive",
       });
-      navigate('/');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRetry = () => {
+    if (id) {
+      loadQuiz(parseInt(id));
+      toast({
+        title: "Retrying",
+        description: "Attempting to reconnect to the quiz server...",
+      });
     }
   };
 
@@ -173,12 +186,25 @@ const QuizPage = () => {
     );
   }
 
+  if (connectionError) {
+    return (
+      <div className="container mx-auto p-4 max-w-4xl text-center py-24">
+        <h1 className="text-2xl font-bold mb-4">Connection Error</h1>
+        <p className="mb-8">Unable to connect to the quiz server. This might be due to network issues or server maintenance.</p>
+        <Button onClick={handleRetry} className="flex items-center gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
   if (!quiz || !quiz.is_visible) {
     return (
       <div className="container mx-auto p-4 max-w-4xl text-center py-24">
         <h1 className="text-2xl font-bold mb-4">Quiz Not Found</h1>
         <p className="mb-8">The quiz you're looking for is either not available or has been removed.</p>
-        <Button onClick={() => navigate('/')}>Return Home</Button>
+        <Button onClick={() => navigate('/quizzes')}>Return to Quizzes</Button>
       </div>
     );
   }

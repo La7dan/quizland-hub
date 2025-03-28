@@ -23,6 +23,7 @@ export function useQuizzes({
   const [loading, setLoading] = useState(propIsLoading !== undefined ? propIsLoading : true);
   const [error, setError] = useState<string | null>(propError ? propError.message || "An error occurred" : null);
   const [levelCodes, setLevelCodes] = useState<{[key: number]: string}>({});
+  const [connectionError, setConnectionError] = useState(false);
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
 
@@ -38,6 +39,7 @@ export function useQuizzes({
       }
     } catch (error) {
       console.error('Error loading quiz levels:', error);
+      setConnectionError(true);
     }
   };
 
@@ -49,11 +51,13 @@ export function useQuizzes({
 
     try {
       setError(null);
+      setConnectionError(false);
       setLoading(true);
       const response = await getQuizzes();
       processQuizzes(response);
     } catch (error) {
       console.error('Error loading quizzes:', error);
+      setConnectionError(true);
       setError("Unable to connect to the quiz server. Please try again later.");
       toast({
         title: "Connection Error",
@@ -127,6 +131,7 @@ export function useQuizzes({
   const handleRetry = () => {
     setLoading(true);
     setError(null);
+    setConnectionError(false);
     fetchQuizzes();
     toast({
       title: "Retrying",
@@ -158,6 +163,7 @@ export function useQuizzes({
     loading,
     error,
     levelCodes,
+    connectionError,
     handleRetry,
     fetchQuizzes
   };

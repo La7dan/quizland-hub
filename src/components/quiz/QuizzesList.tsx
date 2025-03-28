@@ -29,6 +29,7 @@ export function QuizzesList({
     loading, 
     error, 
     levelCodes, 
+    connectionError,
     handleRetry,
     fetchQuizzes 
   } = useQuizzes({
@@ -52,12 +53,12 @@ export function QuizzesList({
     return <LoadingState />;
   }
 
-  if (error) {
+  if (error && !connectionError) {
     return <ErrorState errorMessage={error} onRetry={handleRetry} />;
   }
 
   if (quizzes.length === 0) {
-    return <EmptyQuizState />;
+    return <EmptyQuizState connectionError={connectionError} onRetry={handleRetry} />;
   }
 
   return (
