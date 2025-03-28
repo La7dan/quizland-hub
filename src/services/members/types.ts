@@ -1,4 +1,3 @@
-
 export interface Member {
   id?: number;
   member_id: string;
@@ -10,6 +9,7 @@ export interface Member {
   coach_id?: number;
   coach_name?: string;
   created_at?: string;
+  evaluation_date?: string; // Added evaluation date
 }
 
 export interface MemberResponse {

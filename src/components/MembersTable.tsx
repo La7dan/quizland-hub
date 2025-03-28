@@ -12,17 +12,26 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, AlertCircle, User, Trash, UserMinus } from 'lucide-react';
+import { RefreshCw, AlertCircle, User, Trash, UserMinus, Search, ArrowDown, ArrowUp } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { format } from 'date-fns';
 
 interface MembersTableProps {
   onRefresh?: () => void;
 }
 
+type SortField = 'name' | 'member_id' | 'level_code' | 'classes_count' | 'coach_name' | 'evaluation_date';
+type SortOrder = 'asc' | 'desc';
+
 const MembersTable: React.FC<MembersTableProps> = ({ onRefresh }) => {
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -34,6 +43,49 @@ const MembersTable: React.FC<MembersTableProps> = ({ onRefresh }) => {
 
   const members = data?.members || [];
   const error = queryError ? String(queryError) : (data?.message && !data.success ? data.message : null);
+
+  // Filter members based on search term
+  const filteredMembers = members.filter((member) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      member.name?.toLowerCase().includes(searchLower) ||
+      member.member_id?.toLowerCase().includes(searchLower) ||
+      member.level_code?.toLowerCase().includes(searchLower) ||
+      member.coach_name?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Sort members based on sort field and order
+  const sortedMembers = [...filteredMembers].sort((a, b) => {
+    let aVal = a[sortField as keyof Member];
+    let bVal = b[sortField as keyof Member];
+    
+    // Handle nullish values
+    aVal = aVal === undefined || aVal === null ? '' : aVal;
+    bVal = bVal === undefined || bVal === null ? '' : bVal;
+    
+    // Compare as strings
+    const comparison = String(aVal).localeCompare(String(bVal));
+    return sortOrder === 'asc' ? comparison : -comparison;
+  });
+
+  // Toggle sort when clicking a column header
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  // Render sort indicator for column headers
+  const renderSortIndicator = (field: SortField) => {
+    if (sortField !== field) return null;
+    return sortOrder === 'asc' ? 
+      <ArrowUp className="inline h-4 w-4 ml-1" /> : 
+      <ArrowDown className="inline h-4 w-4 ml-1" />;
+  };
 
   // Bulk delete members mutation
   const bulkDeleteMutation = useMutation({
@@ -77,11 +129,11 @@ const MembersTable: React.FC<MembersTableProps> = ({ onRefresh }) => {
   };
 
   const toggleSelectAll = () => {
-    if (members.length > 0) {
-      if (selectedMembers.length === members.length) {
+    if (sortedMembers.length > 0) {
+      if (selectedMembers.length === sortedMembers.length) {
         setSelectedMembers([]);
       } else {
-        setSelectedMembers(members.map(member => member.id!));
+        setSelectedMembers(sortedMembers.map(member => member.id!));
       }
     }
   };
@@ -97,6 +149,15 @@ const MembersTable: React.FC<MembersTableProps> = ({ onRefresh }) => {
 
     if (window.confirm(`Are you sure you want to delete ${selectedMembers.length} members?`)) {
       bulkDeleteMutation.mutate(selectedMembers);
+    }
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Not evaluated';
+    try {
+      return format(new Date(dateString), 'MMM dd, yyyy');
+    } catch (e) {
+      return 'Invalid date';
     }
   };
 
@@ -131,6 +192,17 @@ const MembersTable: React.FC<MembersTableProps> = ({ onRefresh }) => {
         </div>
       </div>
 
+      {/* Search input */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Input
+          placeholder="Search members by name, ID, level, or coach..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -153,45 +225,87 @@ const MembersTable: React.FC<MembersTableProps> = ({ onRefresh }) => {
               <TableRow>
                 <TableHead className="w-12">
                   <Checkbox 
-                    checked={members.length > 0 && selectedMembers.length === members.length}
+                    checked={sortedMembers.length > 0 && selectedMembers.length === sortedMembers.length}
                     onCheckedChange={toggleSelectAll}
                     aria-label="Select all members"
                   />
                 </TableHead>
-                <TableHead>Member ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Level</TableHead>
-                <TableHead>Classes</TableHead>
-                <TableHead>Coach</TableHead>
+                <TableHead 
+                  className="cursor-pointer"
+                  onClick={() => handleSort('member_id')}
+                >
+                  Member ID {renderSortIndicator('member_id')}
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer"
+                  onClick={() => handleSort('name')}
+                >
+                  Name {renderSortIndicator('name')}
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer"
+                  onClick={() => handleSort('level_code')}
+                >
+                  Level {renderSortIndicator('level_code')}
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer"
+                  onClick={() => handleSort('classes_count')}
+                >
+                  Classes {renderSortIndicator('classes_count')}
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer"
+                  onClick={() => handleSort('coach_name')}
+                >
+                  Coach {renderSortIndicator('coach_name')}
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer"
+                  onClick={() => handleSort('evaluation_date')}
+                >
+                  Evaluation Date {renderSortIndicator('evaluation_date')}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members.map((member) => (
-                <TableRow key={member.id} className={selectedMembers.includes(member.id!) ? "bg-muted/50" : ""}>
-                  <TableCell>
-                    <Checkbox 
-                      checked={selectedMembers.includes(member.id!)}
-                      onCheckedChange={() => toggleMemberSelection(member.id!)}
-                      aria-label={`Select ${member.name}`}
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">{member.member_id}</TableCell>
-                  <TableCell>{member.name}</TableCell>
-                  <TableCell>
-                    {member.level_code ? (
-                      <Badge variant="outline" className="bg-blue-50">
-                        {member.level_code} - {member.level_name}
-                      </Badge>
-                    ) : (
-                      <span className="text-gray-400">Not assigned</span>
-                    )}
-                  </TableCell>
-                  <TableCell>{member.classes_count || 0}</TableCell>
-                  <TableCell>
-                    {member.coach_name || <span className="text-gray-400">Not assigned</span>}
+              {sortedMembers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-4 text-gray-500">
+                    No members match your search criteria
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                sortedMembers.map((member) => (
+                  <TableRow key={member.id} className={selectedMembers.includes(member.id!) ? "bg-muted/50" : ""}>
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedMembers.includes(member.id!)}
+                        onCheckedChange={() => toggleMemberSelection(member.id!)}
+                        aria-label={`Select ${member.name}`}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">{member.member_id}</TableCell>
+                    <TableCell>{member.name}</TableCell>
+                    <TableCell>
+                      {member.level_code ? (
+                        <Badge variant="outline" className="bg-blue-50">
+                          {member.level_code} - {member.level_name}
+                        </Badge>
+                      ) : (
+                        <span className="text-gray-400">Not assigned</span>
+                      )}
+                    </TableCell>
+                    <TableCell>{member.classes_count || 0}</TableCell>
+                    <TableCell>
+                      {member.coach_name || <span className="text-gray-400">Not assigned</span>}
+                    </TableCell>
+                    <TableCell>
+                      {formatDate(member.evaluation_date)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
