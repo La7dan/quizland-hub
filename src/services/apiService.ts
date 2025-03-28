@@ -120,7 +120,7 @@ const sanitizeSqlString = (value: string): string => {
 // Execute custom SQL with improved error handling and input sanitization
 export const executeSql = async (
   sql: string,
-  options?: { timeout?: number }
+  options?: { timeout?: number, isPublicQuery?: boolean }
 ): Promise<{ success: boolean; message: string; rows?: any[]; rowCount?: number }> => {
   try {
     console.log('Executing SQL on server:', API_BASE_URL);
@@ -133,7 +133,10 @@ export const executeSql = async (
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include', // Include cookies for authentication
-      body: JSON.stringify({ sql }),
+      body: JSON.stringify({ 
+        sql,
+        isPublicQuery: options?.isPublicQuery || false
+      }),
     };
     
     // Add timeout if provided
