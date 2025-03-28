@@ -15,12 +15,14 @@ const LoginPage = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { login, isAuthenticated, isSuperAdmin } = useAuth();
+  const { login, isAuthenticated, isSuperAdmin, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
   // Get the redirect path from location state or default to admin panel for superadmin
   const from = (location.state as any)?.from?.pathname || (isSuperAdmin ? '/admin' : '/');
+  
+  console.log('LoginPage - Auth status:', { isAuthenticated, userRole: user?.role, from });
   
   // If already authenticated and trying to access admin panel
   if (isAuthenticated && from.includes('/admin') && !isSuperAdmin) {
@@ -51,19 +53,15 @@ const LoginPage = () => {
       console.log('Login result:', success ? 'success' : 'failed');
       
       if (success) {
-        // If login is successful and user is super_admin, redirect to admin panel
-        if (isSuperAdmin) {
-          navigate('/admin', { replace: true });
-        } else {
-          navigate(from, { replace: true });
-        }
+        // Login was successful - the redirect will happen automatically 
+        // when the AuthContext sets the user state
       } else {
         // Login will display its own toast, but we also set this for form validation
         setLoginError('Login failed. Please check your credentials.');
       }
     } catch (error) {
       console.error('Login submission error:', error);
-      setLoginError('An unexpected error occurred.');
+      setLoginError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoggingIn(false);
     }

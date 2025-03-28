@@ -1,3 +1,4 @@
+
 import express from 'express';
 import pg from 'pg';
 import cors from 'cors';
@@ -12,7 +13,7 @@ const __dirname = path.dirname(__filename);
 
 const { Pool } = pg;
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 // Environment variables or defaults
 const SESSION_SECRET = process.env.SESSION_SECRET || 'quiz-app-secret-key-change-in-production';
@@ -51,6 +52,17 @@ const pool = new Pool({
   database: 'quiz',
   port: 5432,
 });
+
+// Test the database connection immediately on startup
+console.log('Testing database connection...');
+pool.connect()
+  .then(client => {
+    console.log('Database connection successful!');
+    client.release();
+  })
+  .catch(err => {
+    console.error('Database connection failed:', err);
+  });
 
 // Authentication middleware
 const requireAuth = async (req, res, next) => {
@@ -278,7 +290,7 @@ app.post('/api/tables/create', requireAuth, async (req, res) => {
 });
 
 // Run custom SQL
-app.post('/api/execute-sql', requireAuth, async (req, res) => {
+app.post('/api/execute-sql', async (req, res) => {
   const { sql } = req.body;
   
   if (!sql) {

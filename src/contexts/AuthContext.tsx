@@ -21,6 +21,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Custom API URL for auth endpoints
+const AUTH_API_URL = 'http://209.74.89.41:8080/api/auth';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkAuth = async () => {
       try {
         console.log('Checking authentication status...');
-        const response = await fetch('/api/auth/check', {
+        const response = await fetch(`${AUTH_API_URL}/check`, {
           credentials: 'include', // Important for cookies
           headers: {
             'Content-Type': 'application/json'
@@ -89,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Login attempt for user:', username);
       
       // Call the server's login API endpoint
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${AUTH_API_URL}/login`, {
         method: 'POST',
         credentials: 'include', // Important for cookies
         headers: {
@@ -98,10 +101,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ username, password })
       });
       
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Login failed with status:', response.status, errorData);
+        toast({
+          title: "Login Failed",
+          description: errorData.message || "Invalid credentials",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
       const result = await response.json();
       console.log('Login response:', result);
       
-      if (response.ok && result.success) {
+      if (result.success) {
         console.log('Login successful', result.user);
         setUser(result.user);
         
@@ -129,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Login error:', error);
       toast({
         title: "Login Error",
-        description: "An error occurred during login",
+        description: "An error occurred during login. Please check your network connection.",
         variant: "destructive"
       });
       return false;
@@ -141,12 +155,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       // Call logout API endpoint to clear the cookie
-      const response = await fetch('/api/auth/logout', {
+      const response = await fetch(`${AUTH_API_URL}/logout`, {
         method: 'POST',
         credentials: 'include'
       });
       
-      console.log('Logout response:', await response.json());
+      const result = await response.json();
+      console.log('Logout response:', result);
       
       setUser(null);
       

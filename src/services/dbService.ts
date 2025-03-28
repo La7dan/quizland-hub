@@ -1,5 +1,6 @@
+
 // API base URL - always pointing to the database server IP
-const API_BASE_URL = 'http://209.74.89.41:5000/api';
+const API_BASE_URL = 'http://209.74.89.41:8080/api';
 
 export interface TableColumn {
   name: string;
@@ -137,11 +138,17 @@ export const executeSql = async (
   sql: string
 ): Promise<{ success: boolean; message: string; rows?: any[]; rowCount?: number }> => {
   try {
+    console.log('Executing SQL on server:', API_BASE_URL);
     const response = await fetch(`${API_BASE_URL}/execute-sql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sql }),
     });
+    
+    if (!response.ok) {
+      throw new Error(`Server responded with status ${response.status}`);
+    }
+    
     const data = await response.json();
     return data;
   } catch (error) {
