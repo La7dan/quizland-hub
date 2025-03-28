@@ -1,6 +1,8 @@
+
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookHeart, User, LogOut, Shield, Menu, X } from 'lucide-react';
+import { User, LogOut, Shield, Menu, X } from 'lucide-react';
+import JumpingHorse from './icons/JumpingHorse';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -36,7 +38,7 @@ export default function Navigation() {
     <div className="border-b bg-background">
       <div className="container flex h-16 items-center px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2">
-          <BookHeart className="h-6 w-6 text-primary" />
+          <JumpingHorse className="h-6 w-6 text-primary" />
           <span className="font-bold text-xl">Alshaqab Quiz System</span>
         </Link>
         
