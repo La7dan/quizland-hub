@@ -37,8 +37,8 @@ export default function Navigation() {
     <div className="border-b bg-background">
       <div className="container flex h-16 items-center px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2">
-          <BookOpen className="h-6 w-6" />
-          <span className="font-bold text-xl">Quiz Platform</span>
+          <BookOpen className="h-6 w-6 text-primary" />
+          <span className="font-bold text-xl">Alshaqab Quiz System</span>
         </Link>
         
         {isMobile ? (

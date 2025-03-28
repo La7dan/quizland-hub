@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { getTables, clearTable, deleteTable, DBTable } from '@/services/dbService';
-import { Trash2, RefreshCw, TableProperties, X } from 'lucide-react';
+import { Trash2, RefreshCw, TableProperties, X, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import {
   AlertDialog,
@@ -15,6 +15,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface TableListProps {
   onRefresh: () => void;
@@ -25,23 +27,36 @@ const TableList = ({ onRefresh }: TableListProps) => {
   const [loading, setLoading] = useState(true);
   const [clearingTable, setClearingTable] = useState<string | null>(null);
   const [deletingTable, setDeletingTable] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<boolean>(false);
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const fetchTables = async () => {
     setLoading(true);
+    setAuthError(false);
     try {
       console.log('Fetching tables... Authentication status:', isAuthenticated);
       const result = await getTables();
       console.log('Fetch tables result:', result);
+      
       if (result.success) {
         setTables(result.tables);
       } else {
-        toast({
-          title: "Error fetching tables",
-          description: result.message,
-          variant: "destructive",
-        });
+        if (result.message === 'Authentication required') {
+          setAuthError(true);
+          toast({
+            title: "Authentication Error",
+            description: "Please log in to access database tables",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error fetching tables",
+            description: result.message,
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching tables:', error);
@@ -136,16 +151,37 @@ const TableList = ({ onRefresh }: TableListProps) => {
     fetchTables();
   };
 
+  const handleLogin = () => {
+    navigate('/login');
+  };
+
+  if (authError) {
+    return (
+      <div className="bg-white shadow-md rounded-lg p-6">
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
+          <h3 className="text-lg font-medium mb-2">Authentication Required</h3>
+          <p className="text-gray-500 mb-4">
+            You need to be logged in to view and manage database tables.
+          </p>
+          <Button onClick={handleLogin} className="bg-primary hover:bg-primary/90">
+            Log in to continue
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white shadow-md rounded-lg p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-medium flex items-center gap-2">
-          <TableProperties className="h-5 w-5 text-blue-600" />
+          <TableProperties className="h-5 w-5 text-primary" />
           Database Tables
         </h2>
         <button
           onClick={handleManualRefresh}
-          className="flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-md text-sm transition-colors"
+          className="flex items-center gap-1 bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 rounded-md text-sm transition-colors"
           disabled={loading}
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -155,7 +191,7 @@ const TableList = ({ onRefresh }: TableListProps) => {
 
       {loading ? (
         <div className="flex justify-center py-8">
-          <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
         </div>
       ) : tables.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
