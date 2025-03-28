@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks: {
           react: ['react', 'react-dom'],
-          ui: ['@/components/ui']
+          ui: ['@/components/ui/button', '@/components/ui/card', '@/components/ui/input', '@/components/ui/label']
         }
       }
     }
