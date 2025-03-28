@@ -15,6 +15,8 @@ import EmptyEvaluations from './EmptyEvaluations';
 import EvaluationsErrorDisplay from './EvaluationsErrorDisplay';
 import { Evaluation } from '@/services/evaluations/types';
 import { executeSql } from '@/services/apiService';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 interface EvaluationsCardProps {
   isLoading: boolean;
@@ -27,27 +29,39 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
   isLoading, error, evaluations, coachId 
 }) => {
   // Fetch all evaluations (including completed ones)
-  const { data: allEvaluations, isLoading: allEvaluationsLoading } = useQuery({
+  const { data: allEvaluations, isLoading: allEvaluationsLoading, error: allEvaluationsError } = useQuery({
     queryKey: ['allEvaluations', coachId],
     queryFn: async () => {
-      const query = `
-        SELECT e.id, e.status, e.nominated_at, e.evaluation_date, e.evaluation_pdf,
-               m.name as member_name, m.member_id as member_code
-        FROM evaluations e
-        JOIN members m ON e.member_id = m.id
-        WHERE m.coach_id = ${coachId}
-        ORDER BY e.nominated_at DESC
-      `;
-      
-      const result = await executeSql(query);
-      return result.rows || [];
-    }
+      try {
+        console.log('Fetching all evaluations for coach:', coachId);
+        const query = `
+          SELECT e.id, e.status, e.nominated_at, e.evaluation_date, e.evaluation_pdf,
+                m.name as member_name, m.member_id as member_code
+          FROM evaluations e
+          JOIN members m ON e.member_id = m.id
+          WHERE m.coach_id = ${coachId}
+          ORDER BY e.nominated_at DESC
+        `;
+        
+        const result = await executeSql(query);
+        console.log('All evaluations fetch result:', result);
+        return result.rows || [];
+      } catch (err) {
+        console.error('Error fetching all evaluations:', err);
+        throw err;
+      }
+    },
+    retry: 2
   });
 
   // Get evaluations by status
   const completedEvaluations = allEvaluations?.filter(e => e.evaluation_pdf) || [];
   const approvedEvaluations = allEvaluations?.filter(e => e.status === 'approved') || [];
   const disapprovedEvaluations = allEvaluations?.filter(e => e.status === 'disapproved') || [];
+  
+  // Check for database connection errors
+  const hasConnectionError = error?.message?.includes('Failed to fetch') || 
+                            allEvaluationsError?.message?.includes('Failed to fetch');
 
   return (
     <Card>
@@ -58,6 +72,15 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {hasConnectionError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Unable to connect to the database. Please check your network connection and try again.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <Tabs defaultValue="pending" className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="pending">Pending</TabsTrigger>
@@ -70,7 +93,7 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
           <TabsContent value="pending">
             {isLoading ? (
               <LoadingEvaluations />
-            ) : error ? (
+            ) : error && !hasConnectionError ? (
               <EvaluationsErrorDisplay />
             ) : evaluations && evaluations.length > 0 ? (
               <PendingEvaluationsList evaluations={evaluations} />
@@ -122,7 +145,11 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
               <PendingEvaluationsList evaluations={allEvaluations} showAll={true} />
             ) : (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">No evaluations found.</p>
+                <p className="text-muted-foreground">
+                  {hasConnectionError 
+                    ? "Unable to load evaluations due to connection issues." 
+                    : "No evaluations found. Create evaluations for your members to get started."}
+                </p>
               </div>
             )}
           </TabsContent>

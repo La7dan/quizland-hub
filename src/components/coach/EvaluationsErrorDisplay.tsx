@@ -1,14 +1,14 @@
 
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const EvaluationsErrorDisplay: React.FC = () => {
   return (
-    <Alert variant="destructive">
-      <AlertCircle className="h-4 w-4" />
+    <Alert variant="destructive" className="my-4">
+      <AlertTriangle className="h-4 w-4" />
       <AlertDescription>
-        Failed to load evaluations. Please try again later.
+        There was an error loading evaluations. Please try refreshing the page. If the problem persists, contact support.
       </AlertDescription>
     </Alert>
   );
