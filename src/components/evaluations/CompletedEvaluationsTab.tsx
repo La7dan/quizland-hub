@@ -1,4 +1,12 @@
-import React from 'react';
+
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { executeSql } from '@/services/apiService';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search, FileCheck, Download } from 'lucide-react';
+import { EvaluationDisplayItem } from './types';
+import EvaluationItem from './EvaluationItem';
 
 interface CompletedEvaluationsTabProps {
   refreshTrigger?: number;
