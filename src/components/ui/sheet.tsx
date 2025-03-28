@@ -63,7 +63,7 @@ const SheetContent = React.forwardRef<
       className={cn(sheetVariants({ side }), className)}
       {...props}
     >
-      {/* Add a default description to fix accessibility warning */}
+      {/* Add a visible description for accessibility */}
       <SheetPrimitive.Description className="sr-only">
         Sheet content
       </SheetPrimitive.Description>

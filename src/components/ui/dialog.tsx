@@ -42,7 +42,7 @@ const DialogContent = React.forwardRef<
       )}
       {...props}
     >
-      {/* Add a default empty description to fix the warning */}
+      {/* This makes the Dialog accessible by adding a description */}
       <DialogPrimitive.Description className="sr-only">
         Dialog content
       </DialogPrimitive.Description>
