@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { cleanDummyData } from '@/services/dbService';
+import { cleanDummyData } from '@/services/cleanDatabaseService';
 import { Trash2, RefreshCw } from 'lucide-react';
 
 export default function DatabaseActions() {
@@ -10,6 +10,10 @@ export default function DatabaseActions() {
   const { toast } = useToast();
 
   const handleCleanDummyData = async () => {
+    if (!confirm('Warning: This will delete ALL quizzes and questions. Are you sure you want to proceed?')) {
+      return;
+    }
+    
     try {
       setIsCleaningData(true);
       
