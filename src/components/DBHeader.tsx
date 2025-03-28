@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { checkConnection } from '@/services/apiService';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +17,7 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastCheckRef = useRef<number>(0);
   
-  const MIN_CHECK_INTERVAL = 5 * 60 * 1000; // Increase to 5 minutes
+  const MIN_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
   
   const checkDatabaseConnection = async (force = false) => {
     // Skip check if already connected and not forced
@@ -71,18 +72,25 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
       checkDatabaseConnection(true);
     }, 2000);
     
+    // Set up periodic checks if not yet connected
+    const setupIntervalCheck = () => {
+      if (!checkIntervalRef.current) {
+        checkIntervalRef.current = setInterval(() => {
+          // Only perform periodic checks if not connected
+          if (connectionStatus !== 'connected') {
+            checkDatabaseConnection();
+          } else if (checkIntervalRef.current) {
+            // Clear interval if we're connected
+            clearInterval(checkIntervalRef.current);
+            checkIntervalRef.current = null;
+          }
+        }, MIN_CHECK_INTERVAL);
+      }
+    };
+    
     // Only set up periodic checks if not yet connected
     if (connectionStatus !== 'connected') {
-      checkIntervalRef.current = setInterval(() => {
-        // Only perform periodic checks if disconnected or checking
-        if (connectionStatus !== 'connected') {
-          checkDatabaseConnection();
-        } else if (checkIntervalRef.current) {
-          // Clear interval if we're connected
-          clearInterval(checkIntervalRef.current);
-          checkIntervalRef.current = null;
-        }
-      }, MIN_CHECK_INTERVAL);
+      setupIntervalCheck();
     }
     
     return () => {
