@@ -207,16 +207,29 @@ const batchImportMembers = async (members: Member[]): Promise<MemberImportRespon
         const batchResult = await batchImportMemberQuery(batch);
         
         if (batchResult.success) {
-          totalSuccess += batchResult.successCount || 0;
-          totalErrors += batchResult.errorCount || 0;
-          
-          if (batchResult.errors && batchResult.errors.length > 0) {
-            allErrors.push(...batchResult.errors);
+          // Check if we have the successful batch result shape
+          if ('successCount' in batchResult) {
+            totalSuccess += batchResult.successCount || 0;
+            totalErrors += batchResult.errorCount || 0;
+            
+            if (batchResult.errors && batchResult.errors.length > 0) {
+              allErrors.push(...batchResult.errors);
+            }
+          } else {
+            // This batch was successful but we don't have detailed stats
+            // Assume all members were imported successfully
+            totalSuccess += batch.length;
           }
         } else {
-          // If the whole batch failed, mark all members as failed
+          // If the whole batch failed
           totalErrors += batch.length;
-          allErrors.push(`Batch ${batchIndex + 1} failed: ${batchResult.message}`);
+          
+          // Add error message if available
+          if ('message' in batchResult) {
+            allErrors.push(`Batch ${batchIndex + 1} failed: ${batchResult.message}`);
+          } else {
+            allErrors.push(`Batch ${batchIndex + 1} failed: Unknown error`);
+          }
         }
       } catch (error) {
         totalErrors += batch.length;

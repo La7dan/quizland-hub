@@ -65,7 +65,7 @@ export const batchImportMemberQuery = async (members: Member[]) => {
     console.log(`Deduplicating ${members.length} members to ${uniqueMembers.length} unique members`);
     
     // If we have too many members, split into smaller batches
-    const maxBatchSize = 50; // Smaller batch size to reduce risk of errors
+    const maxBatchSize = 25; // Smaller batch size to reduce risk of errors
     const results = {
       success: true,
       successCount: 0,
@@ -76,7 +76,7 @@ export const batchImportMemberQuery = async (members: Member[]) => {
     // Process in smaller chunks to avoid SQL statement size limitations
     for (let i = 0; i < uniqueMembers.length; i += maxBatchSize) {
       const batch = uniqueMembers.slice(i, i + maxBatchSize);
-      console.log(`Processing sub-batch ${i / maxBatchSize + 1} with ${batch.length} members`);
+      console.log(`Processing sub-batch ${Math.floor(i / maxBatchSize) + 1} with ${batch.length} members`);
       
       const valuesClauses = batch.map(member => `(
         ${sqlEscape.string(member.member_id)}, 
@@ -108,11 +108,11 @@ export const batchImportMemberQuery = async (members: Member[]) => {
         
         if (batchSuccessCount < batch.length) {
           results.errorCount += (batch.length - batchSuccessCount);
-          results.errors.push(`${batch.length - batchSuccessCount} records failed in batch ${i / maxBatchSize + 1}`);
+          results.errors.push(`${batch.length - batchSuccessCount} records failed in batch ${Math.floor(i / maxBatchSize) + 1}`);
         }
       } else {
         results.errorCount += batch.length;
-        results.errors.push(`Batch ${i / maxBatchSize + 1} failed: ${result.message || 'Unknown error'}`);
+        results.errors.push(`Batch ${Math.floor(i / maxBatchSize) + 1} failed: ${result.message || 'Unknown error'}`);
       }
     }
     
