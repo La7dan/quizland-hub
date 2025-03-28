@@ -31,21 +31,28 @@ const DatabaseSetupButton = () => {
         console.log('Database setup completed successfully');
         toast({
           title: "Success",
-          description: "Database setup completed successfully. Tables and initial data created.",
+          description: "Database structure initialized successfully.",
         });
       } else {
-        console.error('Database setup failed:', result.message);
-        toast({
-          title: "Error",
-          description: "Database setup failed: " + result.message,
-          variant: "destructive"
-        });
+        if (result.message?.includes('already exists')) {
+          toast({
+            title: "Information",
+            description: "Database tables already exist. No changes were made.",
+          });
+        } else {
+          console.error('Database setup failed:', result.message);
+          toast({
+            title: "Warning",
+            description: "Database setup encountered an issue: " + result.message,
+            variant: "destructive"
+          });
+        }
       }
     } catch (error) {
       console.error('Error setting up database:', error);
       toast({
         title: "Error",
-        description: "An error occurred during database setup: " + (error instanceof Error ? error.message : String(error)),
+        description: "Unable to connect to the database server. Please make sure the server is running.",
         variant: "destructive"
       });
     } finally {
@@ -66,7 +73,7 @@ const DatabaseSetupButton = () => {
       ) : (
         <Database className="h-4 w-4" />
       )}
-      {isLoading ? "Setting Up Database..." : "Setup Database"}
+      {isLoading ? "Initializing Database..." : "Initialize Database"}
     </Button>
   );
 };

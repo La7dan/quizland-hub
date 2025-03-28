@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { checkConnection } from '@/services/apiService';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Database, ServerOff } from 'lucide-react';
+import { AlertCircle, Database, ServerOff, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface DBHeaderProps {
   onOpenCreateTable: () => void;
@@ -12,10 +13,12 @@ interface DBHeaderProps {
 const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
   const [statusMessage, setStatusMessage] = useState('Checking connection...');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const checkDatabaseConnection = async () => {
     setConnectionStatus('checking');
     setStatusMessage('Checking connection...');
+    setIsRefreshing(true);
     
     try {
       const result = await checkConnection();
@@ -24,12 +27,14 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
         setStatusMessage('Connected to database');
       } else {
         setConnectionStatus('disconnected');
-        setStatusMessage(`Connection failed: ${result.message}`);
+        setStatusMessage(`Unable to connect to database server`);
       }
     } catch (error) {
       setConnectionStatus('disconnected');
-      setStatusMessage('Connection error');
+      setStatusMessage('Database server is not responding');
       console.error('Connection check failed:', error);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -71,20 +76,33 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
               Checking...
             </Badge>
           )}
-          <button 
+          <Button 
             onClick={checkDatabaseConnection}
-            className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 px-2 py-1 rounded-md transition-colors"
+            size="sm"
+            variant="outline"
+            className="text-xs flex items-center gap-1"
+            disabled={isRefreshing}
           >
+            {isRefreshing ? (
+              <RefreshCw className="h-3 w-3 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3 w-3" />
+            )}
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
       
       <p className="text-sm text-gray-600 mt-2">
         {statusMessage}
+        {connectionStatus === 'disconnected' && (
+          <span className="text-xs block mt-1 text-red-600">
+            Make sure the server is running. Launch it with <code className="bg-gray-100 px-1">node server.js</code> command.
+          </span>
+        )}
       </p>
       
-      <div className="grid grid-cols-4 gap-4 mt-4 text-xs text-gray-700">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 sm:gap-4 mt-4 text-xs text-gray-700">
         <div className="bg-gray-50 p-2 rounded">
           <span className="font-medium">Host:</span> 209.74.89.41
         </div>
