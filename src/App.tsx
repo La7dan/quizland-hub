@@ -24,7 +24,14 @@ const App: React.FC = () => {
         <Route path="/" element={<Index />} />
         <Route path="/quizzes" element={<QuizzesPage />} />
         <Route path="/quiz/:id" element={<QuizPage />} />
-        <Route path="/quiz/preview/:id" element={<QuizPreviewPage />} />
+        <Route 
+          path="/quiz/preview/:id" 
+          element={
+            <ProtectedRoute requireAdmin>
+              <QuizPreviewPage />
+            </ProtectedRoute>
+          } 
+        />
         <Route path="/login" element={<LoginPage />} />
         <Route 
           path="/admin" 

@@ -14,6 +14,14 @@ let cachedConnectionStatus = {
 
 const CONNECTION_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Helper function to check admin privileges
+const requireAdmin = (req, res, next) => {
+  if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
+    return res.status(403).json({ success: false, message: 'Admin privileges required' });
+  }
+  next();
+};
+
 // Test database connection
 router.get('/check-connection', async (req, res) => {
   const now = Date.now();
@@ -66,8 +74,8 @@ router.get('/check-connection', async (req, res) => {
   }
 });
 
-// Get all tables in the database
-router.get('/tables', requireAuth, async (req, res) => {
+// Get all tables in the database - require admin
+router.get('/tables', requireAuth, requireAdmin, async (req, res) => {
   try {
     const client = await pool.connect();
     const result = await client.query(`
@@ -84,8 +92,8 @@ router.get('/tables', requireAuth, async (req, res) => {
   }
 });
 
-// Clear a specific table
-router.post('/tables/clear', requireAuth, async (req, res) => {
+// Clear a specific table - require admin
+router.post('/tables/clear', requireAuth, requireAdmin, async (req, res) => {
   const { tableName } = req.body;
   
   if (!tableName) {
@@ -103,8 +111,8 @@ router.post('/tables/clear', requireAuth, async (req, res) => {
   }
 });
 
-// Clear all tables
-router.post('/tables/clear-all', requireAuth, async (req, res) => {
+// Clear all tables - require admin
+router.post('/tables/clear-all', requireAuth, requireAdmin, async (req, res) => {
   try {
     const client = await pool.connect();
     const result = await client.query(`
@@ -131,8 +139,8 @@ router.post('/tables/clear-all', requireAuth, async (req, res) => {
   }
 });
 
-// Delete a table
-router.post('/tables/delete', requireAuth, async (req, res) => {
+// Delete a table - require admin
+router.post('/tables/delete', requireAuth, requireAdmin, async (req, res) => {
   const { tableName } = req.body;
   
   if (!tableName) {
@@ -150,8 +158,8 @@ router.post('/tables/delete', requireAuth, async (req, res) => {
   }
 });
 
-// Create a table
-router.post('/tables/create', requireAuth, async (req, res) => {
+// Create a table - require admin
+router.post('/tables/create', requireAuth, requireAdmin, async (req, res) => {
   const { tableName, columns } = req.body;
   
   if (!tableName || !columns || !columns.length) {
@@ -184,8 +192,8 @@ router.post('/tables/create', requireAuth, async (req, res) => {
   }
 });
 
-// Run custom SQL
-router.post('/execute-sql', async (req, res) => {
+// Run custom SQL - require admin
+router.post('/execute-sql', requireAuth, requireAdmin, async (req, res) => {
   const { sql } = req.body;
   
   if (!sql) {

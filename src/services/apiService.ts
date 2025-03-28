@@ -13,7 +13,8 @@ export const callApi = async <T>(
   try {
     const options: RequestInit = {
       method,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include' // Important to include cookies for authentication
     };
 
     if (body) {
@@ -27,6 +28,15 @@ export const callApi = async <T>(
     const response = await fetch(`${API_BASE_URL}/${cleanEndpoint}`, options);
     
     if (!response.ok) {
+      // Check for authentication errors
+      if (response.status === 401) {
+        throw new Error('Authentication required. Please log in.');
+      }
+      
+      if (response.status === 403) {
+        throw new Error('Access denied. You do not have sufficient privileges.');
+      }
+      
       const errorText = await response.text();
       throw new Error(`Server responded with ${response.status}: ${errorText || response.statusText}`);
     }
@@ -73,10 +83,26 @@ export const executeSql = async (
     const response = await fetch(`${API_BASE_URL}/execute-sql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // Include cookies for authentication
       body: JSON.stringify({ sql }),
     });
     
     if (!response.ok) {
+      // Check for authentication errors
+      if (response.status === 401) {
+        return { 
+          success: false, 
+          message: 'Authentication required. Please log in.' 
+        };
+      }
+      
+      if (response.status === 403) {
+        return { 
+          success: false, 
+          message: 'Access denied. You do not have sufficient privileges.' 
+        };
+      }
+      
       const errorText = await response.text();
       throw new Error(`Server responded with status ${response.status}: ${errorText || 'Unknown error'}`);
     }

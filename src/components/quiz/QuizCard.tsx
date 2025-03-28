@@ -25,6 +25,7 @@ export function QuizCard({ quiz, levelCodes, onDeleteClick }: QuizCardProps) {
     navigate(`/quiz/preview/${quizId}`);
   };
 
+  // Check if user has admin privileges (super_admin or admin)
   const isAdmin = isAuthenticated && user && (user.role === 'super_admin' || user.role === 'admin');
 
   return (

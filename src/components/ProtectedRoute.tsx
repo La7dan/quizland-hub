@@ -6,9 +6,10 @@ import { useEffect } from 'react';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireSuperAdmin?: boolean;
+  requireAdmin?: boolean;
 }
 
-const ProtectedRoute = ({ children, requireSuperAdmin = false }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, requireSuperAdmin = false, requireAdmin = false }: ProtectedRouteProps) => {
   const { isAuthenticated, user, loading } = useAuth();
   const location = useLocation();
   
@@ -18,9 +19,10 @@ const ProtectedRoute = ({ children, requireSuperAdmin = false }: ProtectedRouteP
       isAuthenticated, 
       userRole: user?.role,
       requireSuperAdmin,
+      requireAdmin,
       currentPath: location.pathname
     });
-  }, [isAuthenticated, user, requireSuperAdmin, location]);
+  }, [isAuthenticated, user, requireSuperAdmin, requireAdmin, location]);
   
   // If still loading authentication state, show loading indicator
   if (loading) {
@@ -40,6 +42,12 @@ const ProtectedRoute = ({ children, requireSuperAdmin = false }: ProtectedRouteP
   // Check for super admin access if required
   if (requireSuperAdmin && user?.role !== 'super_admin') {
     console.log('Not a super admin, redirecting to home');
+    return <Navigate to="/" replace />;
+  }
+  
+  // Check for admin access if required (both admin and super_admin roles qualify)
+  if (requireAdmin && user?.role !== 'super_admin' && user?.role !== 'admin') {
+    console.log('Not an admin, redirecting to home');
     return <Navigate to="/" replace />;
   }
   

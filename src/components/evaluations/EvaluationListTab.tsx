@@ -1,9 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, TableBody } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { exportToCSV } from './utils';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 // Components
 import EvaluationTableHeader from './EvaluationTableHeader';
@@ -28,7 +30,21 @@ interface EvaluationListTabProps {
 
 const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger }) => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+  
+  // Redirect non-admin users
+  useEffect(() => {
+    if (!isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to view evaluations.",
+        variant: "destructive"
+      });
+      navigate('/');
+    }
+  }, [isAdmin, navigate, toast]);
   
   // State for editing evaluations
   const [editingEvaluation, setEditingEvaluation] = useState<EvaluationDisplayItem | null>(null);
@@ -94,11 +110,10 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
     setIsEditDialogOpen(true);
   };
 
-  console.log('Rendering evaluation list with:', {
-    dataLength: data?.length || 0,
-    filteredLength: filteredEvaluations?.length || 0,
-    isLoading
-  });
+  // If user isn't admin, don't render anything (they'll be redirected)
+  if (!isAdmin) {
+    return <LoadingEvaluationState />;
+  }
 
   if (isLoading) {
     return <LoadingEvaluationState />;
