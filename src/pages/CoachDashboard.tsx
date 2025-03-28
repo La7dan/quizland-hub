@@ -7,7 +7,7 @@ import Navigation from '@/components/Navigation';
 import CoachDashboardHeader from '@/components/coach/CoachDashboardHeader';
 import EvaluationsCard from '@/components/coach/EvaluationsCard';
 import MembersSection from '@/components/coach/MembersSection';
-import { fetchPendingEvaluations } from '@/services/evaluations/evaluationService';
+import { fetchPendingEvaluations } from '@/services/evaluations'; // Updated import path
 // Import User type from AuthContext instead of userService
 import type { User as AuthUser } from '@/contexts/AuthContext';
 
