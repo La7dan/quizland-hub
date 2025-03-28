@@ -12,11 +12,15 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { format } from 'date-fns';
-import { Search, ArrowUp, ArrowDown, Filter } from 'lucide-react';
+import { Search, ArrowUp, ArrowDown, Filter, Trash2 } from 'lucide-react';
 import { SortField } from '../hooks/useEvaluationFilters';
 import LoadingEvaluations from '../LoadingEvaluations';
 import EvaluationActions from '../EvaluationActions';
 import { Evaluation } from '@/services/evaluations/types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { executeSql } from '@/services/apiService';
+import { useToast } from '@/components/ui/use-toast';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface CompletedEvaluationsTabProps {
   allEvaluationsLoading: boolean;
@@ -49,6 +53,46 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({
   renderResultBadge,
   renderSortIndicator,
 }) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [deleteEvaluationId, setDeleteEvaluationId] = React.useState<number | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const query = `DELETE FROM evaluations WHERE id = ${id} RETURNING id`;
+      return await executeSql(query);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Evaluation deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['allEvaluations'] });
+      setIsDeleteDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete evaluation: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Handle delete
+  const handleDelete = (id: number) => {
+    setDeleteEvaluationId(id);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const confirmDelete = () => {
+    if (deleteEvaluationId) {
+      deleteMutation.mutate(deleteEvaluationId);
+    }
+  };
+
   if (allEvaluationsLoading) {
     return <LoadingEvaluations />;
   }
@@ -145,13 +189,21 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({
                     <TableCell>
                       {renderResultBadge(evaluation.evaluation_result)}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right flex justify-end items-center space-x-2">
                       <EvaluationActions 
                         evaluationId={evaluation.id!}
                         pdfFileName={evaluation.evaluation_pdf}
                         status={evaluation.status}
                         showAll={true}
                       />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(evaluation.id!)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -168,6 +220,18 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({
           </p>
         </div>
       )}
+      
+      <ConfirmationDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Delete Evaluation"
+        description="Are you sure you want to delete this evaluation? This action cannot be undone."
+        onConfirm={confirmDelete}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        loading={deleteMutation.isPending}
+      />
     </>
   );
 };

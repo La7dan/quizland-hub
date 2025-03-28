@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -42,6 +43,7 @@ const DisapprovalDialog: React.FC<DisapprovalDialogProps> = ({
         setDisapprovalReason('');
         queryClient.invalidateQueries({ queryKey: ['pendingEvaluations'] });
         queryClient.invalidateQueries({ queryKey: ['allEvaluations'] });
+        queryClient.invalidateQueries({ queryKey: ['completedEvaluations'] });
       } else {
         toast({
           title: "Error",

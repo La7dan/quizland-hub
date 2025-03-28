@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileText, CheckCircle } from 'lucide-react';
+import { FileText, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import DisapprovalDialog from './DisapprovalDialog';
@@ -41,6 +41,7 @@ const EvaluationActions: React.FC<EvaluationActionsProps> = ({
         });
         queryClient.invalidateQueries({ queryKey: ['pendingEvaluations'] });
         queryClient.invalidateQueries({ queryKey: ['allEvaluations'] });
+        queryClient.invalidateQueries({ queryKey: ['completedEvaluations'] });
       } else {
         toast({
           title: "Error",
@@ -82,26 +83,22 @@ const EvaluationActions: React.FC<EvaluationActionsProps> = ({
         </Button>
       )}
       
-      {/* Show approve/disapprove buttons regardless of PDF/result status */}
-      {(showAll || status === 'pending') && (
-        <>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={handleApprove}
-            disabled={approveMutation.isPending}
-          >
-            <CheckCircle className="h-4 w-4 text-green-500" />
-            {showAll && status === 'approved' ? 'Approved' : 'Approve'}
-          </Button>
-          
-          <DisapprovalDialog 
-            evaluationId={evaluationId} 
-            showStatus={showAll && status === 'disapproved'} 
-          />
-        </>
-      )}
+      {/* Always show approve/disapprove buttons */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="flex items-center gap-1"
+        onClick={handleApprove}
+        disabled={approveMutation.isPending}
+      >
+        <CheckCircle className="h-4 w-4 text-green-500" />
+        {showAll && status === 'approved' ? 'Approved' : 'Approve'}
+      </Button>
+      
+      <DisapprovalDialog 
+        evaluationId={evaluationId} 
+        showStatus={showAll && status === 'disapproved'} 
+      />
     </div>
   );
 };
