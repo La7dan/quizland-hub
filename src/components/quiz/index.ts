@@ -7,3 +7,6 @@ export * from './LoadingState';
 export * from './QuizzesList';
 export * from './QuizFilters';
 export * from './PageHeader';
+export * from './hooks/useQuizzes';
+export * from './hooks/useQuizDeletion';
+
