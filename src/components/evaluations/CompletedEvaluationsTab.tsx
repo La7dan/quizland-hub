@@ -41,7 +41,7 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
                m.name as member_name, m.member_id as member_code
         FROM evaluations e
         JOIN members m ON e.member_id = m.id
-        WHERE e.status = 'completed' OR e.evaluation_result = 'passed'
+        WHERE e.status = 'completed' OR e.evaluation_result IS NOT NULL
       `;
       
       if (searchTerm) {
@@ -304,7 +304,7 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
           <p className="text-muted-foreground mt-1">
             {searchTerm
               ? "Try changing your search"
-              : "Mark evaluations as 'completed' or 'passed' to see them here"}
+              : "Mark evaluations as 'completed' or add a result to see them here"}
           </p>
         </div>
       )}

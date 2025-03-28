@@ -302,7 +302,7 @@ router.get('/completed', requireAuth, async (req, res) => {
              m.name as member_name, m.member_id as member_code
       FROM evaluations e
       JOIN members m ON e.member_id = m.id
-      WHERE e.status = 'completed' OR e.evaluation_result = 'passed'
+      WHERE e.status = 'completed' OR e.evaluation_result IS NOT NULL
       ORDER BY e.evaluation_date DESC NULLS LAST;
     `);
     client.release();
