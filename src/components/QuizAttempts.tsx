@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { getQuizAttempts, bulkDeleteQuizAttempts } from '@/services/quizService';
+import { getQuizAttempts, deleteQuizAttempt, bulkDeleteQuizAttempts } from '@/services/quiz';
 import { 
   Table, 
   TableBody, 

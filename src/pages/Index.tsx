@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,14 +22,12 @@ export default function Index() {
     queryFn: getQuizzes,
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 2, // Retry failed requests up to 2 times
-    onSettled: (data, error) => {
-      if (error) {
-        console.error('Failed to fetch quizzes:', error);
-        toast('Error loading quizzes', {
-          description: 'Unable to connect to the database. Please try again later.',
-          duration: 5000,
-        });
-      }
+    onError: (error) => {
+      console.error('Failed to fetch quizzes:', error);
+      toast('Error loading quizzes', {
+        description: 'Unable to connect to the database. Please try again later.',
+        duration: 5000,
+      });
     }
   });
   

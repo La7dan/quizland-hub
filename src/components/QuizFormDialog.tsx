@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/components/ui/use-toast';
-import { createQuiz, updateQuiz } from '@/services/quizService';
+import { createQuiz, updateQuiz, getQuizLevels } from '@/services/quiz';
 import {
   Dialog,
   DialogContent,

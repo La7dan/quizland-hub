@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getQuizLevels } from '@/services/quizService';
+import { getQuizLevels } from '@/services/quiz';
 import { getUsers } from '@/services/dbService';
 import { importMembers, Member } from '@/services/members/memberService';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';

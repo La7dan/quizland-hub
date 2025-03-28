@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { getQuizById, addQuestion, updateQuestion, deleteQuestion } from '@/services/quizService';
+import { getQuizById, getQuizQuestions, deleteQuestion } from '@/services/quiz';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   Table, 

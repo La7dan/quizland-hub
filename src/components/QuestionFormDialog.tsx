@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { addQuestion, updateQuestion, getQuestionById } from '@/services/quizService';
+import { addQuestion, updateQuestion, getQuestionById } from '@/services/quiz';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Plus, Trash, Save } from 'lucide-react';

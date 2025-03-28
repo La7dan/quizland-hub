@@ -1,8 +1,7 @@
-
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getQuizLevels } from '@/services/quizService';
+import { getQuizLevels } from '@/services/quiz';
 import { getUsers } from '@/services/dbService';
 import { createMember, updateMember, Member } from '@/services/members/memberService';
 import { useToast } from '@/hooks/use-toast';

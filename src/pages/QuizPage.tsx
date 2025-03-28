@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
-import { getQuizById, saveQuizAttempt } from '@/services/quizService';
+import { getQuizById, saveQuizAttempt } from '@/services/quiz';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';

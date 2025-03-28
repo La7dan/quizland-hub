@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getQuizzes } from '@/services/quizService';
+import { getQuizzes } from '@/services/quiz';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { executeSql } from '@/services/dbService';
+import { executeSql, deleteQuiz } from '@/services/dbService';
 
 interface QuizzesListProps {
   sortBy?: string;
@@ -47,7 +47,6 @@ export default function QuizzesList({
   const { user, isAuthenticated } = useAuth();
 
   const fetchQuizzes = async () => {
-    // If quizzes are provided through props, use them instead of fetching
     if (quizzesData && !propIsLoading) {
       processQuizzes(quizzesData);
       return;
@@ -73,22 +72,18 @@ export default function QuizzesList({
 
   const processQuizzes = (response: any) => {
     if (response && response.success) {
-      // Filter quizzes based on user role
       let filteredQuizzes = response.quizzes || [];
       
-      // For non-admin users, only show visible quizzes
       if (!isAuthenticated || (user && user.role !== 'super_admin' && user.role !== 'admin')) {
         filteredQuizzes = filteredQuizzes.filter((quiz: any) => quiz.is_visible);
       }
       
-      // Apply category filter if selected
       if (categoryFilter !== "all") {
         filteredQuizzes = filteredQuizzes.filter((quiz: any) => 
           String(quiz.level_id) === categoryFilter
         );
       }
       
-      // Sort quizzes
       const sortedQuizzes = sortQuizzes(filteredQuizzes, sortBy, sortOrder);
       setQuizzes(sortedQuizzes);
     } else {
@@ -102,17 +97,14 @@ export default function QuizzesList({
   };
 
   useEffect(() => {
-    // Update loading state if prop changes
     if (propIsLoading !== undefined) {
       setLoading(propIsLoading);
     }
     
-    // Update error state if prop changes
     if (propError) {
       setError(propError.message || "An error occurred");
     }
     
-    // Process quizzes data if provided
     if (quizzesData) {
       processQuizzes(quizzesData);
     } else {
@@ -165,22 +157,17 @@ export default function QuizzesList({
     try {
       setLoading(true);
       
-      // First delete related questions
       await executeSql(`
         DELETE FROM questions WHERE quiz_id = ${deleteQuizId}
       `);
       
-      // Then delete the quiz
-      await executeSql(`
-        DELETE FROM quizzes WHERE id = ${deleteQuizId}
-      `);
+      await deleteQuiz(deleteQuizId);
       
       toast({
         title: "Success",
         description: "Quiz deleted successfully",
       });
       
-      // Refresh the list
       fetchQuizzes();
     } catch (error) {
       console.error('Error deleting quiz:', error);

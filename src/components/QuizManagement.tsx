@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { getQuizzes, getQuizLevels, deleteQuiz } from '@/services/quizService';
+import { getQuizzes, getQuizLevels, deleteQuiz } from '@/services/quiz';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   Table, 
@@ -32,7 +31,6 @@ const QuizManagement = ({ onRefresh }: QuizManagementProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch quizzes with React Query
   const { 
     data: quizzesData, 
     isLoading: quizzesLoading, 
@@ -42,7 +40,6 @@ const QuizManagement = ({ onRefresh }: QuizManagementProps) => {
     queryFn: getQuizzes
   });
 
-  // Fetch levels for dropdowns
   const { data: levelsData } = useQuery({
     queryKey: ['quizLevels'],
     queryFn: getQuizLevels
@@ -51,7 +48,6 @@ const QuizManagement = ({ onRefresh }: QuizManagementProps) => {
   const quizzes = quizzesData?.quizzes || [];
   const levels = levelsData?.levels || [];
 
-  // Delete quiz mutation
   const deleteQuizMutation = useMutation({
     mutationFn: deleteQuiz,
     onSuccess: () => {
@@ -71,7 +67,6 @@ const QuizManagement = ({ onRefresh }: QuizManagementProps) => {
     }
   });
 
-  // Bulk delete quizzes mutation
   const bulkDeleteQuizzesMutation = useMutation({
     mutationFn: async (ids: number[]) => {
       for (const id of ids) {

@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { ArrowDown, ArrowUp, Moon, Sun } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
-import { getQuizLevels } from '@/services/quizService';
+import { getQuizLevels } from '@/services/quiz';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 

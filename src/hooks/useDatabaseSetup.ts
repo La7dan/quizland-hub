@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { executeSql, initializeDatabase } from '@/services/dbService';
@@ -56,7 +55,7 @@ export const useDatabaseSetup = () => {
               queryKey: ['quizzes'],
               queryFn: async () => {
                 try {
-                  const { getQuizzes } = await import('@/services/quizService');
+                  const { getQuizzes } = await import('@/services/quiz');
                   return getQuizzes();
                 } catch (error) {
                   console.error('Error prefetching quizzes:', error);
