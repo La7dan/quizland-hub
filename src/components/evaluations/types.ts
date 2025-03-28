@@ -12,6 +12,7 @@ export interface EvaluationDisplayItem {
   coach_id?: number;
   member_level?: string;
   coach_name?: string;
+  classes_count?: number;
 }
 
 // Add the missing type for the form data

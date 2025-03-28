@@ -22,6 +22,9 @@ const CoachDashboard = () => {
     enabled: !!user?.id && isAuthenticated && user.role === 'coach'
   });
 
+  // Get the pending evaluations count
+  const pendingCount = data?.evaluations?.length || 0;
+
   // If loading auth, show loading spinner
   if (loading) {
     return (
@@ -46,7 +49,7 @@ const CoachDashboard = () => {
       <Navigation />
       <div className="container py-8">
         <div className="flex flex-col gap-6">
-          <CoachDashboardHeader user={user as AuthUser} />
+          <CoachDashboardHeader user={user as AuthUser} pendingCount={pendingCount} />
           
           {/* Navigation tabs */}
           <div className="flex border-b border-gray-200 mb-4">

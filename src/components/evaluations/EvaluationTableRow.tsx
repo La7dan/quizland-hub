@@ -24,6 +24,28 @@ const EvaluationTableRow: React.FC<EvaluationTableRowProps> = ({
   hasLevels,
   hasCoaches
 }) => {
+  // Format the approval status for display
+  const getApprovalStatus = () => {
+    if (evaluation.evaluation_pdf) {
+      return (
+        <Badge variant="success">
+          Completed
+        </Badge>
+      );
+    }
+    
+    return (
+      <Badge 
+        variant={
+          evaluation.status === 'approved' ? 'success' :
+          evaluation.status === 'disapproved' ? 'destructive' : 'default'
+        }
+      >
+        {evaluation.status}
+      </Badge>
+    );
+  };
+
   return (
     <TableRow key={evaluation.id}>
       {isAdmin && (
@@ -44,14 +66,7 @@ const EvaluationTableRow: React.FC<EvaluationTableRowProps> = ({
         <TableCell>{evaluation.member_level || 'N/A'}</TableCell>
       )}
       <TableCell>
-        <Badge 
-          variant={
-            evaluation.status === 'approved' ? 'success' :
-            evaluation.status === 'disapproved' ? 'destructive' : 'default'
-          }
-        >
-          {evaluation.status}
-        </Badge>
+        {getApprovalStatus()}
       </TableCell>
       <TableCell>
         {evaluation.evaluation_result ? (
