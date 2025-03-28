@@ -48,12 +48,12 @@ const EvaluationItem: React.FC<EvaluationItemProps> = ({ evaluation }) => {
             {evaluation.member_code}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {getStatusIcon(evaluation.status)}
           <span className="capitalize">{evaluation.status}</span>
           {getResultIcon(evaluation.evaluation_result)}
           {evaluation.evaluation_result && (
-            <span className="text-sm ml-1">
+            <span className="text-sm">
               ({evaluation.evaluation_result === 'passed' ? 'Passed' : 'Not Ready'})
             </span>
           )}

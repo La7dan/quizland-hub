@@ -26,7 +26,9 @@ const EvaluationActions: React.FC<EvaluationActionsProps> = ({
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const isCompleted = !!pdfFileName;
+  
+  // We no longer check for isCompleted to enable actions
+  // This allows coaches to approve/disapprove even after setting result
 
   // Approve evaluation mutation
   const approveMutation = useMutation({
@@ -80,8 +82,8 @@ const EvaluationActions: React.FC<EvaluationActionsProps> = ({
         </Button>
       )}
       
-      {/* Only show approve/disapprove buttons for non-completed evaluations */}
-      {(showAll || status === 'pending') && !isCompleted && (
+      {/* Show approve/disapprove buttons regardless of PDF/result status */}
+      {(showAll || status === 'pending') && (
         <>
           <Button
             variant="outline"
