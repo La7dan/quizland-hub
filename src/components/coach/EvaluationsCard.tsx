@@ -36,7 +36,7 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
         console.log('Fetching all evaluations for coach:', coachId);
         const query = `
           SELECT e.id, e.status, e.nominated_at, e.evaluation_date, e.evaluation_pdf,
-                m.name as member_name, m.member_id as member_code
+                m.name as member_name, m.member_id as member_code, m.classes_count
           FROM evaluations e
           JOIN members m ON e.member_id = m.id
           WHERE m.coach_id = ${coachId}

@@ -29,6 +29,7 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({
           <TableHead>Member ID</TableHead>
           <TableHead>Name</TableHead>
           <TableHead>Nominated On</TableHead>
+          <TableHead>Classes Count</TableHead>
           {showAll && <TableHead>Status</TableHead>}
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -43,6 +44,7 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({
                 ? format(new Date(evaluation.nominated_at), 'MMM dd, yyyy')
                 : 'N/A'}
             </TableCell>
+            <TableCell>{evaluation.classes_count || 0}</TableCell>
             {showAll && (
               <TableCell>
                 <StatusBadge status={evaluation.status} />

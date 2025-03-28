@@ -6,7 +6,7 @@ export const fetchPendingEvaluationsQuery = async (coachId: number) => {
   console.log('Fetching pending evaluations for coach:', coachId);
   return await executeSql(`
     SELECT e.id, e.member_id, e.status, e.nominated_at, e.coach_id, 
-           m.name as member_name, m.member_id as member_code
+           m.name as member_name, m.member_id as member_code, m.classes_count
     FROM evaluations e
     JOIN members m ON e.member_id = m.id
     WHERE e.coach_id = ${coachId} AND e.status = 'pending'

@@ -1,4 +1,3 @@
-
 export interface Evaluation {
   id?: number;
   member_id?: number; // Made optional to match EvaluationDisplayItem
@@ -15,6 +14,7 @@ export interface Evaluation {
   // Additional properties from the joined query
   member_name?: string;
   member_code?: string;
+  classes_count?: number;
 }
 
 export interface EvaluationResponse {
