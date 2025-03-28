@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { executeSql } from '@/services/apiService';
 import { Evaluation } from '@/services/evaluations/types';
 import { useEvaluationFilters } from './hooks/useEvaluationFilters';
@@ -116,14 +116,25 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
             </AlertDescription>
           </Alert>
         )}
+
+        {passedEvaluations && passedEvaluations.length > 0 && (
+          <div className="mb-4 bg-green-50 border border-green-200 rounded-md p-3 flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            <p className="text-green-800">
+              You have <strong>{passedEvaluations.length}</strong> passed evaluations. Click the "Passed" tab to view them.
+            </p>
+          </div>
+        )}
         
         <Tabs defaultValue="pending" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-4">
+          <TabsList className="mb-4 flex flex-wrap">
             <TabsTrigger value="pending">Pending</TabsTrigger>
             <TabsTrigger value="approved">Approved</TabsTrigger>
             <TabsTrigger value="disapproved">Disapproved</TabsTrigger>
             <TabsTrigger value="completed">Completed</TabsTrigger>
-            <TabsTrigger value="passed">Passed</TabsTrigger>
+            <TabsTrigger value="passed" className="bg-green-50 data-[state=active]:bg-green-100 data-[state=active]:text-green-800">
+              Passed {passedEvaluations?.length ? `(${passedEvaluations.length})` : ''}
+            </TabsTrigger>
             <TabsTrigger value="all">All</TabsTrigger>
           </TabsList>
           
@@ -154,16 +165,6 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
             <PassedEvaluationsTab 
               allEvaluationsLoading={allEvaluationsLoading}
               passedEvaluations={passedEvaluations}
-              passedSearchTerm={passedSearchTerm}
-              setPassedSearchTerm={setPassedSearchTerm}
-              passedSortField={passedSortField}
-              passedSortOrder={passedSortOrder}
-              passedFilters={passedFilters}
-              togglePassedSort={togglePassedSort}
-              filteredPassedEvaluations={filteredPassedEvaluations}
-              clearPassedFilters={clearPassedFilters}
-              renderResultBadge={renderResultBadge}
-              renderSortIndicator={renderSortIndicator}
             />
           </TabsContent>
           
