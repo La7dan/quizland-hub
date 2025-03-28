@@ -25,6 +25,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  
+  // Setup database tables when the app loads
+  useEffect(() => {
+    const setupDatabase = async () => {
+      try {
+        console.log('Setting up database tables...');
+        // Fetch the SQL file content
+        const response = await fetch('/src/assets/db-setup.sql');
+        const sqlContent = await response.text();
+        
+        // Execute SQL to set up all tables
+        console.log('Executing database setup SQL...');
+        const result = await executeSql(sqlContent);
+        
+        if (result.success) {
+          console.log('Database setup completed successfully');
+        } else {
+          console.error('Database setup failed:', result.message);
+        }
+      } catch (error) {
+        console.error('Error setting up database:', error);
+      }
+    };
+    
+    setupDatabase();
+  }, []);
 
   useEffect(() => {
     // Check for saved user in localStorage on app load
