@@ -38,6 +38,8 @@ export interface QuizAttempt {
   total_questions?: number;
   passed?: boolean;
   time_taken?: number;
+  quiz_title?: string;
+  member_name?: string;
 }
 
 export interface ServiceResponse<T = any> {
