@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { checkConnection } from '@/services/apiService';
 import { Badge } from '@/components/ui/badge';
@@ -67,39 +66,22 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
   };
 
   useEffect(() => {
-    // Initial check on component mount with a slight delay
+    // Initial check on component mount but only once
     const initialCheckTimeout = setTimeout(() => {
       checkDatabaseConnection(true);
-    }, 2000);
+    }, 1000); // Reduced from 2000ms to 1000ms
     
-    // Set up periodic checks if not yet connected
-    const setupIntervalCheck = () => {
-      if (!checkIntervalRef.current) {
-        checkIntervalRef.current = setInterval(() => {
-          // Only perform periodic checks if not connected
-          if (connectionStatus !== 'connected') {
-            checkDatabaseConnection();
-          } else if (checkIntervalRef.current) {
-            // Clear interval if we're connected
-            clearInterval(checkIntervalRef.current);
-            checkIntervalRef.current = null;
-          }
-        }, MIN_CHECK_INTERVAL);
-      }
-    };
-    
-    // Only set up periodic checks if not yet connected
-    if (connectionStatus !== 'connected') {
-      setupIntervalCheck();
-    }
+    // We only want to set up the interval check if we're not connected initially
+    // The interval itself will clean up when we connect successfully
     
     return () => {
       clearTimeout(initialCheckTimeout);
       if (checkIntervalRef.current) {
         clearInterval(checkIntervalRef.current);
+        checkIntervalRef.current = null;
       }
     };
-  }, [connectionStatus]);
+  }, []); // Empty dependency array - only run on mount
 
   return (
     <div className="bg-white shadow-md rounded-lg p-4 mb-6">
