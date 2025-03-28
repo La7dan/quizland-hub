@@ -53,7 +53,7 @@ const EvaluationTableRow: React.FC<EvaluationTableRowProps> = ({
   return (
     <TableRow key={evaluation.id} className={isSelected ? "bg-muted/50" : ""}>
       {isAdmin && (
-        <TableCell>
+        <TableCell className="w-[50px]">
           <Checkbox 
             checked={isSelected}
             onCheckedChange={(checked) => 
@@ -62,17 +62,17 @@ const EvaluationTableRow: React.FC<EvaluationTableRowProps> = ({
           />
         </TableCell>
       )}
-      <TableCell>
-        <div className="font-medium">{evaluation.member_name}</div>
-        <div className="text-sm text-muted-foreground">{evaluation.member_code}</div>
+      <TableCell className="min-w-[200px]">
+        <div className="font-medium truncate">{evaluation.member_name}</div>
+        <div className="text-sm text-muted-foreground truncate">{evaluation.member_code}</div>
       </TableCell>
       {hasLevels && (
-        <TableCell>{evaluation.member_level || 'N/A'}</TableCell>
+        <TableCell className="min-w-[120px]">{evaluation.member_level || 'N/A'}</TableCell>
       )}
-      <TableCell>
+      <TableCell className="min-w-[100px]">
         {getApprovalStatus()}
       </TableCell>
-      <TableCell>
+      <TableCell className="min-w-[100px]">
         {evaluation.evaluation_result ? (
           <Badge 
             variant={evaluation.evaluation_result === 'passed' ? 'success' : 'destructive'}
@@ -83,20 +83,20 @@ const EvaluationTableRow: React.FC<EvaluationTableRowProps> = ({
           <span className="text-muted-foreground">-</span>
         )}
       </TableCell>
-      <TableCell>
+      <TableCell className="min-w-[120px]">
         {evaluation.nominated_at 
           ? format(new Date(evaluation.nominated_at), 'PP')
           : 'N/A'}
       </TableCell>
-      <TableCell>
+      <TableCell className="min-w-[120px]">
         {evaluation.evaluation_date 
           ? format(new Date(evaluation.evaluation_date), 'PP')
           : 'Not set'}
       </TableCell>
       {hasCoaches && (
-        <TableCell>{evaluation.coach_name || 'Not assigned'}</TableCell>
+        <TableCell className="min-w-[150px]">{evaluation.coach_name || 'Not assigned'}</TableCell>
       )}
-      <TableCell className="text-right">
+      <TableCell className="text-right min-w-[100px]">
         <div className="flex justify-end items-center space-x-2">
           <EvaluationItem evaluation={evaluation} />
           {isAdmin && onDelete && (
