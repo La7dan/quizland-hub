@@ -10,7 +10,6 @@ import { Label } from '@/components/ui/label';
 import { Shield, LogIn, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Navigation from '@/components/Navigation';
-import DatabaseSetupButton from '@/components/DatabaseSetupButton';
 
 const LoginPage = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -77,13 +76,10 @@ const LoginPage = () => {
         <div className="flex flex-col w-full max-w-md">
           <Card>
             <CardHeader className="space-y-1">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-2xl flex items-center">
-                  <Shield className="mr-2 h-5 w-5 text-primary" />
-                  Login
-                </CardTitle>
-                <DatabaseSetupButton />
-              </div>
+              <CardTitle className="text-2xl flex items-center">
+                <Shield className="mr-2 h-5 w-5 text-primary" />
+                Login
+              </CardTitle>
               <CardDescription>
                 Enter your credentials to access the application
               </CardDescription>
@@ -141,12 +137,6 @@ const LoginPage = () => {
               </Button>
               </form>
             </CardContent>
-            <CardFooter className="border-t px-6 py-4">
-              <div className="text-sm text-muted-foreground">
-                <strong>Note:</strong> Sample users will be created when you click "Setup Database" 
-                (username: superadmin, password: password123)
-              </div>
-            </CardFooter>
           </Card>
         </div>
       </div>
