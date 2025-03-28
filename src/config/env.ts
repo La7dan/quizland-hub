@@ -5,7 +5,7 @@
 
 // Set default API URL based on environment
 const getDevelopmentApiUrl = () => {
-  // Use the server IP address with port
+  // Use the server IP address with port and path
   return 'http://209.74.89.41:8080/api';
 };
 
