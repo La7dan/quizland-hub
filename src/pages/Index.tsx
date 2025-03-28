@@ -1,12 +1,15 @@
 
 import { useNavigate } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import Navigation from '@/components/Navigation';
 import QuizzesList from '@/components/QuizzesList';
+import { Toggle } from '@/components/ui/toggle';
 
 export default function Index() {
   const { isAuthenticated } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   
   return (
@@ -22,6 +25,15 @@ export default function Index() {
                 Browse and take quizzes to test your knowledge
               </p>
             </div>
+            
+            <Toggle
+              aria-label="Toggle theme"
+              pressed={theme === "dark"}
+              onPressedChange={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="p-2"
+            >
+              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Toggle>
           </div>
           
           <QuizzesList />

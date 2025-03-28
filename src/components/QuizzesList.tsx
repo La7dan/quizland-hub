@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getQuizzes } from '@/services/quizService';
@@ -24,9 +23,10 @@ import { executeSql } from '@/services/dbService';
 interface QuizzesListProps {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  categoryFilter?: string;
 }
 
-export default function QuizzesList({ sortBy = "default", sortOrder = "asc" }: QuizzesListProps) {
+export default function QuizzesList({ sortBy = "default", sortOrder = "asc", categoryFilter = "all" }: QuizzesListProps) {
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +48,13 @@ export default function QuizzesList({ sortBy = "default", sortOrder = "asc" }: Q
         // For non-admin users, only show visible quizzes
         if (!isAuthenticated || (user && user.role !== 'super_admin' && user.role !== 'admin')) {
           filteredQuizzes = filteredQuizzes.filter((quiz: any) => quiz.is_visible);
+        }
+        
+        // Apply category filter if selected
+        if (categoryFilter !== "all") {
+          filteredQuizzes = filteredQuizzes.filter((quiz: any) => 
+            String(quiz.level_id) === categoryFilter
+          );
         }
         
         // Sort quizzes
@@ -76,7 +83,7 @@ export default function QuizzesList({ sortBy = "default", sortOrder = "asc" }: Q
 
   useEffect(() => {
     fetchQuizzes();
-  }, [toast, sortBy, sortOrder, isAuthenticated, user]);
+  }, [toast, sortBy, sortOrder, categoryFilter, isAuthenticated, user]);
 
   const sortQuizzes = (quizzesArray: any[], sortByField: string, order: "asc" | "desc") => {
     if (sortByField === "default") return quizzesArray;
@@ -106,6 +113,10 @@ export default function QuizzesList({ sortBy = "default", sortOrder = "asc" }: Q
       title: "Retrying",
       description: "Attempting to reconnect to the quiz server...",
     });
+  };
+
+  const handlePreviewQuiz = (quizId: number) => {
+    navigate(`/quiz/preview/${quizId}`);
   };
 
   const confirmDeleteQuiz = (quizId: number) => {
@@ -223,13 +234,23 @@ export default function QuizzesList({ sortBy = "default", sortOrder = "asc" }: Q
                 <span>Passing Score: {quiz.passing_percentage}%</span>
               </div>
             </CardContent>
-            <CardFooter className="pt-2">
+            <CardFooter className="pt-2 flex gap-2">
               <Button 
                 onClick={() => handleStartQuiz(quiz.id)}
                 className="w-full"
               >
                 Start Quiz
               </Button>
+              
+              {(isAuthenticated && user && (user.role === 'super_admin' || user.role === 'admin')) && (
+                <Button 
+                  variant="outline"
+                  onClick={() => handlePreviewQuiz(quiz.id)}
+                  className="flex-shrink-0"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              )}
             </CardFooter>
           </Card>
         ))}

@@ -1,18 +1,36 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import QuizzesList from '@/components/QuizzesList';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, Moon, Sun } from 'lucide-react';
+import { Toggle } from '@/components/ui/toggle';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { getQuizLevels } from '@/services/quizService';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function QuizzesPage() {
   const [sortBy, setSortBy] = useState<string>("default");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [levels, setLevels] = useState<any[]>([]);
+  const { theme, setTheme } = useTheme();
   
   const toggleSortOrder = () => {
     setSortOrder(sortOrder === "asc" ? "desc" : "asc");
   };
+
+  useEffect(() => {
+    const fetchLevels = async () => {
+      const response = await getQuizLevels();
+      if (response.success) {
+        setLevels(response.levels || []);
+      }
+    };
+    
+    fetchLevels();
+  }, []);
 
   return (
     <div>
@@ -20,9 +38,20 @@ export default function QuizzesPage() {
       
       <div className="container mx-auto p-4 max-w-6xl">
         <div className="my-8">
-          <h1 className="text-3xl font-bold mb-8">Explore All Quizzes</h1>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold">Explore All Quizzes</h1>
+            
+            <Toggle
+              aria-label="Toggle theme"
+              pressed={theme === "dark"}
+              onPressedChange={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="p-2"
+            >
+              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Toggle>
+          </div>
           
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Sort by:</span>
               <Select value={sortBy} onValueChange={setSortBy}>
@@ -40,9 +69,26 @@ export default function QuizzesPage() {
             <Button variant="outline" size="icon" onClick={toggleSortOrder}>
               {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
             </Button>
+            
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-sm font-medium">Filter by Level:</span>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Levels" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Levels</SelectItem>
+                  {levels.map((level) => (
+                    <SelectItem key={level.id} value={String(level.id)}>
+                      {level.code} - {level.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
-          <QuizzesList sortBy={sortBy} sortOrder={sortOrder} />
+          <QuizzesList sortBy={sortBy} sortOrder={sortOrder} categoryFilter={selectedCategory} />
         </div>
       </div>
     </div>
