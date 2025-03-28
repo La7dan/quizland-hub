@@ -1,6 +1,8 @@
 
-// API base URL - use environment variable or default to server IP with port
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://209.74.89.41:8080/api';
+import { ENV } from '@/config/env';
+
+// Get API base URL from environment config
+const API_BASE_URL = ENV.API_BASE_URL;
 
 // Base API call function
 export const callApi = async <T>(
@@ -66,6 +68,6 @@ export const executeSql = async (
     return data;
   } catch (error) {
     console.error('Execute SQL error:', error);
-    return { success: false, message: 'Failed to execute SQL' };
+    return { success: false, message: String(error) };
   }
 };

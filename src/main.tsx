@@ -7,10 +7,15 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import App from './App.tsx'
 import './index.css'
-import { logEnvironment } from './config/env'
+import { logEnvironment, ENV } from './config/env'
 
 // Log environment configuration
 logEnvironment();
+
+// Output API URL in development for debugging
+if (ENV.DEBUG) {
+  console.log('🌐 API URL:', ENV.API_BASE_URL);
+}
 
 // Create a QueryClient
 const queryClient = new QueryClient()

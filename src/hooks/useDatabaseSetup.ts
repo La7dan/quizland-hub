@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { executeSql } from '@/services/dbService';
+import { ENV } from '@/config/env';
 
 export const useDatabaseSetup = () => {
   const { toast } = useToast();
@@ -12,6 +13,10 @@ export const useDatabaseSetup = () => {
         console.log('Setting up database tables...');
         // Fetch the SQL file content
         const response = await fetch('/src/assets/db-setup.sql');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch SQL: ${response.status} ${response.statusText}`);
+        }
+        
         const sqlContent = await response.text();
         
         // Execute SQL to set up all tables
@@ -37,6 +42,10 @@ export const useDatabaseSetup = () => {
       }
     };
     
-    setupDatabase();
+    if (ENV.API_BASE_URL) {
+      setupDatabase();
+    } else {
+      console.warn("No API URL configured. Database setup skipped.");
+    }
   }, []);
 };

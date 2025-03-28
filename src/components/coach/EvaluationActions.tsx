@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, CheckCircle } from 'lucide-react';
@@ -6,6 +5,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import DisapprovalDialog from './DisapprovalDialog';
 import { approveEvaluation } from '@/services/evaluations/evaluationService';
+import { ENV } from '@/config/env';
 
 interface EvaluationActionsProps {
   evaluationId: number;
@@ -14,7 +14,7 @@ interface EvaluationActionsProps {
   showAll?: boolean;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://209.74.89.41:8080';
+const API_BASE_URL = ENV.API_BASE_URL.replace('/api', '');
 
 const EvaluationActions: React.FC<EvaluationActionsProps> = ({ 
   evaluationId, 
