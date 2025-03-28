@@ -13,6 +13,8 @@ export const saveQuizAttempt = async (attemptData: Partial<QuizAttempt>): Promis
       };
     }
 
+    console.log('Saving quiz attempt:', attemptData);
+
     // Insert the attempt
     const result = await executeSql(`
       INSERT INTO quiz_attempts (
@@ -35,6 +37,8 @@ export const saveQuizAttempt = async (attemptData: Partial<QuizAttempt>): Promis
       )
       RETURNING id;
     `);
+
+    console.log('Save quiz attempt result:', result);
 
     if (result.success && result.rows && result.rows.length > 0) {
       return {
@@ -59,6 +63,7 @@ export const saveQuizAttempt = async (attemptData: Partial<QuizAttempt>): Promis
 // Function to get quiz attempts by member
 export const getQuizAttemptsByMember = async (memberId: string): Promise<ServiceResponse<{ attempts: QuizAttempt[] }>> => {
   try {
+    console.log('Fetching attempts for member:', memberId);
     const result = await executeSql(`
       SELECT a.*, q.title as quiz_title
       FROM quiz_attempts a
@@ -66,6 +71,8 @@ export const getQuizAttemptsByMember = async (memberId: string): Promise<Service
       WHERE a.member_id = ${sqlEscape.string(memberId)}
       ORDER BY a.attempt_date DESC;
     `);
+    
+    console.log('Member attempts result:', result);
     
     if (result.success) {
       return {
@@ -90,12 +97,15 @@ export const getQuizAttemptsByMember = async (memberId: string): Promise<Service
 // Function to get quiz attempts by quiz
 export const getQuizAttemptsByQuiz = async (quizId: number): Promise<ServiceResponse<{ attempts: QuizAttempt[] }>> => {
   try {
+    console.log('Fetching attempts for quiz:', quizId);
     const result = await executeSql(`
       SELECT a.*
       FROM quiz_attempts a
       WHERE a.quiz_id = ${sqlEscape.number(quizId)}
       ORDER BY a.attempt_date DESC;
     `);
+    
+    console.log('Quiz attempts result:', result);
     
     if (result.success) {
       return {
@@ -120,15 +130,18 @@ export const getQuizAttemptsByQuiz = async (quizId: number): Promise<ServiceResp
 // Function to get all quiz attempts
 export const getQuizAttempts = async (): Promise<ServiceResponse<{ attempts: QuizAttempt[] }>> => {
   try {
+    console.log('Fetching all quiz attempts');
     const result = await executeSql(`
       SELECT a.*, 
              q.title as quiz_title,
              m.name as member_name
       FROM quiz_attempts a
-      JOIN quizzes q ON a.quiz_id = q.id
-      JOIN members m ON a.member_id = m.member_id
+      LEFT JOIN quizzes q ON a.quiz_id = q.id
+      LEFT JOIN members m ON a.member_id = m.member_id
       ORDER BY a.attempt_date DESC;
     `);
+    
+    console.log('All attempts result:', result);
     
     if (result.success) {
       return {

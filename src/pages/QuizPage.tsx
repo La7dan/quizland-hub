@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { toast as sonnerToast } from 'sonner';
 
 const QuizPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -43,7 +44,6 @@ const QuizPage = () => {
       const response = await getQuizById(quizId);
       
       if (response.success && response.quiz) {
-        // Only show visible questions for visitors
         const visibleQuestions = (response.questions || [])
           .filter(q => q.is_visible);
         
@@ -161,7 +161,17 @@ const QuizPage = () => {
     setQuizCompleted(true);
     
     try {
-      await saveQuizAttempt({
+      console.log('Submitting quiz attempt with data:', {
+        quiz_id: quiz.id,
+        member_id: memberId,
+        visitor_name: name,
+        score: scoreResult.score,
+        percentage: scoreResult.percentage,
+        result: scoreResult.passed ? 'passed' : 'not_ready',
+        total_questions: questions.length
+      });
+      
+      const response = await saveQuizAttempt({
         quiz_id: quiz.id,
         member_id: memberId,
         visitor_name: name,
@@ -172,9 +182,22 @@ const QuizPage = () => {
         passed: scoreResult.passed,
         time_taken: 0 // You could add timing functionality if needed
       });
+      
+      console.log('Quiz attempt save response:', response);
+      
+      if (response.success) {
+        sonnerToast.success('Quiz attempt recorded successfully!');
+      } else {
+        console.error('Failed to record quiz attempt:', response.message);
+        sonnerToast.error('Failed to record your attempt', {
+          description: 'Your results are displayed but could not be saved',
+        });
+      }
     } catch (error) {
       console.error('Error recording quiz attempt:', error);
-      // Continue even if recording fails
+      sonnerToast.error('Error saving quiz attempt', {
+        description: 'An unexpected error occurred when saving your results',
+      });
     }
   };
 

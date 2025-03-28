@@ -65,7 +65,6 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
   }, []);
   
   useEffect(() => {
-    // Filter attempts based on search term
     const filtered = attempts.filter(attempt => 
       attempt.visitor_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       attempt.member_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -73,19 +72,30 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
     );
     
     setFilteredAttempts(filtered);
-    // Clear selections when filter changes
     setSelectedAttempts([]);
   }, [searchTerm, attempts]);
 
   const loadData = async () => {
     setLoading(true);
     try {
+      console.log('Loading quiz attempts data');
       const response = await getQuizAttempts();
+      console.log('Quiz attempts response:', response);
       
       if (response.success) {
+        console.log('Loaded attempts:', response.attempts);
         setAttempts(response.attempts || []);
         setFilteredAttempts(response.attempts || []);
+        
+        if (response.attempts?.length === 0) {
+          console.log('No quiz attempts found in the database');
+          toast({
+            title: "No Attempts Found",
+            description: "No quiz attempts have been recorded in the database yet.",
+          });
+        }
       } else {
+        console.error('Failed to load quiz attempts:', response.message);
         toast({
           title: "Error",
           description: response.message || "Failed to load quiz attempts",
@@ -114,7 +124,6 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
     
     setSortConfig({ key, direction });
     
-    // Sort the data
     const sortedData = [...filteredAttempts].sort((a, b) => {
       if (key === 'percentage' || key === 'score') {
         return direction === 'ascending' 
@@ -152,7 +161,6 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
       return;
     }
     
-    // Create CSV headers
     const headers = [
       "Date", 
       "Quiz", 
@@ -163,7 +171,6 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
       "Result"
     ];
     
-    // Map data to CSV format
     const csvData = data.map(item => [
       format(new Date(item.attempt_date), 'yyyy-MM-dd HH:mm:ss'),
       item.quiz_title,
@@ -174,13 +181,11 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
       item.result === 'passed' ? 'Passed' : 'Not Ready'
     ]);
     
-    // Combine headers and data
     const csvContent = [
       headers.join(','),
       ...csvData.map(row => row.join(','))
     ].join('\n');
     
-    // Create download link
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -196,15 +201,12 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
       title: "PDF Export",
       description: "PDF export is currently being implemented",
     });
-    
-    // For future implementation with PDF generation library
   };
 
   const exportSingleAttempt = (attempt: any) => {
     exportToCSV([attempt]);
   };
 
-  // Handle checkbox selection
   const toggleSelection = (id: number) => {
     setSelectedAttempts(prev => {
       if (prev.includes(id)) {
@@ -215,7 +217,6 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
     });
   };
 
-  // Handle "select all" checkbox
   const toggleSelectAll = () => {
     if (selectedAttempts.length === filteredAttempts.length) {
       setSelectedAttempts([]);
@@ -224,7 +225,6 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
     }
   };
 
-  // Handle bulk delete
   const handleBulkDelete = async () => {
     if (selectedAttempts.length === 0) {
       toast({
@@ -238,7 +238,6 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
     setIsConfirmDialogOpen(true);
   };
 
-  // Confirm and execute bulk delete
   const confirmBulkDelete = async () => {
     setIsDeleting(true);
     try {
@@ -250,10 +249,8 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
           description: `${response.count} attempts deleted successfully`,
         });
         
-        // Refresh data
         loadData();
         
-        // Call onRefresh if provided
         if (onRefresh) {
           onRefresh();
         }
@@ -421,7 +418,6 @@ const QuizAttempts = ({ onRefresh }: QuizAttemptsProps) => {
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
