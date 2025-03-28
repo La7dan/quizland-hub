@@ -8,6 +8,9 @@ export interface Evaluation {
   disapproved_at?: string;
   disapproval_reason?: string;
   coach_id: number;
+  // Additional properties from the joined query
+  member_name?: string;
+  member_code?: string;
 }
 
 export interface EvaluationResponse {
