@@ -4,7 +4,6 @@ import { BookOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import QuizzesList from '@/components/QuizzesList';
-import { Button } from '@/components/ui/button';
 
 export default function Index() {
   const { isAuthenticated } = useAuth();
@@ -23,13 +22,6 @@ export default function Index() {
                 Browse and take quizzes to test your knowledge
               </p>
             </div>
-            
-            {!isAuthenticated && (
-              <Button onClick={() => navigate('/login')} className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                Login
-              </Button>
-            )}
           </div>
           
           <QuizzesList />
