@@ -2,15 +2,25 @@
 import { executeSql, sqlEscape } from '../../apiService';
 import { ServiceResponse } from '../quizTypes';
 
-// Function to delete a quiz attempt
-export const deleteQuizAttempt = async (id: number): Promise<ServiceResponse> => {
+/**
+ * Delete a single quiz attempt by ID
+ */
+export const deleteQuizAttempt = async (attemptId: number): Promise<ServiceResponse> => {
   try {
-    const result = await executeSql(`
-      DELETE FROM quiz_attempts
-      WHERE id = ${sqlEscape.number(id)};
-    `);
+    if (!attemptId) {
+      return {
+        success: false,
+        message: 'Attempt ID is required'
+      };
+    }
 
-    if (result.success) {
+    const result = await executeSql(`
+      DELETE FROM quiz_attempts 
+      WHERE id = ${sqlEscape.number(attemptId)}
+      RETURNING id;
+    `);
+    
+    if (result.success && result.rows && result.rows.length > 0) {
       return {
         success: true,
         message: 'Quiz attempt deleted successfully'
@@ -18,7 +28,7 @@ export const deleteQuizAttempt = async (id: number): Promise<ServiceResponse> =>
     } else {
       return {
         success: false,
-        message: result.message || 'Failed to delete quiz attempt'
+        message: 'Failed to delete quiz attempt or attempt not found'
       };
     }
   } catch (error) {
@@ -30,27 +40,32 @@ export const deleteQuizAttempt = async (id: number): Promise<ServiceResponse> =>
   }
 };
 
-// Function to bulk delete quiz attempts
-export const bulkDeleteQuizAttempts = async (ids: number[]): Promise<ServiceResponse> => {
+/**
+ * Delete multiple quiz attempts by IDs
+ */
+export const bulkDeleteQuizAttempts = async (attemptIds: number[]): Promise<ServiceResponse> => {
   try {
-    if (!ids.length) {
+    if (!attemptIds || !attemptIds.length) {
       return {
         success: false,
         message: 'No attempt IDs provided'
       };
     }
 
-    const idList = ids.map(id => sqlEscape.number(id)).join(',');
-    
-    const result = await executeSql(`
-      DELETE FROM quiz_attempts
-      WHERE id IN (${idList});
-    `);
+    // Format IDs for SQL query
+    const formattedIds = attemptIds.join(', ');
 
+    const result = await executeSql(`
+      DELETE FROM quiz_attempts 
+      WHERE id IN (${formattedIds})
+      RETURNING id;
+    `);
+    
     if (result.success) {
       return {
         success: true,
-        message: `${ids.length} quiz attempts deleted successfully`
+        message: `${result.rowCount || 0} quiz attempts deleted successfully`,
+        count: result.rowCount || 0
       };
     } else {
       return {
