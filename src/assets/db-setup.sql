@@ -1,4 +1,3 @@
-
 -- Create users table with roles (super_admin, admin, coach)
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
@@ -82,6 +81,17 @@ SELECT
 FROM quizzes q
 LEFT JOIN questions qn ON q.id = qn.quiz_id
 GROUP BY q.id, q.title;
+
+-- Create members table
+CREATE TABLE IF NOT EXISTS members (
+  id SERIAL PRIMARY KEY,
+  member_id VARCHAR(20) NOT NULL UNIQUE,
+  name VARCHAR(100) NOT NULL,
+  level_id INTEGER REFERENCES quiz_levels(id),
+  classes_count INTEGER DEFAULT 0,
+  coach_id INTEGER REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Insert quiz levels
 INSERT INTO quiz_levels (code, name, description)

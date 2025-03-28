@@ -11,6 +11,7 @@ import UserManagement from '@/components/UserManagement';
 import SQLViewerDialog from '@/components/SQLViewerDialog';
 import QuizManagement from '@/components/QuizManagement';
 import QuizAttempts from '@/components/QuizAttempts';
+import MemberManagement from '@/components/MemberManagement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminPanel() {
@@ -55,9 +56,10 @@ export default function AdminPanel() {
 
         <div className="mt-2">
           <Tabs defaultValue="tables" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="tables">Database Tables</TabsTrigger>
               <TabsTrigger value="users">User Management</TabsTrigger>
+              <TabsTrigger value="members">Members</TabsTrigger>
               <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
               <TabsTrigger value="attempts">Quiz Attempts</TabsTrigger>
             </TabsList>
@@ -73,6 +75,10 @@ export default function AdminPanel() {
             
             <TabsContent value="users">
               <UserManagement />
+            </TabsContent>
+
+            <TabsContent value="members">
+              <MemberManagement onRefresh={handleRefresh} />
             </TabsContent>
 
             <TabsContent value="quizzes">
