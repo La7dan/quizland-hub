@@ -5,7 +5,7 @@ import { FileText, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import DisapprovalDialog from './DisapprovalDialog';
-import { approveEvaluation } from '@/services/evaluations/evaluationService';
+import { approveEvaluation } from '@/services/evaluations'; // Updated import
 import { ENV } from '@/config/env';
 
 interface EvaluationActionsProps {

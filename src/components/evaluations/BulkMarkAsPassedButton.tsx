@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { bulkMarkEvaluationsAsPassed } from '@/services/evaluations/evaluationService';
+import { bulkMarkEvaluationsAsPassed } from '@/services/evaluations'; // Updated import
 import {
   AlertDialog,
   AlertDialogAction,

@@ -1,9 +1,10 @@
+
 // Re-export everything from our service modules
 export * from './apiService';
 export * from './tableService';
 export * from './userService';
 export * from './members/memberService';
-export * from './evaluations/evaluationService';
+export * from './evaluations'; // Updated to use the new index.ts
 // export * from './cleanDatabaseService'; // Removed as requested
 export * from './quiz';
 

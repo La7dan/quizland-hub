@@ -25,6 +25,11 @@ export const useEvaluationFilters = (evaluations: EvaluationDisplayItem[] | unde
       setSortOrder('asc');
     }
   };
+  
+  const clearFilters = () => {
+    setFilters({});
+    setSearchTerm('');
+  };
 
   // Apply search, filtering and sorting
   const filteredEvaluations = useMemo(() => {
@@ -45,14 +50,14 @@ export const useEvaluationFilters = (evaluations: EvaluationDisplayItem[] | unde
         const matchesCoach = !filters.coach || 
           (evaluation.coach_id !== undefined && 
            evaluation.coach_id !== null && 
-           evaluation.coach_id.toString() === filters.coach);
+           String(evaluation.coach_id) === filters.coach);
         
         return matchesSearch && matchesStatus && matchesLevel && matchesCoach;
       })
       .sort((a, b) => {
         // Apply sorting
-        let valA = a[sortField];
-        let valB = b[sortField];
+        let valA: any = a[sortField];
+        let valB: any = b[sortField];
         
         // Handle dates
         if (sortField === 'nominated_at' || sortField === 'evaluation_date') {
@@ -83,6 +88,7 @@ export const useEvaluationFilters = (evaluations: EvaluationDisplayItem[] | unde
     filters,
     setFilters,
     toggleSort,
-    filteredEvaluations
+    filteredEvaluations,
+    clearFilters
   };
 };

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -16,7 +15,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { XCircle } from 'lucide-react';
-import { disapproveEvaluation } from '@/services/evaluations/evaluationService';
+import { disapproveEvaluation } from '@/services/evaluations';
 
 interface DisapprovalDialogProps {
   evaluationId: number;
@@ -31,7 +30,6 @@ const DisapprovalDialog: React.FC<DisapprovalDialogProps> = ({
   const queryClient = useQueryClient();
   const [disapprovalReason, setDisapprovalReason] = React.useState('');
 
-  // Disapprove evaluation mutation
   const disapproveMutation = useMutation({
     mutationFn: ({ evaluationId, reason }: { evaluationId: number; reason: string }) => 
       disapproveEvaluation(evaluationId, reason),
@@ -54,7 +52,6 @@ const DisapprovalDialog: React.FC<DisapprovalDialogProps> = ({
     }
   });
 
-  // Handle disapprove
   const handleDisapprove = () => {
     if (!disapprovalReason.trim()) {
       toast({

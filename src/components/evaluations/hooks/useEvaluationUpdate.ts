@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
-import { updateEvaluationResult } from '@/services/evaluations/evaluationService';
+import { updateEvaluationResult } from '@/services/evaluations'; // Updated import
 import { EvaluationDisplayItem } from '../types';
 import { ENV } from '@/config/env';
 
