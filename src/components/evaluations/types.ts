@@ -1,7 +1,7 @@
 
 export interface EvaluationDisplayItem {
   id: number;
-  status: string;
+  status: 'pending' | 'approved' | 'disapproved';
   nominated_at: string;
   evaluation_date?: string;
   member_name: string;
