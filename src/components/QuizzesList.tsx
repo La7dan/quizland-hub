@@ -4,7 +4,7 @@ import { getQuizzes } from '@/services/quizService';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, Trash2, Plus } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from '@/contexts/AuthContext';
@@ -72,7 +72,7 @@ export default function QuizzesList({
   };
 
   const processQuizzes = (response: any) => {
-    if (response.success) {
+    if (response && response.success) {
       // Filter quizzes based on user role
       let filteredQuizzes = response.quizzes || [];
       
@@ -92,10 +92,10 @@ export default function QuizzesList({
       const sortedQuizzes = sortQuizzes(filteredQuizzes, sortBy, sortOrder);
       setQuizzes(sortedQuizzes);
     } else {
-      setError(response.message || "Failed to load quizzes");
+      setError(response?.message || "Failed to load quizzes");
       toast({
         title: "Error",
-        description: response.message || "Failed to load quizzes",
+        description: response?.message || "Failed to load quizzes",
         variant: "destructive",
       });
     }
@@ -223,7 +223,18 @@ export default function QuizzesList({
     return (
       <div className="text-center py-12 bg-muted/20 rounded-lg">
         <h2 className="text-xl font-semibold mb-2">No Quizzes Available</h2>
-        <p className="text-muted-foreground">Check back later for new quizzes.</p>
+        <p className="text-muted-foreground mb-6">
+          {isAuthenticated && user && (user.role === 'super_admin' || user.role === 'admin') 
+            ? "Start by creating your first quiz." 
+            : "Check back later for new quizzes."}
+        </p>
+        
+        {isAuthenticated && user && (user.role === 'super_admin' || user.role === 'admin') && (
+          <Button onClick={() => navigate('/admin')} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Create Quiz
+          </Button>
+        )}
       </div>
     );
   }
@@ -273,8 +284,9 @@ export default function QuizzesList({
               <Button 
                 onClick={() => handleStartQuiz(quiz.id)}
                 className="w-full"
+                disabled={!quiz.question_count || quiz.question_count === 0}
               >
-                Start Quiz
+                {!quiz.question_count || quiz.question_count === 0 ? "No Questions" : "Start Quiz"}
               </Button>
               
               {(isAuthenticated && user && (user.role === 'super_admin' || user.role === 'admin')) && (

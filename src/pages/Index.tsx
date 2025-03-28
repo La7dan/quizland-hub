@@ -10,17 +10,26 @@ import { useEffect } from 'react';
 import { cleanDummyData } from '@/services/dbService';
 import { useQuery } from '@tanstack/react-query';
 import { getQuizzes } from '@/services/quizService';
+import { toast } from 'sonner';
 
 export default function Index() {
   const { isAuthenticated } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   
-  // Fetch quizzes from database when app loads
+  // Fetch quizzes from database when app loads with improved error handling
   const { data: quizzesData, isLoading, error } = useQuery({
     queryKey: ['quizzes'],
     queryFn: getQuizzes,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 2, // Retry failed requests up to 2 times
+    onError: (err) => {
+      console.error('Failed to fetch quizzes:', err);
+      toast('Error loading quizzes', {
+        description: 'Unable to connect to the database. Please try again later.',
+        duration: 5000,
+      });
+    }
   });
   
   // Clean dummy data when the app starts
