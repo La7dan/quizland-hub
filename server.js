@@ -57,9 +57,10 @@ const storage = multer.diskStorage({
     // Get member code and evaluation date from request body for naming
     const memberCode = req.body.memberCode || 'unknown';
     const evaluationDate = req.body.evaluationDate || new Date().toISOString().split('T')[0];
+    const timestamp = req.body.timestamp || Date.now();
     
-    // Create filename: SH-number_YYYY-MM-DD.pdf
-    const filename = `${memberCode}_${evaluationDate}.pdf`;
+    // Create filename: SH-number_YYYY-MM-DD_timestamp.pdf
+    const filename = `${memberCode}_${evaluationDate}_${timestamp}.pdf`;
     cb(null, filename);
   }
 });

@@ -86,7 +86,7 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
               {isAdmin && (
                 <TableHead className="w-12">
                   <Checkbox 
-                    checked={selectedIds.length === evaluations.length && evaluations.length > 0}
+                    checked={selectedIds.length === evaluations?.length && evaluations?.length > 0}
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
@@ -100,7 +100,7 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
             </TableRow>
           </TableHeader>
           <TableBody>
-            {evaluations.map((evaluation: Evaluation) => (
+            {evaluations?.map((evaluation: Evaluation) => (
               <TableRow key={evaluation.id}>
                 {isAdmin && (
                   <TableCell>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { executeSql } from '@/services/apiService';
@@ -62,16 +63,19 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
       
       const formattedDate = evaluationDate.replace(/\//g, '-');
       
-      const formData = new FormData();
-      formData.append('file', pdfFile);
-      formData.append('memberCode', memberCode);
-      formData.append('evaluationDate', formattedDate);
+      // Generate a unique filename to support multiple PDFs for the same member
+      const timestamp = new Date().getTime();
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', pdfFile);
+      uploadFormData.append('memberCode', memberCode);
+      uploadFormData.append('evaluationDate', formattedDate);
+      uploadFormData.append('timestamp', timestamp.toString());
       
       setUploadProgress(30);
       
       const uploadResponse = await fetch(`${API_BASE_URL}/api/evaluations/upload-file`, {
         method: 'POST',
-        body: formData,
+        body: uploadFormData,
       });
       
       if (!uploadResponse.ok) {
@@ -83,6 +87,7 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
       
       const uploadResult = await uploadResponse.json();
       
+      // Create a new evaluation record with the PDF file
       const result = await executeSql(`
         INSERT INTO evaluations (member_id, status, nominated_at, evaluation_date, evaluation_pdf, coach_id)
         VALUES (

@@ -63,7 +63,7 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
             <TabsTrigger value="pending">Pending</TabsTrigger>
             <TabsTrigger value="approved">Approved</TabsTrigger>
             <TabsTrigger value="disapproved">Disapproved</TabsTrigger>
-            <TabsTrigger value="completed">With PDF</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
             <TabsTrigger value="all">All</TabsTrigger>
           </TabsList>
           

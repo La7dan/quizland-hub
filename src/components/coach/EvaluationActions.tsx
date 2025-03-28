@@ -26,6 +26,7 @@ const EvaluationActions: React.FC<EvaluationActionsProps> = ({
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isCompleted = !!pdfFileName;
 
   // Approve evaluation mutation
   const approveMutation = useMutation({
@@ -73,7 +74,8 @@ const EvaluationActions: React.FC<EvaluationActionsProps> = ({
         </Button>
       )}
       
-      {(showAll || status === 'pending') && (
+      {/* Only show approve/disapprove buttons for non-completed evaluations */}
+      {(showAll || status === 'pending') && !isCompleted && (
         <>
           <Button
             variant="outline"
