@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Table, TableBody } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
@@ -13,12 +13,14 @@ import BulkMarkAsPassedButton from './BulkMarkAsPassedButton';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 import EmptyEvaluationState from './EmptyEvaluationState';
 import LoadingEvaluationState from './LoadingEvaluationState';
+import EditEvaluationDialog from './EditEvaluationDialog';
 
 // Hooks
 import { useEvaluationData, useFilterOptions } from './hooks/useEvaluationData';
 import { useEvaluationFilters } from './hooks/useEvaluationFilters';
 import { useEvaluationSelection } from './hooks/useEvaluationSelection';
 import { useEvaluationDeletion } from './hooks/useEvaluationDeletion';
+import { EvaluationDisplayItem } from './types';
 
 interface EvaluationListTabProps {
   refreshTrigger?: number;
@@ -27,6 +29,10 @@ interface EvaluationListTabProps {
 const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+  
+  // State for editing evaluations
+  const [editingEvaluation, setEditingEvaluation] = useState<EvaluationDisplayItem | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   // Fetch data
   const { data, isLoading } = useEvaluationData(refreshTrigger);
@@ -63,7 +69,7 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
     handleBulkDelete,
     confirmDelete
   } = useEvaluationDeletion(resetSelection);
-
+  
   // Handle CSV export
   const handleExportCSV = () => {
     if (!filteredEvaluations || filteredEvaluations.length === 0) return;
@@ -80,6 +86,12 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
     }));
     
     exportToCSV(exportData, `evaluations_export_${new Date().toISOString().split('T')[0]}.csv`);
+  };
+  
+  // Handle editing an evaluation
+  const handleEditEvaluation = (evaluation: EvaluationDisplayItem) => {
+    setEditingEvaluation(evaluation);
+    setIsEditDialogOpen(true);
   };
 
   console.log('Rendering evaluation list with:', {
@@ -159,6 +171,7 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
                   onSelectOne={handleSelectOne}
                   hasLevels={hasLevels}
                   hasCoaches={hasCoaches}
+                  onEdit={isAdmin ? () => handleEditEvaluation(evaluation) : undefined}
                   onDelete={isAdmin ? () => {
                     deleteMutation.mutate([evaluation.id]);
                   } : undefined}
@@ -175,6 +188,12 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
         onConfirm={() => confirmDelete(selectedIds)}
         count={selectedIds.length}
         isPending={deleteMutation.isPending}
+      />
+      
+      <EditEvaluationDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        evaluation={editingEvaluation}
       />
     </div>
   );
