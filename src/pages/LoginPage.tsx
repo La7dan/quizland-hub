@@ -19,8 +19,10 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get the redirect path from location state or default to admin panel for superadmin
-  const from = (location.state as any)?.from?.pathname || (isSuperAdmin ? '/admin' : '/');
+  // Get the redirect path from location state or default based on user role
+  const from = (location.state as any)?.from?.pathname || 
+               (isSuperAdmin ? '/admin' : 
+               (user?.role === 'coach' ? '/coach' : '/'));
   
   console.log('LoginPage - Auth status:', { isAuthenticated, userRole: user?.role, from });
   
@@ -29,12 +31,17 @@ const LoginPage = () => {
     return <Navigate to="/" replace />;
   }
   
-  // If already authenticated, redirect to the intended page
+  // If already authenticated, redirect to the appropriate page
   if (isAuthenticated) {
     // If super admin, redirect to admin panel
     if (isSuperAdmin) {
       return <Navigate to="/admin" replace />;
     }
+    // If coach, redirect to coach dashboard
+    if (user?.role === 'coach') {
+      return <Navigate to="/coach" replace />;
+    }
+    // For other users, redirect to the intended page
     return <Navigate to={from} replace />;
   }
 

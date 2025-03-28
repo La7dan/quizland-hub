@@ -12,6 +12,7 @@ import QuizPage from "./pages/QuizPage";
 import QuizzesPage from "./pages/QuizzesPage";
 import LoginPage from "./pages/LoginPage";
 import AdminPanel from "./pages/AdminPanel";
+import CoachDashboard from "./pages/CoachDashboard";
 import NotFound from "./pages/NotFound";
 import QuizPreviewPage from "./pages/QuizPreviewPage";
 
@@ -37,6 +38,14 @@ const App: React.FC = () => {
                 element={
                   <ProtectedRoute requireSuperAdmin>
                     <AdminPanel />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/coach" 
+                element={
+                  <ProtectedRoute>
+                    <CoachDashboard />
                   </ProtectedRoute>
                 } 
               />
