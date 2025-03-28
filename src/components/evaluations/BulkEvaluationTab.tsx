@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -108,11 +107,20 @@ const BulkEvaluationTab: React.FC<BulkEvaluationTabProps> = ({ onSuccess }) => {
       const memberIds = selectedMembers.join(',');
       
       return await executeSql(`
-        WITH inserted_evaluations AS (
-          INSERT INTO evaluations (member_id, status, nominated_at, evaluation_date, coach_id)
-          SELECT id, 'pending', NOW(), '${formattedDate}', ${selectedCoachId}
+        WITH eligible_members AS (
+          SELECT id 
           FROM members
           WHERE id IN (${memberIds})
+          AND NOT EXISTS (
+            SELECT 1 FROM evaluations 
+            WHERE member_id = members.id 
+            AND status = 'pending'
+          )
+        ),
+        inserted_evaluations AS (
+          INSERT INTO evaluations (member_id, status, nominated_at, evaluation_date, coach_id)
+          SELECT id, 'pending', NOW(), '${formattedDate}', ${selectedCoachId}
+          FROM eligible_members
           RETURNING id
         )
         SELECT COUNT(*) as count FROM inserted_evaluations
@@ -120,10 +128,20 @@ const BulkEvaluationTab: React.FC<BulkEvaluationTabProps> = ({ onSuccess }) => {
     },
     onSuccess: (data) => {
       const count = data.rows[0]?.count || 0;
-      toast({
-        title: "Success",
-        description: `Created ${count} pending evaluations for selected members`,
-      });
+      
+      if (count === 0) {
+        toast({
+          title: "No evaluations created",
+          description: "Selected members already have pending evaluations",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: `Created ${count} pending evaluations for selected members`,
+        });
+      }
+      
       setSelectedMembers([]);
       setSelectAll(false);
       onSuccess();

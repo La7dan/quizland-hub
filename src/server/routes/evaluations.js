@@ -194,7 +194,7 @@ router.post('/upload-file', upload.single('file'), (req, res) => {
   }
 });
 
-// Upload evaluation record
+// Upload evaluation record - now checks for existing pending evaluations
 router.post('/upload', requireAuth, async (req, res) => {
   const { member_id, evaluation_date, file_url, coach_id } = req.body;
   
@@ -207,6 +207,21 @@ router.post('/upload', requireAuth, async (req, res) => {
   
   try {
     const client = await pool.connect();
+    
+    // Check if member already has a pending evaluation
+    const checkResult = await client.query(`
+      SELECT COUNT(*) FROM evaluations
+      WHERE member_id = $1 AND status = 'pending'
+    `, [member_id]);
+    
+    if (checkResult.rows[0].count > 0) {
+      client.release();
+      return res.status(400).json({
+        success: false,
+        message: 'Member already has a pending evaluation'
+      });
+    }
+    
     const result = await client.query(`
       INSERT INTO evaluations (member_id, status, nominated_at, evaluation_date, evaluation_pdf, coach_id)
       VALUES ($1, 'pending', NOW(), $2, $3, $4)

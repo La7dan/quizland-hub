@@ -28,13 +28,18 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const { toast } = useToast();
 
+  // Get members without pending evaluations
   const { data: membersData } = useQuery({
     queryKey: ['members-dropdown'],
     queryFn: async () => {
       const result = await executeSql(`
-        SELECT id, name, member_id 
-        FROM members 
-        ORDER BY name
+        SELECT m.id, m.name, m.member_id 
+        FROM members m
+        WHERE NOT EXISTS (
+          SELECT 1 FROM evaluations e 
+          WHERE e.member_id = m.id AND e.status = 'pending'
+        )
+        ORDER BY m.name
       `);
       return result.rows || [];
     }
@@ -86,6 +91,16 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
       setUploadProgress(70);
       
       const uploadResult = await uploadResponse.json();
+      
+      // Check if member already has a pending evaluation
+      const checkResult = await executeSql(`
+        SELECT COUNT(*) as count FROM evaluations 
+        WHERE member_id = ${selectedMemberId} AND status = 'pending'
+      `);
+      
+      if (checkResult.rows[0].count > 0) {
+        throw new Error("This member already has a pending evaluation");
+      }
       
       // Create a new evaluation record with the PDF file
       const result = await executeSql(`
@@ -162,11 +177,17 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
               <SelectValue placeholder="Select a member" />
             </SelectTrigger>
             <SelectContent>
-              {membersData?.map((member: any) => (
-                <SelectItem key={member.id} value={member.id.toString()}>
-                  {member.name} ({member.member_id})
+              {membersData?.length > 0 ? (
+                membersData.map((member: any) => (
+                  <SelectItem key={member.id} value={member.id.toString()}>
+                    {member.name} ({member.member_id})
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="none" disabled>
+                  No eligible members found
                 </SelectItem>
-              ))}
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -226,6 +247,24 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
           {isUploading ? 'Uploading...' : 'Upload Evaluation'}
         </Button>
       </div>
+      
+      {membersData?.length === 0 && (
+        <div className="rounded-lg bg-yellow-50 p-4 mt-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.485 3.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 3.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800">No eligible members</h3>
+              <div className="mt-2 text-sm text-yellow-700">
+                <p>All members already have pending evaluations. Complete or delete existing evaluations before creating new ones.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

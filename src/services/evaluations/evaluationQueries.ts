@@ -34,15 +34,24 @@ export const disapproveEvaluationQuery = async (evaluationId: number, reason: st
   `);
 };
 
-// Create bulk evaluations query
+// Create bulk evaluations query - now checks for existing pending evaluations
 export const createBulkEvaluationsQuery = async (memberIds: number[], evaluationDate: string, coachId: number) => {
   const memberIdsStr = memberIds.join(',');
   return await executeSql(`
-    WITH inserted_evaluations AS (
-      INSERT INTO evaluations (member_id, status, nominated_at, evaluation_date, coach_id)
-      SELECT id, 'pending', NOW(), ${sqlEscape.string(evaluationDate)}, ${coachId}
+    WITH eligible_members AS (
+      SELECT id 
       FROM members
       WHERE id IN (${memberIdsStr})
+      AND NOT EXISTS (
+        SELECT 1 FROM evaluations 
+        WHERE member_id = members.id 
+        AND status = 'pending'
+      )
+    ),
+    inserted_evaluations AS (
+      INSERT INTO evaluations (member_id, status, nominated_at, evaluation_date, coach_id)
+      SELECT id, 'pending', NOW(), ${sqlEscape.string(evaluationDate)}, ${coachId}
+      FROM eligible_members
       RETURNING id
     )
     SELECT COUNT(*) as count FROM inserted_evaluations
@@ -51,6 +60,20 @@ export const createBulkEvaluationsQuery = async (memberIds: number[], evaluation
 
 // For testing and development - creates a sample pending evaluation
 export const createSampleEvaluationQuery = async (memberId: number, coachId: number) => {
+  // First check if there's already a pending evaluation
+  const checkResult = await executeSql(`
+    SELECT COUNT(*) as count 
+    FROM evaluations 
+    WHERE member_id = ${memberId} AND status = 'pending'
+  `);
+  
+  if (checkResult.rows[0].count > 0) {
+    return {
+      success: false,
+      message: 'Member already has a pending evaluation'
+    };
+  }
+  
   return await executeSql(`
     INSERT INTO evaluations (member_id, status, nominated_at, coach_id)
     VALUES (${memberId}, 'pending', NOW(), ${coachId})
