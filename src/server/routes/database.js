@@ -5,20 +5,26 @@ import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Track the last successful connection time to avoid excessive checking
-let lastConnectionCheck = 0;
-const CONNECTION_CHECK_INTERVAL = 30000; // 30 seconds
+// Cache connection status
+let cachedConnectionStatus = {
+  success: false,
+  timestamp: 0,
+  message: 'Not checked yet'
+};
+
+const CONNECTION_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Test database connection
 router.get('/check-connection', async (req, res) => {
   const now = Date.now();
+  const { isConnected } = getConnectionStatus();
   
-  // Only check connection if it's been more than 30 seconds since last check
-  if (now - lastConnectionCheck < CONNECTION_CHECK_INTERVAL) {
-    const { isConnected } = getConnectionStatus();
+  // If we already know we're connected, return cached status
+  if (isConnected && cachedConnectionStatus.success && 
+      (now - cachedConnectionStatus.timestamp < CONNECTION_CACHE_DURATION)) {
     return res.json({ 
-      success: isConnected, 
-      message: isConnected ? 'Using cached connection status (connected)' : 'Using cached connection status (disconnected)', 
+      success: true, 
+      message: 'Using cached connection status (connected)', 
       cached: true 
     });
   }
@@ -29,7 +35,13 @@ router.get('/check-connection', async (req, res) => {
     client.release();
     
     console.log('Database connection successful (API check)');
-    lastConnectionCheck = now;
+    
+    // Update cached status
+    cachedConnectionStatus = {
+      success: true,
+      timestamp: now,
+      message: 'Database connection successful'
+    };
     
     res.json({ 
       success: true, 
@@ -38,6 +50,14 @@ router.get('/check-connection', async (req, res) => {
     });
   } catch (error) {
     console.error('Database connection error (API check):', error);
+    
+    // Update cached status to failure
+    cachedConnectionStatus = {
+      success: false,
+      timestamp: now,
+      message: 'Database connection failed'
+    };
+    
     res.status(500).json({ 
       success: false, 
       message: 'Database connection failed', 

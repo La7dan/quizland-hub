@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { checkConnection } from '@/services/apiService';
 import { Badge } from '@/components/ui/badge';
@@ -17,9 +16,15 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastCheckRef = useRef<number>(0);
   
-  const MIN_CHECK_INTERVAL = 60000; // Increase to 1 minute to reduce check frequency
-
+  const MIN_CHECK_INTERVAL = 5 * 60 * 1000; // Increase to 5 minutes
+  
   const checkDatabaseConnection = async (force = false) => {
+    // Skip check if already connected and not forced
+    if (!force && connectionStatus === 'connected') {
+      console.log("Skipping connection check - already connected");
+      return;
+    }
+    
     const now = Date.now();
     
     if (!force && now - lastCheckRef.current < MIN_CHECK_INTERVAL) {
@@ -41,6 +46,12 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
         setStatusMessage(result.cached 
           ? 'Connected to database (cached status)' 
           : 'Connected to database');
+          
+        // Clear interval if connected successfully
+        if (checkIntervalRef.current) {
+          clearInterval(checkIntervalRef.current);
+          checkIntervalRef.current = null;
+        }
       } else {
         setConnectionStatus('disconnected');
         setStatusMessage(`Unable to connect to database server`);
@@ -55,16 +66,24 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
   };
 
   useEffect(() => {
-    // Initial check on component mount with a slight delay to avoid
-    // too many concurrent connections during app startup
+    // Initial check on component mount with a slight delay
     const initialCheckTimeout = setTimeout(() => {
       checkDatabaseConnection(true);
     }, 2000);
     
-    // Set up periodic check, but much less frequently than before
-    checkIntervalRef.current = setInterval(() => {
-      checkDatabaseConnection();
-    }, MIN_CHECK_INTERVAL * 2); // Check half as often as the minimum interval
+    // Only set up periodic checks if not yet connected
+    if (connectionStatus !== 'connected') {
+      checkIntervalRef.current = setInterval(() => {
+        // Only perform periodic checks if disconnected or checking
+        if (connectionStatus !== 'connected') {
+          checkDatabaseConnection();
+        } else if (checkIntervalRef.current) {
+          // Clear interval if we're connected
+          clearInterval(checkIntervalRef.current);
+          checkIntervalRef.current = null;
+        }
+      }, MIN_CHECK_INTERVAL);
+    }
     
     return () => {
       clearTimeout(initialCheckTimeout);
@@ -72,7 +91,7 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
         clearInterval(checkIntervalRef.current);
       }
     };
-  }, []);
+  }, [connectionStatus]);
 
   return (
     <div className="bg-white shadow-md rounded-lg p-4 mb-6">
