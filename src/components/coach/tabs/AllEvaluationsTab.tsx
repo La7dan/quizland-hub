@@ -6,6 +6,7 @@ import { Evaluation } from '@/services/evaluations/types';
 import EditEvaluationDialog from '@/components/evaluations/EditEvaluationDialog';
 import { Button } from '@/components/ui/button';
 import { Edit } from 'lucide-react';
+import { EvaluationDisplayItem } from '@/components/evaluations/types';
 
 interface AllEvaluationsTabProps {
   allEvaluationsLoading: boolean;
@@ -18,11 +19,26 @@ const AllEvaluationsTab: React.FC<AllEvaluationsTabProps> = ({
   allEvaluations,
   hasConnectionError,
 }) => {
-  const [editingEvaluation, setEditingEvaluation] = useState<Evaluation | null>(null);
+  const [editingEvaluation, setEditingEvaluation] = useState<EvaluationDisplayItem | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleEditEvaluation = (evaluation: Evaluation) => {
-    setEditingEvaluation(evaluation);
+    // Convert Evaluation to EvaluationDisplayItem
+    const displayItem: EvaluationDisplayItem = {
+      id: evaluation.id || 0, // Provide a default value since id is optional in Evaluation but required in EvaluationDisplayItem
+      status: evaluation.status,
+      nominated_at: evaluation.nominated_at,
+      evaluation_date: evaluation.evaluation_date,
+      evaluation_pdf: evaluation.evaluation_pdf,
+      evaluation_result: evaluation.evaluation_result as 'passed' | 'not_ready',
+      member_name: evaluation.member_name || '',
+      member_code: evaluation.member_code || '',
+      member_id: evaluation.member_id,
+      coach_id: evaluation.coach_id,
+      classes_count: evaluation.classes_count
+    };
+    
+    setEditingEvaluation(displayItem);
     setIsEditDialogOpen(true);
   };
 
