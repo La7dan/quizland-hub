@@ -79,10 +79,11 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
     retry: 2
   });
 
-  // Get evaluations by status
+  // Get evaluations by status and result
   const completedEvaluations = allEvaluations?.filter(e => e.evaluation_pdf) || [];
   const approvedEvaluations = allEvaluations?.filter(e => e.status === 'approved') || [];
   const disapprovedEvaluations = allEvaluations?.filter(e => e.status === 'disapproved') || [];
+  const passedEvaluations = allEvaluations?.filter(e => e.evaluation_result === 'passed') || [];
   
   // Set up filters for completed tab
   const {
@@ -96,15 +97,28 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
     filteredEvaluations: filteredCompletedEvaluations,
     clearFilters
   } = useEvaluationFilters(completedEvaluations);
+
+  // Set up filters for passed tab
+  const {
+    searchTerm: passedSearchTerm,
+    setSearchTerm: setPassedSearchTerm,
+    sortField: passedSortField,
+    sortOrder: passedSortOrder,
+    filters: passedFilters,
+    setFilters: setPassedFilters,
+    toggleSort: togglePassedSort,
+    filteredEvaluations: filteredPassedEvaluations,
+    clearFilters: clearPassedFilters
+  } = useEvaluationFilters(passedEvaluations);
   
   // Check for database connection errors
   const hasConnectionError = error?.message?.includes('Failed to fetch') || 
                             allEvaluationsError?.message?.includes('Failed to fetch');
 
   // Helper for rendering sort indicators
-  const renderSortIndicator = (field: SortField) => {
-    if (field !== sortField) return null;
-    return sortOrder === 'asc' ? 
+  const renderSortIndicator = (field: SortField, currentSortField: SortField, currentSortOrder: 'asc' | 'desc') => {
+    if (field !== currentSortField) return null;
+    return currentSortOrder === 'asc' ? 
       <ArrowUp className="inline-block h-4 w-4 ml-1" /> : 
       <ArrowDown className="inline-block h-4 w-4 ml-1" />;
   };
@@ -142,6 +156,7 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
             <TabsTrigger value="approved">Approved</TabsTrigger>
             <TabsTrigger value="disapproved">Disapproved</TabsTrigger>
             <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="passed">Passed</TabsTrigger>
             <TabsTrigger value="all">All</TabsTrigger>
           </TabsList>
           
@@ -178,6 +193,111 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
               <div className="text-center py-8">
                 <p className="text-muted-foreground">No disapproved evaluations found.</p>
               </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="passed">
+            {allEvaluationsLoading ? (
+              <LoadingEvaluations />
+            ) : (
+              <>
+                {/* Filters for passed evaluations */}
+                {passedEvaluations.length > 0 && (
+                  <div className="mb-4 flex flex-col sm:flex-row gap-3 justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search members..."
+                          className="pl-8 w-[250px]"
+                          value={passedSearchTerm}
+                          onChange={(e) => setPassedSearchTerm(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={clearPassedFilters}
+                        disabled={!passedSearchTerm && Object.keys(passedFilters).length === 0}
+                      >
+                        Clear Filters
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {passedEvaluations.length > 0 ? (
+                  <div className="border rounded-md overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead 
+                              className="cursor-pointer" 
+                              onClick={() => togglePassedSort('member_code')}
+                            >
+                              Member ID {renderSortIndicator('member_code', passedSortField, passedSortOrder)}
+                            </TableHead>
+                            <TableHead 
+                              className="cursor-pointer" 
+                              onClick={() => togglePassedSort('member_name')}
+                            >
+                              Name {renderSortIndicator('member_name', passedSortField, passedSortOrder)}
+                            </TableHead>
+                            <TableHead 
+                              className="cursor-pointer" 
+                              onClick={() => togglePassedSort('evaluation_date')}
+                            >
+                              Eval Date {renderSortIndicator('evaluation_date', passedSortField, passedSortOrder)}
+                            </TableHead>
+                            <TableHead 
+                              className="cursor-pointer" 
+                              onClick={() => togglePassedSort('status')}
+                            >
+                              Status {renderSortIndicator('status', passedSortField, passedSortOrder)}
+                            </TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredPassedEvaluations.map((evaluation) => (
+                            <TableRow key={evaluation.id}>
+                              <TableCell className="font-medium">{evaluation.member_code}</TableCell>
+                              <TableCell>
+                                <div className="truncate max-w-[180px]">{evaluation.member_name}</div>
+                              </TableCell>
+                              <TableCell>
+                                {evaluation.evaluation_date
+                                  ? format(new Date(evaluation.evaluation_date), 'MMM dd, yyyy')
+                                  : 'N/A'}
+                              </TableCell>
+                              <TableCell>
+                                {renderResultBadge(evaluation.evaluation_result)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <EvaluationActions 
+                                  evaluationId={evaluation.id!}
+                                  pdfFileName={evaluation.evaluation_pdf}
+                                  status={evaluation.status}
+                                  showAll={true}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      No passed evaluations found.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
           
@@ -238,25 +358,25 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
                               className="cursor-pointer" 
                               onClick={() => toggleSort('member_code')}
                             >
-                              Member ID {renderSortIndicator('member_code')}
+                              Member ID {renderSortIndicator('member_code', sortField, sortOrder)}
                             </TableHead>
                             <TableHead 
                               className="cursor-pointer" 
                               onClick={() => toggleSort('member_name')}
                             >
-                              Name {renderSortIndicator('member_name')}
+                              Name {renderSortIndicator('member_name', sortField, sortOrder)}
                             </TableHead>
                             <TableHead 
                               className="cursor-pointer" 
                               onClick={() => toggleSort('evaluation_date')}
                             >
-                              Eval Date {renderSortIndicator('evaluation_date')}
+                              Eval Date {renderSortIndicator('evaluation_date', sortField, sortOrder)}
                             </TableHead>
                             <TableHead 
                               className="cursor-pointer" 
                               onClick={() => toggleSort('evaluation_result')}
                             >
-                              Result {renderSortIndicator('evaluation_result')}
+                              Result {renderSortIndicator('evaluation_result', sortField, sortOrder)}
                             </TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                           </TableRow>

@@ -31,8 +31,8 @@ export const ImportResults = ({ errors, success, result }: ImportResultsProps) =
       )}
       
       {success && (
-        <Alert variant={result === 'not_ready' ? "destructive" : "default"}>
-          <CheckCircle className="h-4 w-4" />
+        <Alert variant={result === 'not_ready' ? "destructive" : "default"} className={result === 'passed' ? "border-green-200 bg-green-50" : ""}>
+          <CheckCircle className={`h-4 w-4 ${result === 'passed' ? "text-green-600" : ""}`} />
           <AlertDescription className="flex items-center gap-2">
             <span>
               {result === 'not_ready' 
@@ -41,7 +41,7 @@ export const ImportResults = ({ errors, success, result }: ImportResultsProps) =
             </span>
             {result && (
               <Badge 
-                variant={result === 'not_ready' ? "outline" : "outline"}
+                variant="outline"
                 className={result === 'not_ready' 
                   ? "bg-red-100 text-red-800 border-red-200" 
                   : "bg-green-100 text-green-800 border-green-200"}
