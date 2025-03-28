@@ -47,7 +47,7 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({
                 <TableHead className="min-w-[100px]">Result</TableHead>
               </>
             )}
-            <TableHead className="text-right min-w-[100px]">Actions</TableHead>
+            <TableHead className="text-right min-w-[180px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -74,12 +74,14 @@ const PendingEvaluationsList: React.FC<PendingEvaluationsListProps> = ({
                 </>
               )}
               <TableCell className="text-right">
-                <EvaluationActions 
-                  evaluationId={evaluation.id!}
-                  pdfFileName={evaluation.evaluation_pdf}
-                  status={evaluation.status}
-                  showAll={showAll}
-                />
+                <div className="flex justify-end flex-wrap gap-2">
+                  <EvaluationActions 
+                    evaluationId={evaluation.id!}
+                    pdfFileName={evaluation.evaluation_pdf}
+                    status={evaluation.status}
+                    showAll={showAll}
+                  />
+                </div>
               </TableCell>
             </TableRow>
           ))}

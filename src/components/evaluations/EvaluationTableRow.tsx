@@ -96,8 +96,8 @@ const EvaluationTableRow: React.FC<EvaluationTableRowProps> = ({
       {hasCoaches && (
         <TableCell className="min-w-[150px]">{evaluation.coach_name || 'Not assigned'}</TableCell>
       )}
-      <TableCell className="text-right min-w-[100px]">
-        <div className="flex justify-end items-center space-x-2">
+      <TableCell className="text-right min-w-[150px]">
+        <div className="flex flex-wrap justify-end items-center gap-2">
           <EvaluationItem evaluation={evaluation} />
           {isAdmin && onDelete && (
             <Button 

@@ -66,7 +66,7 @@ const EvaluationItem: React.FC<EvaluationItemProps> = ({ evaluation }) => {
         <div>
           {new Date(evaluation.nominated_at).toLocaleDateString()}
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2 justify-end">
           {user?.role === 'admin' || user?.role === 'super_admin' ? (
             <Button 
               variant="outline" 
