@@ -107,7 +107,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// Import members from CSV
+// Import members from CSV - Updated to better handle duplicates
 router.post('/import', requireAuth, async (req, res) => {
   const { members } = req.body;
   
@@ -124,13 +124,26 @@ router.post('/import', requireAuth, async (req, res) => {
     // Begin transaction
     await client.query('BEGIN');
     
+    // Deduplicate members by member_id to prevent conflicts
+    const memberIds = new Set();
+    const uniqueMembers = [];
+    
+    // Use the last occurrence of each member_id
+    for (let i = members.length - 1; i >= 0; i--) {
+      const member = members[i];
+      if (member.member_id && !memberIds.has(member.member_id)) {
+        memberIds.add(member.member_id);
+        uniqueMembers.unshift(member); // Add to the front to maintain original order
+      }
+    }
+    
+    console.log(`Server: Processing import for ${uniqueMembers.length} unique members (from ${members.length} total)`);
+    
     let successCount = 0;
     let errorCount = 0;
     const errors = [];
     
-    console.log('Server: Processing import for', members.length, 'members');
-    
-    for (const member of members) {
+    for (const member of uniqueMembers) {
       try {
         if (!member.member_id || !member.name) {
           throw new Error(`Missing required fields for member: ${JSON.stringify(member)}`);
@@ -170,21 +183,25 @@ router.post('/import', requireAuth, async (req, res) => {
         // Ensure classes_count is a number
         const classesCount = typeof member.classes_count === 'number' ? member.classes_count : 0;
         
-        console.log('Inserting member:', {
-          member_id: member.member_id,
-          name: member.name,
-          level_id: levelId,
-          classes_count: classesCount,
-          coach_id: coachId
-        });
-        
-        // Insert the member
-        await client.query(
-          'INSERT INTO members (member_id, name, level_id, classes_count, coach_id) VALUES ($1, $2, $3, $4, $5)',
+        // Do upsert with proper parameterization to avoid SQL injection
+        const result = await client.query(
+          `INSERT INTO members (member_id, name, level_id, classes_count, coach_id) 
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (member_id) 
+           DO UPDATE SET 
+             name = EXCLUDED.name,
+             level_id = EXCLUDED.level_id,
+             classes_count = EXCLUDED.classes_count,
+             coach_id = EXCLUDED.coach_id
+           RETURNING id`,
           [member.member_id, member.name, levelId, classesCount, coachId]
         );
         
-        successCount++;
+        if (result.rows.length > 0) {
+          successCount++;
+        } else {
+          throw new Error('Insert failed without error');
+        }
       } catch (error) {
         errorCount++;
         console.error('Error importing member:', error);

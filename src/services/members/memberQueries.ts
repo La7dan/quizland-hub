@@ -1,4 +1,3 @@
-
 import { executeSql, sqlEscape } from '../apiService';
 import { Member } from './types';
 
@@ -54,15 +53,16 @@ export const importMemberQuery = async (member: Member) => {
   `);
 };
 
-// New function to handle batch imports more efficiently
 export const batchImportMemberQuery = async (members: Member[]) => {
   if (members.length === 0) {
     return { success: false, message: 'No members provided for batch import' };
   }
   
   try {
-    // Build a SQL statement that handles multiple inserts at once
-    const valuesClauses = members.map(member => `(
+    const uniqueMembers = deduplicateMembers(members);
+    console.log(`Deduplicating ${members.length} members to ${uniqueMembers.length} unique members`);
+    
+    const valuesClauses = uniqueMembers.map(member => `(
       ${sqlEscape.string(member.member_id)}, 
       ${sqlEscape.string(member.name)}, 
       ${sqlEscape.number(member.level_id)}, 
@@ -84,7 +84,6 @@ export const batchImportMemberQuery = async (members: Member[]) => {
       SELECT COUNT(*) AS success_count FROM import_data;
     `;
     
-    // Set a longer timeout for large batches
     const result = await executeSql(sql, { timeout: 30000 });
     
     if (result.success && result.rows && result.rows.length > 0) {
@@ -92,8 +91,8 @@ export const batchImportMemberQuery = async (members: Member[]) => {
       return {
         success: true,
         successCount,
-        errorCount: members.length - successCount,
-        errors: successCount < members.length ? [`${members.length - successCount} records failed to import`] : []
+        errorCount: uniqueMembers.length - successCount,
+        errors: successCount < uniqueMembers.length ? [`${uniqueMembers.length - successCount} records failed to import`] : []
       };
     } else {
       return {
@@ -109,3 +108,16 @@ export const batchImportMemberQuery = async (members: Member[]) => {
     };
   }
 };
+
+function deduplicateMembers(members: Member[]): Member[] {
+  const uniqueMembersMap = new Map<string, Member>();
+  
+  for (let i = members.length - 1; i >= 0; i--) {
+    const member = members[i];
+    if (member.member_id) {
+      uniqueMembersMap.set(member.member_id, member);
+    }
+  }
+  
+  return Array.from(uniqueMembersMap.values());
+}
