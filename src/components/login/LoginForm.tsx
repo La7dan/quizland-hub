@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertCircle, LogIn, Lock } from 'lucide-react';
 import { LoginFormData } from '@/hooks/useLoginForm';
-import { UseFormRegister, FieldErrors, FormEventHandler } from 'react-hook-form';
+import { UseFormRegister, FieldErrors } from 'react-hook-form';
 
 interface LoginFormProps {
   register: UseFormRegister<LoginFormData>;
@@ -17,7 +17,7 @@ interface LoginFormProps {
   isLoggingIn: boolean;
   rememberMe: boolean;
   setRememberMe: (value: boolean) => void;
-  onSubmit: FormEventHandler<HTMLFormElement>;
+  onSubmit: React.FormEventHandler<HTMLFormElement>;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({

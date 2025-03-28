@@ -3,83 +3,161 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
+import { User } from '@/types/auth';
 
+// Enhanced types for the login form
 export interface LoginFormData {
   username: string;
   password: string;
 }
 
-export const useLoginForm = () => {
+export interface LoginHistory {
+  time: string;
+  location: string;
+}
+
+export interface UseLoginFormReturn {
+  register: ReturnType<typeof useForm<LoginFormData>>['register'];
+  handleSubmit: ReturnType<typeof useForm<LoginFormData>>['handleSubmit'];
+  onSubmit: (data: LoginFormData) => Promise<void>;
+  errors: ReturnType<typeof useForm<LoginFormData>>['formState']['errors'];
+  loginError: string | null;
+  isLoggingIn: boolean;
+  lastLogin: LoginHistory | null;
+  rememberMe: boolean;
+  setRememberMe: (value: boolean) => void;
+  lockoutTime: number | null;
+  isAuthenticated: boolean;
+  isSuperAdmin: boolean;
+  user: User | null;
+  from: string;
+}
+
+export const useLoginForm = (): UseLoginFormReturn => {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [lastLogin, setLastLogin] = useState<{ time: string, location: string } | null>(null);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+  const [lastLogin, setLastLogin] = useState<LoginHistory | null>(null);
+  const [rememberMe, setRememberMe] = useState<boolean>(false);
+  const [loginAttempts, setLoginAttempts] = useState<number>(0);
   const [lockoutTime, setLockoutTime] = useState<number | null>(null);
   const { login, isAuthenticated, isSuperAdmin, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
   // Get the redirect path from location state or default based on user role
-  const from = (location.state as any)?.from?.pathname || 
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || 
                (isSuperAdmin ? '/admin' : 
                (user?.role === 'coach' ? '/coach' : '/'));
   
   console.log('LoginPage - Auth status:', { isAuthenticated, userRole: user?.role, from });
   
-  // Fetch last login info and login attempts from localStorage on component mount
+  // Load login history and attempt data from localStorage
   useEffect(() => {
-    const storedLoginHistory = localStorage.getItem('loginHistory');
-    if (storedLoginHistory) {
-      try {
-        const parsedHistory = JSON.parse(storedLoginHistory);
+    try {
+      // Fetch last login info
+      const storedLoginHistory = localStorage.getItem('loginHistory');
+      if (storedLoginHistory) {
+        const parsedHistory = JSON.parse(storedLoginHistory) as LoginHistory;
         setLastLogin(parsedHistory);
-      } catch (error) {
-        console.error('Error parsing login history:', error);
       }
-    }
-    
-    // Get stored login attempts and lockout time
-    const storedAttempts = localStorage.getItem('loginAttempts');
-    const storedLockoutTime = localStorage.getItem('lockoutUntil');
-    
-    if (storedAttempts) {
-      setLoginAttempts(parseInt(storedAttempts));
-    }
-    
-    if (storedLockoutTime) {
-      const lockoutUntil = parseInt(storedLockoutTime);
-      const now = Date.now();
       
-      if (lockoutUntil > now) {
-        // Still in lockout period
-        setLockoutTime(Math.ceil((lockoutUntil - now) / 1000));
-        
-        // Set timer to update remaining lockout time
-        const timer = setInterval(() => {
-          setLockoutTime(prev => {
-            if (prev && prev > 1) {
-              return prev - 1;
-            } else {
-              clearInterval(timer);
-              localStorage.removeItem('lockoutUntil');
-              return null;
-            }
-          });
-        }, 1000);
-        
-        return () => clearInterval(timer);
-      } else {
-        // Lockout period has expired
-        localStorage.removeItem('lockoutUntil');
-        setLockoutTime(null);
+      // Get stored login attempts
+      const storedAttempts = localStorage.getItem('loginAttempts');
+      if (storedAttempts) {
+        const attempts = parseInt(storedAttempts, 10);
+        if (!isNaN(attempts)) {
+          setLoginAttempts(attempts);
+        }
       }
+      
+      // Check lockout status
+      const storedLockoutTime = localStorage.getItem('lockoutUntil');
+      if (storedLockoutTime) {
+        const lockoutUntil = parseInt(storedLockoutTime, 10);
+        if (!isNaN(lockoutUntil)) {
+          const now = Date.now();
+          
+          if (lockoutUntil > now) {
+            // Still in lockout period
+            const remainingTime = Math.ceil((lockoutUntil - now) / 1000);
+            setLockoutTime(remainingTime);
+            
+            // Set timer to update remaining lockout time
+            const timer = setInterval(() => {
+              setLockoutTime(prev => {
+                if (prev && prev > 1) {
+                  return prev - 1;
+                } else {
+                  clearInterval(timer);
+                  localStorage.removeItem('lockoutUntil');
+                  return null;
+                }
+              });
+            }, 1000);
+            
+            return () => clearInterval(timer);
+          } else {
+            // Lockout period has expired
+            localStorage.removeItem('lockoutUntil');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading login data from localStorage:', error);
+      // Clear potentially corrupted data
+      localStorage.removeItem('loginHistory');
+      localStorage.removeItem('loginAttempts');
+      localStorage.removeItem('lockoutUntil');
     }
   }, []);
 
-  const onSubmit = async (data: LoginFormData) => {
+  const handleLoginSuccess = (): void => {
+    // Reset login attempts on successful login
+    setLoginAttempts(0);
+    localStorage.removeItem('loginAttempts');
+    
+    try {
+      // Store login time and approximate location on successful login
+      const now = new Date().toLocaleString();
+      // In a real app, you might use a geolocation API here
+      const loginInfo: LoginHistory = {
+        time: now,
+        location: 'Your current location'
+      };
+      
+      localStorage.setItem('loginHistory', JSON.stringify(loginInfo));
+    } catch (error) {
+      console.error('Error saving login history:', error);
+    }
+  };
+
+  const handleLoginFailure = (): void => {
+    try {
+      // Increment failed login attempts
+      const newAttempts = loginAttempts + 1;
+      setLoginAttempts(newAttempts);
+      localStorage.setItem('loginAttempts', newAttempts.toString());
+      
+      // Check if we should lock the account (after 3 failed attempts)
+      if (newAttempts >= 3) {
+        const lockoutDuration = 30; // seconds
+        const lockoutUntil = Date.now() + (lockoutDuration * 1000);
+        
+        localStorage.setItem('lockoutUntil', lockoutUntil.toString());
+        setLockoutTime(lockoutDuration);
+        
+        setLoginError(`Too many failed login attempts. Your account is locked for ${lockoutDuration} seconds.`);
+      } else {
+        setLoginError(`Login failed. Please check your credentials. ${3 - newAttempts} attempts remaining.`);
+      }
+    } catch (error) {
+      console.error('Error handling login failure:', error);
+      setLoginError('Login failed. Please check your credentials.');
+    }
+  };
+
+  const onSubmit = async (data: LoginFormData): Promise<void> => {
     try {
       setLoginError(null);
       
@@ -102,41 +180,11 @@ export const useLoginForm = () => {
       console.log('Login result:', success ? 'success' : 'failed');
       
       if (success) {
-        // Reset login attempts on successful login
-        setLoginAttempts(0);
-        localStorage.removeItem('loginAttempts');
-        
-        // Store login time and approximate location on successful login
-        const now = new Date().toLocaleString();
-        // In a real app, you might use a geolocation API here
-        // For this example, we'll use a placeholder
-        const loginInfo = {
-          time: now,
-          location: 'Your current location'
-        };
-        
-        localStorage.setItem('loginHistory', JSON.stringify(loginInfo));
+        handleLoginSuccess();
         // Login was successful - the redirect will happen automatically 
         // when the AuthContext sets the user state
       } else {
-        // Increment failed login attempts
-        const newAttempts = loginAttempts + 1;
-        setLoginAttempts(newAttempts);
-        localStorage.setItem('loginAttempts', newAttempts.toString());
-        
-        // Check if we should lock the account (after 3 failed attempts)
-        if (newAttempts >= 3) {
-          const lockoutDuration = 30; // seconds
-          const lockoutUntil = Date.now() + (lockoutDuration * 1000);
-          
-          localStorage.setItem('lockoutUntil', lockoutUntil.toString());
-          setLockoutTime(lockoutDuration);
-          
-          setLoginError(`Too many failed login attempts. Your account is locked for ${lockoutDuration} seconds.`);
-        } else {
-          // Login will display its own toast, but we also set this for form validation
-          setLoginError(`Login failed. Please check your credentials. ${3 - newAttempts} attempts remaining.`);
-        }
+        handleLoginFailure();
       }
     } catch (error) {
       console.error('Login submission error:', error);

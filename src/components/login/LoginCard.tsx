@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Shield } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import LoginLastActivity from './LoginLastActivity';
 import LoginForm from './LoginForm';
-import { UseFormRegister, FieldErrors, FormEventHandler } from 'react-hook-form';
+import { UseFormRegister, FieldErrors } from 'react-hook-form';
 import { LoginFormData } from '@/hooks/useLoginForm';
 
 interface LoginCardProps {
@@ -16,7 +15,7 @@ interface LoginCardProps {
   isLoggingIn: boolean;
   rememberMe: boolean;
   setRememberMe: (value: boolean) => void;
-  onSubmit: FormEventHandler<HTMLFormElement>;
+  onSubmit: React.FormEventHandler<HTMLFormElement>;
 }
 
 const LoginCard: React.FC<LoginCardProps> = ({
