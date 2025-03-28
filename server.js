@@ -1,4 +1,3 @@
-
 import express from 'express';
 import pg from 'pg';
 import cors from 'cors';
@@ -83,8 +82,12 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'dist')));
 }
 
-// Serve uploaded files
-app.use('/files', express.static(UPLOADS_DIR));
+// Serve uploaded files with proper CORS headers
+app.use('/files', (req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  next();
+}, express.static(UPLOADS_DIR));
 
 // Database connection configuration
 const pool = new Pool({
@@ -667,6 +670,8 @@ app.post('/api/evaluations/upload-file', upload.single('file'), (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
+    
+    console.log('File uploaded successfully:', req.file.filename);
     
     // Return the file path to be stored in the database
     res.json({ 

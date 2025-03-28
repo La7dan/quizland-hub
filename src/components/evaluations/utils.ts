@@ -1,4 +1,3 @@
-
 import { ENV } from '@/config/env';
 
 const API_BASE_URL = ENV.API_BASE_URL.replace('/api', '') || 'http://209.74.89.41:8080';
@@ -15,7 +14,14 @@ export const getStatusIcon = (status: string) => {
 };
 
 export const handleDownload = (filePath: string) => {
-  window.open(`${API_BASE_URL}/files/${filePath}`, '_blank');
+  if (!filePath) return;
+  
+  // Ensure we have the proper URL format for file paths
+  const fileUrl = filePath.startsWith('http') 
+    ? filePath 
+    : `${API_BASE_URL}/files/${filePath}`;
+    
+  window.open(fileUrl, '_blank');
 };
 
 export const getSelectedMemberCode = (

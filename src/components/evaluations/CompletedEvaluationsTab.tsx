@@ -21,6 +21,7 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
     queryFn: async () => {
       let query = `
         SELECT e.id, e.status, e.nominated_at, e.evaluation_date, e.evaluation_pdf,
+               e.evaluation_result, e.member_id, e.coach_id,
                m.name as member_name, m.member_id as member_code
         FROM evaluations e
         JOIN members m ON e.member_id = m.id

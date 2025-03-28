@@ -1,58 +1,87 @@
-
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import EvaluationUploadTab from './EvaluationUploadTab';
+import BulkEvaluationTab from './BulkEvaluationTab';
 import EvaluationListTab from './EvaluationListTab';
 import CompletedEvaluationsTab from './CompletedEvaluationsTab';
-import BulkEvaluationTab from './BulkEvaluationTab';
 
-interface EvaluationManagementProps {
-  onRefresh: () => void;
-}
+const EvaluationManagement = () => {
+  const [activeTab, setActiveTab] = useState('upload');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-const EvaluationManagement: React.FC<EvaluationManagementProps> = ({ onRefresh }) => {
-  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
-
-  const handleUploadSuccess = () => {
+  // Function to trigger refresh after operations
+  const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
-    onRefresh();
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Evaluation Management</CardTitle>
-          <CardDescription>Upload and manage member evaluations with PDF documents</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="upload">
-            <TabsList className="mb-4">
-              <TabsTrigger value="upload">Upload New Evaluation</TabsTrigger>
-              <TabsTrigger value="bulk">Bulk Evaluation Dates</TabsTrigger>
-              <TabsTrigger value="list">View Evaluations</TabsTrigger>
-              <TabsTrigger value="completed">Completed Evaluations</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="upload">
-              <EvaluationUploadTab onUploadSuccess={handleUploadSuccess} />
-            </TabsContent>
-            
-            <TabsContent value="bulk">
-              <BulkEvaluationTab onSuccess={handleUploadSuccess} />
-            </TabsContent>
-            
-            <TabsContent value="list">
+    <div className="container py-6">
+      <h1 className="text-2xl font-bold mb-6">Evaluation Management</h1>
+      
+      <Tabs defaultValue="upload" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="upload">Upload Evaluation</TabsTrigger>
+          <TabsTrigger value="all">Evaluation List</TabsTrigger>
+          <TabsTrigger value="completed">Completed Evaluations</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="upload">
+          <Card>
+            <CardHeader>
+              <CardTitle>Upload Evaluation</CardTitle>
+              <CardDescription>
+                Upload evaluation PDFs and assign them to members
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <EvaluationUploadTab onSuccess={handleRefresh} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="bulk">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bulk Evaluation Upload</CardTitle>
+              <CardDescription>
+                Upload multiple evaluations at once
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BulkEvaluationTab onSuccess={handleRefresh} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="all">
+          <Card>
+            <CardHeader>
+              <CardTitle>All Evaluations</CardTitle>
+              <CardDescription>
+                View and manage all evaluations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <EvaluationListTab refreshTrigger={refreshTrigger} />
-            </TabsContent>
-            
-            <TabsContent value="completed">
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="completed">
+          <Card>
+            <CardHeader>
+              <CardTitle>Completed Evaluations</CardTitle>
+              <CardDescription>
+                View evaluations with PDF files
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <CompletedEvaluationsTab refreshTrigger={refreshTrigger} />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

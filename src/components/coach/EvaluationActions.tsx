@@ -57,7 +57,13 @@ const EvaluationActions: React.FC<EvaluationActionsProps> = ({
   // Handle PDF download/view
   const handleViewPdf = () => {
     if (!pdfFileName) return;
-    window.open(`${API_BASE_URL}/files/${pdfFileName}`, '_blank');
+    
+    // Ensure we have the proper URL format
+    const fileUrl = pdfFileName.startsWith('http') 
+      ? pdfFileName 
+      : `${API_BASE_URL}/files/${pdfFileName}`;
+      
+    window.open(fileUrl, '_blank');
   };
 
   return (

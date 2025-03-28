@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -31,7 +30,6 @@ const EditEvaluationDialog: React.FC<EditEvaluationDialogProps> = ({
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Reset form when dialog opens/closes
   React.useEffect(() => {
     if (open && evaluation) {
       setEvaluationResult(evaluation.evaluation_result || 'passed');
@@ -41,7 +39,6 @@ const EditEvaluationDialog: React.FC<EditEvaluationDialogProps> = ({
 
   const API_BASE_URL = ENV.API_BASE_URL.replace('/api', '');
 
-  // Handle file upload
   const uploadFile = async () => {
     if (!pdfFile) return null;
     
@@ -51,7 +48,6 @@ const EditEvaluationDialog: React.FC<EditEvaluationDialogProps> = ({
       const formData = new FormData();
       formData.append('file', pdfFile);
       
-      // Add member info to formData for naming the file
       formData.append('memberCode', evaluation?.member_code || 'unknown');
       
       if (evaluation?.evaluation_date) {
@@ -59,6 +55,8 @@ const EditEvaluationDialog: React.FC<EditEvaluationDialogProps> = ({
       } else {
         formData.append('evaluationDate', new Date().toISOString().split('T')[0]);
       }
+      
+      formData.append('timestamp', Date.now().toString());
       
       const response = await fetch(`${ENV.API_BASE_URL}/evaluations/upload-file`, {
         method: 'POST',
@@ -80,17 +78,14 @@ const EditEvaluationDialog: React.FC<EditEvaluationDialogProps> = ({
     }
   };
 
-  // Mutation for updating evaluation
   const updateMutation = useMutation({
     mutationFn: async () => {
       if (!evaluation?.id) throw new Error('No evaluation ID');
       
-      // If "not ready" is selected, PDF is required
       if (evaluationResult === 'not_ready' && !pdfFile && !evaluation.evaluation_pdf) {
         throw new Error('PDF is required for "Not Ready" evaluations');
       }
       
-      // Upload file if provided
       let filePath = evaluation.evaluation_pdf || null;
       if (pdfFile) {
         filePath = await uploadFile();
@@ -178,7 +173,10 @@ const EditEvaluationDialog: React.FC<EditEvaluationDialogProps> = ({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open(`${API_BASE_URL}/files/${evaluation.evaluation_pdf}`, '_blank')}
+                  onClick={() => {
+                    const fileUrl = `${API_BASE_URL}/files/${evaluation.evaluation_pdf}`;
+                    window.open(fileUrl, '_blank');
+                  }}
                 >
                   View Current
                 </Button>
