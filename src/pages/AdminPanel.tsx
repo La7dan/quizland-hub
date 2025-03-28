@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import DBHeader from '@/components/DBHeader';
 import CreateTableDialog from '@/components/CreateTableDialog';
-import TableList from '@/components/TableList';
 import DatabaseActions from '@/components/DatabaseActions';
 import SQLExecuteDialog from '@/components/SQLExecuteDialog';
 import UserManagement from '@/components/UserManagement';
@@ -59,24 +58,14 @@ export default function AdminPanel() {
         </div>
 
         <div className="mt-2">
-          <Tabs defaultValue="tables" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="tables">Database Tables</TabsTrigger>
+          <Tabs defaultValue="users" className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="users">User Management</TabsTrigger>
               <TabsTrigger value="members">Members</TabsTrigger>
               <TabsTrigger value="evaluations">Evaluations</TabsTrigger>
               <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
               <TabsTrigger value="attempts">Quiz Attempts</TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="tables" className="space-y-4">
-              <DatabaseActions 
-                onRefresh={handleRefresh}
-                onCreateTable={() => setIsCreateTableDialogOpen(true)}
-                onExecuteSQL={() => setIsSQLDialogOpen(true)}
-              />
-              <TableList onRefresh={handleRefresh} />
-            </TabsContent>
             
             <TabsContent value="users">
               <UserManagement />
