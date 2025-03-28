@@ -1,7 +1,5 @@
-
 import * as XLSX from 'xlsx';
 import { Member } from '@/services/members/memberService';
-import { useToast } from '@/hooks/use-toast';
 
 // CSV import functionality
 export const parseCSVData = (csvData: string, levelsData: any, coaches: any[]): { members: Member[], error?: string } => {
@@ -91,8 +89,23 @@ export const parseCSVData = (csvData: string, levelsData: any, coaches: any[]): 
   }
 };
 
+// Define an interface for invalid records
+interface InvalidRecord {
+  rowData: Record<string, any>;
+  reason: string;
+}
+
 // Excel import functionality
-export const parseExcelFile = (file: File, levelsData: any, coaches: any[]): Promise<{ members: Member[], error?: string }> => {
+export const parseExcelFile = (
+  file: File, 
+  levelsData: any, 
+  coaches: any[]
+): Promise<{ 
+  members: Member[], 
+  total: number,
+  invalidRecords: InvalidRecord[],
+  error?: string 
+}> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -106,18 +119,29 @@ export const parseExcelFile = (file: File, levelsData: any, coaches: any[]): Pro
         const excelData = XLSX.utils.sheet_to_json(worksheet);
         
         if (excelData.length === 0) {
-          resolve({ members: [], error: 'Excel file is empty or has no valid data' });
+          resolve({ 
+            members: [], 
+            total: 0,
+            invalidRecords: [],
+            error: 'Excel file is empty or has no valid data' 
+          });
           return;
         }
         
         // Process members from Excel data
         const members: Member[] = [];
+        const invalidRecords: InvalidRecord[] = [];
+        const total = excelData.length;
         
         for (const row of excelData) {
           const rowData = row as Record<string, any>;
           
           // Check for required fields
           if (!rowData.member_id || !rowData.name) {
+            invalidRecords.push({
+              rowData,
+              reason: `Missing required field: ${!rowData.member_id ? 'member_id' : 'name'}`
+            });
             continue;
           }
           
@@ -130,7 +154,6 @@ export const parseExcelFile = (file: File, levelsData: any, coaches: any[]): Pro
           if (rowData.level_code) {
             const levelCode = String(rowData.level_code).trim();
             console.log('Excel: Looking for level code:', levelCode);
-            console.log('Excel: Available levels:', levelsData?.levels);
             
             const level = levelsData?.levels?.find((l: any) => 
               l.code.toLowerCase() === levelCode.toLowerCase()
@@ -142,6 +165,11 @@ export const parseExcelFile = (file: File, levelsData: any, coaches: any[]): Pro
               console.log('Excel: Found level:', level);
             } else {
               console.log('Excel: Level not found for code:', levelCode);
+              // We still keep the member, but log that level wasn't found
+              invalidRecords.push({
+                rowData,
+                reason: `Level code "${levelCode}" not found in the system`
+              });
             }
           }
           
@@ -150,6 +178,12 @@ export const parseExcelFile = (file: File, levelsData: any, coaches: any[]): Pro
             const classesCount = Number(rowData.classes_count);
             if (!isNaN(classesCount)) {
               member.classes_count = classesCount;
+            } else {
+              // If classes_count isn't a number, note it but continue
+              invalidRecords.push({
+                rowData,
+                reason: `Invalid classes_count: "${rowData.classes_count}" is not a number`
+              });
             }
           }
           
@@ -160,6 +194,12 @@ export const parseExcelFile = (file: File, levelsData: any, coaches: any[]): Pro
             if (coach) {
               member.coach_id = coach.id;
               member.coach_name = coach.username; // Store for display
+            } else {
+              // Coach not found
+              invalidRecords.push({
+                rowData,
+                reason: `Coach "${coachName}" not found in the system`
+              });
             }
           }
           
@@ -167,21 +207,33 @@ export const parseExcelFile = (file: File, levelsData: any, coaches: any[]): Pro
         }
         
         if (members.length === 0) {
-          resolve({ members: [], error: 'No valid members found in Excel data' });
+          resolve({ 
+            members: [], 
+            total,
+            invalidRecords,
+            error: 'No valid members found in Excel data' 
+          });
           return;
         }
         
-        resolve({ members });
+        resolve({ members, total, invalidRecords });
       } catch (error) {
         resolve({ 
           members: [], 
+          total: 0,
+          invalidRecords: [],
           error: `Failed to parse Excel file: ${error instanceof Error ? error.message : 'Unknown error'}` 
         });
       }
     };
     
     reader.onerror = () => {
-      resolve({ members: [], error: 'Failed to read Excel file' });
+      resolve({ 
+        members: [], 
+        total: 0,
+        invalidRecords: [],
+        error: 'Failed to read Excel file' 
+      });
     };
     
     reader.readAsBinaryString(file);

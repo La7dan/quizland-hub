@@ -23,6 +23,12 @@ export const ExcelImport = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [stats, setStats] = useState<{
+    total: number;
+    valid: number;
+    invalid: number;
+    invalidReason?: string[];
+  } | null>(null);
 
   const handleExcelUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -30,17 +36,18 @@ export const ExcelImport = ({
     
     setFileName(file.name);
     setUploadProgress(10); // Start progress
+    setStats(null);
     
     try {
       // Simulate progress during processing
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
-          const nextProgress = prev + 10;
+          const nextProgress = prev + 5;
           return nextProgress < 90 ? nextProgress : prev; // Cap at 90% until complete
         });
-      }, 200);
+      }, 100);
       
-      const { members, error } = await parseExcelFile(file, levelsData, coaches);
+      const { members, total, invalidRecords, error } = await parseExcelFile(file, levelsData, coaches);
       
       clearInterval(progressInterval);
       setUploadProgress(100); // Complete progress
@@ -55,19 +62,47 @@ export const ExcelImport = ({
         setTimeout(() => {
           setUploadProgress(0);
           setFileName(null);
-        }, 2000);
+          setStats(null);
+        }, 3000);
         return;
       }
       
+      // Show stats about the import
+      setStats({
+        total: total,
+        valid: members.length,
+        invalid: invalidRecords.length,
+        invalidReason: invalidRecords.length > 0 
+          ? invalidRecords.slice(0, 5).map(r => r.reason) // Show first 5 errors
+          : undefined
+      });
+      
+      // Log validation issues for debugging
+      if (invalidRecords.length > 0) {
+        console.log('Invalid records:', invalidRecords);
+      }
+      
       onImport(members);
-      // Keep the 100% for a moment
+      
+      toast({
+        title: 'Import Processing',
+        description: `Processed ${total} records: ${members.length} valid, ${invalidRecords.length} invalid`,
+        variant: invalidRecords.length > 0 ? 'default' : 'default',
+      });
+      
+      // Keep progress at 100% for a moment
       setTimeout(() => {
-        setUploadProgress(0);
-        setFileName(null);
-      }, 2000);
+        if (invalidRecords.length === 0) {
+          // Only reset if everything was successful
+          setUploadProgress(0);
+          setFileName(null);
+          setStats(null);
+        }
+      }, 5000);
     } catch (error) {
       setUploadProgress(0);
       setFileName(null);
+      setStats(null);
       toast({
         title: 'Error',
         description: `Failed to process Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -100,6 +135,30 @@ export const ExcelImport = ({
             <span>{uploadProgress}%</span>
           </div>
           <Progress value={uploadProgress} className="h-2" />
+          
+          {stats && (
+            <div className="mt-2 p-3 bg-muted rounded-md text-sm">
+              <p className="font-medium">Import Summary:</p>
+              <ul className="mt-1 space-y-1">
+                <li>Total records: {stats.total}</li>
+                <li>Valid records: {stats.valid}</li>
+                <li>Invalid records: {stats.invalid}</li>
+                {stats.invalidReason && stats.invalidReason.length > 0 && (
+                  <li>
+                    <p className="font-medium mt-1">Sample errors:</p>
+                    <ul className="list-disc pl-5 mt-1">
+                      {stats.invalidReason.map((reason, idx) => (
+                        <li key={idx} className="text-xs text-destructive">{reason}</li>
+                      ))}
+                      {stats.invalid > 5 && (
+                        <li className="text-xs italic">...and {stats.invalid - 5} more</li>
+                      )}
+                    </ul>
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
         </div>
       )}
       
