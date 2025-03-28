@@ -1,7 +1,7 @@
 
 import { useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { executeSql } from '@/services/dbService';
+import { executeSql } from '@/services/apiService';
 import { ENV } from '@/config/env';
 
 export const useDatabaseSetup = () => {
@@ -11,8 +11,8 @@ export const useDatabaseSetup = () => {
     const setupDatabase = async () => {
       try {
         console.log('Setting up database tables...');
-        // Fetch the SQL file content
-        const response = await fetch('/src/assets/db-setup.sql');
+        // Use the correct path for the SQL file - we'll use a relative path from the public directory
+        const response = await fetch('/db-setup.sql');
         if (!response.ok) {
           throw new Error(`Failed to fetch SQL: ${response.status} ${response.statusText}`);
         }

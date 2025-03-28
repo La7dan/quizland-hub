@@ -26,10 +26,10 @@ const SQLViewerDialog = ({ open, onOpenChange }: SQLViewerDialogProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load the SQL file content
+    // Load the SQL file content from the public directory
     const loadSqlFile = async () => {
       try {
-        const response = await fetch('/src/assets/db-setup.sql');
+        const response = await fetch('/db-setup.sql');
         const text = await response.text();
         setSqlContent(text);
       } catch (error) {

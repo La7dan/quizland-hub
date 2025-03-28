@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Database, RefreshCw } from 'lucide-react';
@@ -13,8 +14,8 @@ const DatabaseSetupButton = () => {
       setIsLoading(true);
       console.log('Setting up database tables...');
       
-      // Fetch the SQL file content
-      const response = await fetch('/src/assets/db-setup.sql');
+      // Use the same path as in useDatabaseSetup
+      const response = await fetch('/db-setup.sql');
       if (!response.ok) {
         throw new Error(`Failed to fetch SQL: ${response.status} ${response.statusText}`);
       }
