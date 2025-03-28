@@ -27,38 +27,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
-    // Add the superadmin user if not exists
-    const addSuperAdmin = async () => {
-      try {
-        // Check if the user already exists
-        const checkQuery = `
-          SELECT COUNT(*) as count 
-          FROM users 
-          WHERE username = 'la7dan'
-        `;
-        
-        const checkResult = await executeSql(checkQuery);
-        
-        if (checkResult.success && checkResult.rows && checkResult.rows[0].count === '0') {
-          // User doesn't exist, add it
-          const insertQuery = `
-            INSERT INTO users (username, password, email, role)
-            VALUES ('la7dan', 'Lal@13161', 'la7dan@example.com', 'super_admin')
-          `;
-          
-          await executeSql(insertQuery);
-          console.log('Superadmin user added successfully');
-        } else {
-          console.log('Superadmin user already exists');
-        }
-      } catch (error) {
-        console.error('Error adding superadmin user:', error);
-      }
-    };
+    // Remove hardcoded superadmin creation for security reasons
     
-    // Call the function to add superadmin
-    addSuperAdmin();
-
     // Check for saved user in localStorage on app load
     const savedUser = localStorage.getItem('quiz_user');
     if (savedUser) {

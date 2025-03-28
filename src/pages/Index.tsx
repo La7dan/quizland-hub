@@ -1,15 +1,16 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Shield } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BookOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import QuizzesList from '@/components/QuizzesList';
 import { Button } from '@/components/ui/button';
 
 export default function Index() {
-  const { isSuperAdmin } = useAuth();
-
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  
   return (
     <div>
       <Navigation />
@@ -24,13 +25,11 @@ export default function Index() {
               </p>
             </div>
             
-            {isSuperAdmin && (
-              <Link to="/admin">
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  Admin Control Panel
-                </Button>
-              </Link>
+            {!isAuthenticated && (
+              <Button onClick={() => navigate('/login')} className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                Login
+              </Button>
             )}
           </div>
           
