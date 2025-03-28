@@ -57,7 +57,7 @@ const UserForm = ({ formData, handleInputChange, handleRoleChange, isEdit = fals
           Role
         </label>
         <Select
-          value={formData.role}
+          value={formData.role || "admin"} 
           onValueChange={handleRoleChange}
         >
           <SelectTrigger>
