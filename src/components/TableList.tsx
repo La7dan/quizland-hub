@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { getTables, clearTable, deleteTable } from '@/services/dbService';
+import { getTables, clearTable, deleteTable } from '@/services/tableService';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import TableListHeader from './database/TableListHeader';

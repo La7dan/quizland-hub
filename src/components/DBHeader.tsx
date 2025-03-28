@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { checkConnection } from '@/services/dbService';
+import { checkConnection } from '@/services/apiService';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Database, ServerOff } from 'lucide-react';
 

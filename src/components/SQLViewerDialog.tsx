@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { executeSql } from '@/services/dbService';
+import { executeSql } from '@/services/apiService';
 import { useToast } from '@/components/ui/use-toast';
 import {
   Dialog,

@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Database, RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { executeSql } from '@/services/dbService';
+import { executeSql } from '@/services/apiService';
 
 const DatabaseSetupButton = () => {
   const [isLoading, setIsLoading] = useState(false);
