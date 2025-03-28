@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { executeSql, initializeDatabase } from '@/services/dbService';
+import { executeSql, initializeDatabase, checkConnection } from '@/services/dbService';
 import { toast } from 'sonner';
 import { ENV } from '@/config/env';
 import { useQueryClient } from '@tanstack/react-query';
@@ -15,7 +15,16 @@ export const useDatabaseSetup = () => {
     const setupDatabase = async () => {
       try {
         setIsConnecting(true);
-        console.log('Setting up database tables...');
+        
+        // First check if the database is already connected
+        const connectionResult = await checkConnection();
+        
+        if (!connectionResult.success) {
+          console.warn('Database connection check failed during setup');
+          // Don't abort - try to continue with setup
+        } else {
+          console.log('Database connection confirmed during setup');
+        }
         
         // Try to fetch the SQL file, but don't throw an error if it fails
         try {

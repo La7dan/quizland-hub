@@ -15,7 +15,7 @@ import membersRoutes from './routes/members.js';
 import evaluationsRoutes from './routes/evaluations.js';
 
 // Import config
-import pool from './config/database.js';
+import pool, { getConnectionStatus } from './config/database.js';
 import { UPLOADS_DIR } from './config/upload.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -78,9 +78,15 @@ if (process.env.NODE_ENV === 'production') {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   
-  // Initialize database - ensure the evaluations table has the evaluation_result column
+  // Initialize database less verbosely - ensure the evaluations table has the evaluation_result column
   (async () => {
     try {
+      // First check if we're already connected rather than making a new connection
+      const { isConnected } = getConnectionStatus();
+      if (isConnected) {
+        console.log('Database already connected, skipping connection test');
+      }
+      
       const client = await pool.connect();
       
       // Check if evaluation_result column exists

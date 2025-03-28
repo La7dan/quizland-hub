@@ -1,6 +1,6 @@
 
 import express from 'express';
-import pool from '../config/database.js';
+import pool, { getConnectionStatus } from '../config/database.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -15,19 +15,20 @@ router.get('/check-connection', async (req, res) => {
   
   // Only check connection if it's been more than 30 seconds since last check
   if (now - lastConnectionCheck < CONNECTION_CHECK_INTERVAL) {
+    const { isConnected } = getConnectionStatus();
     return res.json({ 
-      success: true, 
-      message: 'Using cached connection status', 
+      success: isConnected, 
+      message: isConnected ? 'Using cached connection status (connected)' : 'Using cached connection status (disconnected)', 
       cached: true 
     });
   }
   
   try {
-    console.log('Attempting database connection...');
+    console.log('Attempting database connection (API check)...');
     const client = await pool.connect();
     client.release();
     
-    console.log('Database connection successful');
+    console.log('Database connection successful (API check)');
     lastConnectionCheck = now;
     
     res.json({ 
@@ -36,7 +37,7 @@ router.get('/check-connection', async (req, res) => {
       cached: false
     });
   } catch (error) {
-    console.error('Database connection error:', error);
+    console.error('Database connection error (API check):', error);
     res.status(500).json({ 
       success: false, 
       message: 'Database connection failed', 

@@ -21,7 +21,6 @@ const DatabaseSetupButton = () => {
       }
       
       const sqlContent = await response.text();
-      console.log('SQL content loaded, length:', sqlContent.length);
       
       // Execute SQL to set up all tables
       console.log('Executing database setup SQL...');

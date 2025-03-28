@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { checkConnection } from '@/services/apiService';
 import { Badge } from '@/components/ui/badge';
@@ -16,12 +17,13 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastCheckRef = useRef<number>(0);
   
-  const MIN_CHECK_INTERVAL = 30000;
+  const MIN_CHECK_INTERVAL = 60000; // Increase to 1 minute to reduce check frequency
 
   const checkDatabaseConnection = async (force = false) => {
     const now = Date.now();
     
     if (!force && now - lastCheckRef.current < MIN_CHECK_INTERVAL) {
+      console.log("Skipping connection check - checked recently");
       return;
     }
     
@@ -31,10 +33,13 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
     setIsRefreshing(true);
     
     try {
+      console.log("Performing connection check from UI...");
       const result = await checkConnection();
       if (result.success) {
         setConnectionStatus('connected');
-        setStatusMessage('Connected to database');
+        setStatusMessage(result.cached 
+          ? 'Connected to database (cached status)' 
+          : 'Connected to database');
       } else {
         setConnectionStatus('disconnected');
         setStatusMessage(`Unable to connect to database server`);
@@ -49,13 +54,19 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
   };
 
   useEffect(() => {
-    checkDatabaseConnection(true);
+    // Initial check on component mount with a slight delay to avoid
+    // too many concurrent connections during app startup
+    const initialCheckTimeout = setTimeout(() => {
+      checkDatabaseConnection(true);
+    }, 2000);
     
+    // Set up periodic check, but much less frequently than before
     checkIntervalRef.current = setInterval(() => {
       checkDatabaseConnection();
-    }, MIN_CHECK_INTERVAL);
+    }, MIN_CHECK_INTERVAL * 2); // Check half as often as the minimum interval
     
     return () => {
+      clearTimeout(initialCheckTimeout);
       if (checkIntervalRef.current) {
         clearInterval(checkIntervalRef.current);
       }
