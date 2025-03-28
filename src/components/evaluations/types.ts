@@ -8,3 +8,9 @@ export interface EvaluationDisplayItem {
   member_name: string;
   member_code: string;
 }
+
+export interface EvaluationUploadFormData {
+  selectedMemberId: string;
+  evaluationDate: string;
+  pdfFile: File | null;
+}
