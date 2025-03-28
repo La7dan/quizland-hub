@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -6,13 +7,19 @@ import BulkEvaluationTab from './BulkEvaluationTab';
 import EvaluationListTab from './EvaluationListTab';
 import CompletedEvaluationsTab from './CompletedEvaluationsTab';
 
-const EvaluationManagement = () => {
+interface EvaluationManagementProps {
+  onRefresh?: () => void;
+}
+
+const EvaluationManagement: React.FC<EvaluationManagementProps> = ({ onRefresh }) => {
   const [activeTab, setActiveTab] = useState('upload');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Function to trigger refresh after operations
   const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
+    // If there's an onRefresh prop, call it too
+    if (onRefresh) onRefresh();
   };
 
   return (
@@ -35,7 +42,7 @@ const EvaluationManagement = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <EvaluationUploadTab onSuccess={handleRefresh} />
+              <EvaluationUploadTab onUploadSuccess={handleRefresh} />
             </CardContent>
           </Card>
         </TabsContent>
