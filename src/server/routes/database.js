@@ -1,21 +1,46 @@
-
 import express from 'express';
 import pool from '../config/database.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Track the last successful connection time to avoid excessive checking
+let lastConnectionCheck = 0;
+const CONNECTION_CHECK_INTERVAL = 30000; // 30 seconds
+
 // Test database connection
 router.get('/check-connection', async (req, res) => {
+  const now = Date.now();
+  
+  // Only check connection if it's been more than 30 seconds since last check
+  if (now - lastConnectionCheck < CONNECTION_CHECK_INTERVAL) {
+    return res.json({ 
+      success: true, 
+      message: 'Using cached connection status', 
+      cached: true 
+    });
+  }
+  
   try {
     console.log('Attempting database connection...');
     const client = await pool.connect();
     client.release();
+    
     console.log('Database connection successful');
-    res.json({ success: true, message: 'Database connection successful' });
+    lastConnectionCheck = now;
+    
+    res.json({ 
+      success: true, 
+      message: 'Database connection successful',
+      cached: false
+    });
   } catch (error) {
     console.error('Database connection error:', error);
-    res.status(500).json({ success: false, message: 'Database connection failed', error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Database connection failed', 
+      error: error.message 
+    });
   }
 });
 

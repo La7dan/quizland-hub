@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { checkConnection } from '@/services/apiService';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Database, ServerOff, RefreshCw } from 'lucide-react';
@@ -14,8 +13,19 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
   const [statusMessage, setStatusMessage] = useState('Checking connection...');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastCheckRef = useRef<number>(0);
+  
+  const MIN_CHECK_INTERVAL = 30000;
 
-  const checkDatabaseConnection = async () => {
+  const checkDatabaseConnection = async (force = false) => {
+    const now = Date.now();
+    
+    if (!force && now - lastCheckRef.current < MIN_CHECK_INTERVAL) {
+      return;
+    }
+    
+    lastCheckRef.current = now;
     setConnectionStatus('checking');
     setStatusMessage('Checking connection...');
     setIsRefreshing(true);
@@ -39,12 +49,17 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
   };
 
   useEffect(() => {
-    checkDatabaseConnection();
+    checkDatabaseConnection(true);
     
-    // Check connection status every 30 seconds
-    const intervalId = setInterval(checkDatabaseConnection, 30000);
+    checkIntervalRef.current = setInterval(() => {
+      checkDatabaseConnection();
+    }, MIN_CHECK_INTERVAL);
     
-    return () => clearInterval(intervalId);
+    return () => {
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+      }
+    };
   }, []);
 
   return (
@@ -77,7 +92,7 @@ const DBHeader = ({ onOpenCreateTable, onOpenSQLDialog }: DBHeaderProps) => {
             </Badge>
           )}
           <Button 
-            onClick={checkDatabaseConnection}
+            onClick={() => checkDatabaseConnection(true)}
             size="sm"
             variant="outline"
             className="text-xs flex items-center gap-1"
