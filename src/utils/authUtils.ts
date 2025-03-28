@@ -1,4 +1,3 @@
-
 import { User } from '@/types/auth';
 import { ENV } from '@/config/env';
 
@@ -66,6 +65,16 @@ export const loginUser = async (
       }
       
       console.error('Login failed with status:', response.status, errorMessage);
+      
+      // Provide more helpful message for default admin account
+      if (username === 'admin' && response.status === 401) {
+        return { 
+          success: false, 
+          user: null, 
+          message: "Login failed. For the default admin account, try username: 'admin', password: 'admin123'"
+        };
+      }
+      
       return { success: false, user: null, message: errorMessage };
     }
     
