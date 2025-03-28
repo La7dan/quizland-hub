@@ -14,7 +14,7 @@ export interface DBTable {
 // Get all tables
 export const getTables = async (): Promise<{ success: boolean; tables: DBTable[]; message?: string }> => {
   try {
-    const response = await fetch(`http://209.74.89.41/api/tables`);
+    const response = await fetch(`http://209.74.89.41:8080/api/tables`);
     const data = await response.json();
     return data;
   } catch (error) {
@@ -27,7 +27,7 @@ export const getTables = async (): Promise<{ success: boolean; tables: DBTable[]
 export const clearTable = async (tableName: string): Promise<{ success: boolean; message: string }> => {
   try {
     console.log(`Clearing table: ${tableName}`);
-    const response = await fetch(`http://209.74.89.41/api/tables/clear`, {
+    const response = await fetch(`http://209.74.89.41:8080/api/tables/clear`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tableName }),
@@ -50,7 +50,7 @@ export const clearTable = async (tableName: string): Promise<{ success: boolean;
 export const clearAllTables = async (): Promise<{ success: boolean; message: string }> => {
   try {
     console.log('Clearing all tables');
-    const response = await fetch(`http://209.74.89.41/api/tables/clear-all`, {
+    const response = await fetch(`http://209.74.89.41:8080/api/tables/clear-all`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -72,7 +72,7 @@ export const clearAllTables = async (): Promise<{ success: boolean; message: str
 export const deleteTable = async (tableName: string): Promise<{ success: boolean; message: string }> => {
   try {
     console.log(`Deleting table: ${tableName}`);
-    const response = await fetch(`http://209.74.89.41/api/tables/delete`, {
+    const response = await fetch(`http://209.74.89.41:8080/api/tables/delete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tableName }),
@@ -97,7 +97,7 @@ export const createTable = async (
   columns: TableColumn[]
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    const response = await fetch(`http://209.74.89.41/api/tables/create`, {
+    const response = await fetch(`http://209.74.89.41:8080/api/tables/create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tableName, columns }),

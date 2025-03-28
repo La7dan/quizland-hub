@@ -2,7 +2,7 @@
 import { User } from '@/types/auth';
 
 // Custom API URL for auth endpoints - using the consistent API base URL
-export const AUTH_API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/auth';
+export const AUTH_API_URL = import.meta.env.VITE_API_BASE_URL || 'http://209.74.89.41:8080/api/auth';
 
 // Authentication utility functions
 export const checkAuthStatus = async (): Promise<{ authenticated: boolean; user: User | null }> => {

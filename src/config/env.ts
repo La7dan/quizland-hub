@@ -5,13 +5,13 @@
 
 // Set default API URL based on environment
 const getDevelopmentApiUrl = () => {
-  // In development, try to connect to the local server
-  return 'http://localhost:8080/api';
+  // Use the server IP address with port
+  return 'http://209.74.89.41:8080/api';
 };
 
 // Environment variables with fallbacks
 export const ENV = {
-  // API Base URL (default to localhost for development)
+  // API Base URL (default to server IP for development)
   API_BASE_URL: import.meta.env.VITE_API_BASE_URL || getDevelopmentApiUrl(),
   
   // Environment name
