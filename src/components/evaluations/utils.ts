@@ -28,3 +28,42 @@ export const getSelectedMemberCode = (
   
   return selectedMember ? selectedMember.member_id : '';
 };
+
+export const exportToCSV = (data: any[], filename: string) => {
+  if (!data || data.length === 0) return;
+  
+  // Convert data to CSV format
+  const csvContent = arrayToCSV(data);
+  
+  // Create a blob and download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+// Helper function to convert array to CSV
+const arrayToCSV = (data: any[]): string => {
+  // Get headers from first object keys
+  const headers = Object.keys(data[0]);
+  
+  // Create header row
+  const csvRows = [headers.join(',')];
+  
+  // Add data rows
+  for (const row of data) {
+    const values = headers.map(header => {
+      const value = row[header];
+      // Handle special characters and wrap in quotes if needed
+      return `"${String(value).replace(/"/g, '""')}"`;
+    });
+    csvRows.push(values.join(','));
+  }
+  
+  return csvRows.join('\n');
+};

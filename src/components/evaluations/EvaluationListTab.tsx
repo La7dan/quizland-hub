@@ -1,10 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { executeSql } from '@/services/apiService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, FileText } from 'lucide-react';
+import { Search, FileText, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EvaluationDisplayItem } from './types';
 import EvaluationItem from './EvaluationItem';
@@ -44,6 +44,42 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
     }
   });
 
+  // Function to export data as CSV
+  const exportToCSV = () => {
+    if (!evaluationsData || evaluationsData.length === 0) return;
+    
+    const headers = [
+      'Member Name', 
+      'Member Code', 
+      'Status', 
+      'Evaluation Date', 
+      'Nominated Date'
+    ];
+    
+    const csvData = evaluationsData.map((item: EvaluationDisplayItem) => [
+      item.member_name,
+      item.member_code,
+      item.status,
+      item.evaluation_date ? new Date(item.evaluation_date).toLocaleDateString() : 'Not set',
+      new Date(item.nominated_at).toLocaleDateString()
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => row.join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `evaluations_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <>
       <div className="flex items-center justify-between space-x-2 pb-4">
@@ -58,17 +94,28 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
             <Search className="h-4 w-4" />
           </Button>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="disapproved">Disapproved</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex space-x-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="disapproved">Disapproved</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={exportToCSV}
+            disabled={!evaluationsData || evaluationsData.length === 0}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+        </div>
       </div>
       
       {isLoading ? (

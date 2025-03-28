@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import TabIcon from './components/TabIcon';
 import Index from "./pages/Index";
 import QuizPage from "./pages/QuizPage"; 
 import QuizzesPage from "./pages/QuizzesPage";
@@ -25,6 +26,7 @@ const App: React.FC = () => {
       <ThemeProvider>
         <AuthProvider>
           <BrowserRouter>
+            <TabIcon />
             <Toaster />
             <Sonner />
             <Routes>
