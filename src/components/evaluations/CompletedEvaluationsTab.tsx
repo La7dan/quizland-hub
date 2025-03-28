@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { executeSql } from '@/services/apiService';
@@ -18,6 +17,7 @@ import {
 import LoadingEvaluationState from './LoadingEvaluationState';
 import { useToast } from '@/components/ui/use-toast';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { ENV } from '@/config/env';
 
 interface CompletedEvaluationsTabProps {
   refreshTrigger?: number;
@@ -32,7 +32,6 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
   const [deleteEvaluationId, setDeleteEvaluationId] = useState<number | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  // Fetch completed evaluations - modified to include those with status='completed' or result='passed'
   const { data: completedEvaluations, isLoading, refetch } = useQuery({
     queryKey: ['completedEvaluations', searchTerm, refreshTrigger],
     queryFn: async () => {
@@ -58,7 +57,6 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
     }
   });
 
-  // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const query = `DELETE FROM evaluations WHERE id = ${id} RETURNING id`;
@@ -81,7 +79,6 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
     }
   });
 
-  // Handle delete
   const handleDelete = (id: number) => {
     setDeleteEvaluationId(id);
     setIsDeleteDialogOpen(true);
@@ -93,7 +90,6 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
     }
   };
 
-  // Function to export data as CSV
   const exportToCSV = () => {
     if (!completedEvaluations || completedEvaluations.length === 0) return;
     
@@ -133,7 +129,6 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
     document.body.removeChild(link);
   };
 
-  // Pagination logic
   const totalItems = completedEvaluations?.length || 0;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -155,7 +150,7 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
-                setCurrentPage(1); // Reset to first page when searching
+                setCurrentPage(1);
               }}
               className="pl-8 w-full sm:w-[250px]"
             />
@@ -218,7 +213,6 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
                         size="sm"
                         className="flex items-center gap-1"
                         onClick={() => {
-                          // API_BASE_URL without the "/api" part for file uploads
                           const API_BASE_URL = ENV.API_BASE_URL?.replace('/api', '') || '';
                           const fileUrl = evaluation.evaluation_pdf?.startsWith('http') 
                             ? evaluation.evaluation_pdf 
@@ -257,13 +251,11 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
                   
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
                     .filter(page => {
-                      // Show first page, last page, current page, and pages around current
                       return page === 1 || 
                              page === totalPages || 
                              (page >= currentPage - 1 && page <= currentPage + 1);
                     })
                     .map((page, i, array) => {
-                      // Add ellipsis
                       const showEllipsisBefore = i > 0 && array[i-1] !== page - 1;
                       const showEllipsisAfter = i < array.length - 1 && array[i+1] !== page + 1;
                       
