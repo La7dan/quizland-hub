@@ -1,39 +1,24 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Table, TableBody } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { exportToCSV } from './utils';
-import BulkMarkAsPassedButton from './BulkMarkAsPassedButton';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { executeSql } from '@/services/apiService';
 
-import { useEvaluationData, useFilterOptions } from './hooks/useEvaluationData';
-import { useEvaluationFilters } from './hooks/useEvaluationFilters';
-import { useEvaluationSelection } from './hooks/useEvaluationSelection';
+// Components
 import EvaluationTableHeader from './EvaluationTableHeader';
 import EvaluationTableRow from './EvaluationTableRow';
 import EvaluationFilters from './EvaluationFilters';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { Filter } from 'lucide-react';
+import BulkMarkAsPassedButton from './BulkMarkAsPassedButton';
+import DeleteConfirmDialog from './DeleteConfirmDialog';
+import EmptyEvaluationState from './EmptyEvaluationState';
+import LoadingEvaluationState from './LoadingEvaluationState';
+
+// Hooks
+import { useEvaluationData, useFilterOptions } from './hooks/useEvaluationData';
+import { useEvaluationFilters } from './hooks/useEvaluationFilters';
+import { useEvaluationSelection } from './hooks/useEvaluationSelection';
+import { useEvaluationDeletion } from './hooks/useEvaluationDeletion';
 
 interface EvaluationListTabProps {
   refreshTrigger?: number;
@@ -41,10 +26,7 @@ interface EvaluationListTabProps {
 
 const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger }) => {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   // Fetch data
   const { data, isLoading } = useEvaluationData(refreshTrigger);
@@ -73,41 +55,14 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
     allSelected
   } = useEvaluationSelection(filteredEvaluations);
 
-  // Delete mutations
-  const deleteMutation = useMutation({
-    mutationFn: async (ids: number[]) => {
-      const query = `DELETE FROM evaluations WHERE id IN (${ids.join(',')}) RETURNING id`;
-      return await executeSql(query);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: `${selectedIds.length} evaluation(s) deleted successfully`,
-      });
-      resetSelection();
-      queryClient.invalidateQueries({ queryKey: ['allEvaluations'] });
-      setIsDeleteDialogOpen(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: `Failed to delete evaluations: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        variant: "destructive"
-      });
-      setIsDeleteDialogOpen(false);
-    }
-  });
-
-  // Handle bulk delete
-  const handleBulkDelete = () => {
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (selectedIds.length > 0) {
-      deleteMutation.mutate(selectedIds);
-    }
-  };
+  // Set up deletion
+  const {
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    deleteMutation,
+    handleBulkDelete,
+    confirmDelete
+  } = useEvaluationDeletion(resetSelection);
 
   // Handle CSV export
   const handleExportCSV = () => {
@@ -134,25 +89,20 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
   });
 
   if (isLoading) {
-    return <div className="py-8 text-center">Loading evaluations...</div>;
+    return <LoadingEvaluationState />;
   }
 
   if (!data || data.length === 0) {
-    return <div className="py-8 text-center">No evaluations found in the database.</div>;
+    return <EmptyEvaluationState hasData={false} hasFilters={false} onClearFilters={clearFilters} />;
   }
 
   if (filteredEvaluations.length === 0) {
     return (
-      <div className="py-8 text-center">
-        No evaluations match the current filters.
-        {Object.keys(filters).length > 0 && (
-          <div className="mt-2">
-            <Button variant="outline" size="sm" onClick={clearFilters}>
-              Clear Filters
-            </Button>
-          </div>
-        )}
-      </div>
+      <EmptyEvaluationState 
+        hasData={true} 
+        hasFilters={Object.keys(filters).length > 0} 
+        onClearFilters={clearFilters} 
+      />
     );
   }
 
@@ -174,31 +124,6 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
           selectedIds={selectedIds}
           onDeleteSelected={isAdmin ? handleBulkDelete : undefined}
         />
-
-        <div className="flex flex-wrap gap-2">
-          {/* Result filter dropdown */}
-          <Select
-            value={filters.result || "all"}
-            onValueChange={(value) => {
-              setFilters({
-                ...filters,
-                result: value === "all" ? undefined : value
-              });
-            }}
-          >
-            <SelectTrigger className="w-[150px]">
-              <div className="flex items-center gap-1">
-                <Filter className="h-4 w-4" />
-                <span>{filters.result ? filters.result : "Result"}</span>
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Results</SelectItem>
-              <SelectItem value="passed">Passed</SelectItem>
-              <SelectItem value="not_ready">Not Ready</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       {isAdmin && selectedIds.length > 0 && (
@@ -244,27 +169,13 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
         </div>
       </div>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete {selectedIds.length} selected evaluation(s)? 
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
-              {deleteMutation.isPending ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              ) : (
-                "Delete"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={() => confirmDelete(selectedIds)}
+        count={selectedIds.length}
+        isPending={deleteMutation.isPending}
+      />
     </div>
   );
 };
