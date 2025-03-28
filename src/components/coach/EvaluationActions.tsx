@@ -1,0 +1,97 @@
+
+import React from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { FileText, CheckCircle } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import DisapprovalDialog from './DisapprovalDialog';
+import { approveEvaluation } from '@/services/evaluations/evaluationService';
+
+interface EvaluationActionsProps {
+  evaluationId: number;
+  pdfFileName?: string | null;
+  status?: string;
+  showAll?: boolean;
+}
+
+const API_BASE_URL = 'http://209.74.89.41:8080';
+
+const EvaluationActions: React.FC<EvaluationActionsProps> = ({ 
+  evaluationId, 
+  pdfFileName, 
+  status,
+  showAll = false 
+}) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Approve evaluation mutation
+  const approveMutation = useMutation({
+    mutationFn: (evaluationId: number) => approveEvaluation(evaluationId),
+    onSuccess: (result) => {
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: result.message,
+        });
+        queryClient.invalidateQueries({ queryKey: ['pendingEvaluations'] });
+        queryClient.invalidateQueries({ queryKey: ['allEvaluations'] });
+      } else {
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive"
+        });
+      }
+    }
+  });
+
+  // Handle approve
+  const handleApprove = () => {
+    approveMutation.mutate(evaluationId);
+  };
+
+  // Handle PDF download/view
+  const handleViewPdf = () => {
+    if (!pdfFileName) return;
+    window.open(`${API_BASE_URL}/files/${pdfFileName}`, '_blank');
+  };
+
+  return (
+    <div className="flex justify-end gap-2">
+      {pdfFileName && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-1"
+          onClick={handleViewPdf}
+        >
+          <FileText className="h-4 w-4 text-blue-500" />
+          PDF
+        </Button>
+      )}
+      
+      {(showAll || status === 'pending') && (
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={handleApprove}
+            disabled={approveMutation.isPending}
+          >
+            <CheckCircle className="h-4 w-4 text-green-500" />
+            {showAll && status === 'approved' ? 'Approved' : 'Approve'}
+          </Button>
+          
+          <DisapprovalDialog 
+            evaluationId={evaluationId} 
+            showStatus={showAll && status === 'disapproved'} 
+          />
+        </>
+      )}
+    </div>
+  );
+};
+
+export default EvaluationActions;
