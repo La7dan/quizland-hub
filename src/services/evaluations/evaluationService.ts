@@ -4,8 +4,10 @@ import {
   fetchPendingEvaluationsQuery, 
   approveEvaluationQuery, 
   disapproveEvaluationQuery,
-  createSampleEvaluationQuery
+  createSampleEvaluationQuery,
+  createBulkEvaluationsQuery
 } from './evaluationQueries';
+import { executeSql, sqlEscape } from '../apiService';
 
 export const fetchPendingEvaluations = async (coachId: number): Promise<EvaluationResponse> => {
   try {
@@ -102,18 +104,7 @@ export const createBulkEvaluations = async (
     
     console.log(`Creating ${memberIds.length} evaluations for coach ${coachId} on ${evaluationDate}`);
     
-    // Create SQL to insert multiple evaluations
-    const memberIdsStr = memberIds.join(',');
-    const result = await executeSql(`
-      WITH inserted_evaluations AS (
-        INSERT INTO evaluations (member_id, status, nominated_at, evaluation_date, coach_id)
-        SELECT id, 'pending', NOW(), '${evaluationDate}', ${coachId}
-        FROM members
-        WHERE id IN (${memberIdsStr})
-        RETURNING id
-      )
-      SELECT COUNT(*) as count FROM inserted_evaluations
-    `);
+    const result = await createBulkEvaluationsQuery(memberIds, evaluationDate, coachId);
     
     if (!result.success) {
       throw new Error(result.message);
@@ -152,6 +143,51 @@ export const createSampleEvaluation = async (memberId: number, coachId: number):
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Failed to create sample evaluation'
+    };
+  }
+};
+
+// New function to update evaluation with result and PDF
+export const updateEvaluationResult = async (
+  evaluationId: number,
+  result: 'passed' | 'not_ready',
+  pdfFileName: string | null
+): Promise<EvaluationActionResponse> => {
+  try {
+    if (result === 'not_ready' && !pdfFileName) {
+      return {
+        success: false,
+        message: 'PDF is required for "Not Ready" evaluations'
+      };
+    }
+
+    const query = `
+      UPDATE evaluations
+      SET 
+        status = 'approved',
+        evaluation_result = ${sqlEscape.string(result)},
+        evaluation_pdf = ${pdfFileName ? sqlEscape.string(pdfFileName) : 'evaluation_pdf'},
+        updated_at = NOW()
+      WHERE id = ${evaluationId}
+      RETURNING id;
+    `;
+    
+    const queryResult = await executeSql(query);
+    
+    if (!queryResult.success) {
+      throw new Error(queryResult.message);
+    }
+    
+    return {
+      success: true,
+      id: queryResult.rows[0]?.id,
+      message: `Evaluation marked as ${result} successfully`
+    };
+  } catch (error) {
+    console.error('Error updating evaluation result:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to update evaluation'
     };
   }
 };

@@ -57,3 +57,35 @@ export const createSampleEvaluationQuery = async (memberId: number, coachId: num
     RETURNING id;
   `);
 };
+
+// Query to get evaluation by ID with member details
+export const getEvaluationByIdQuery = async (evaluationId: number) => {
+  return await executeSql(`
+    SELECT e.*, m.name as member_name, m.member_id as member_code
+    FROM evaluations e
+    JOIN members m ON e.member_id = m.id
+    WHERE e.id = ${evaluationId}
+  `);
+};
+
+// Update database schema if evaluation_result column doesn't exist
+export const ensureEvaluationResultColumnQuery = async () => {
+  // Check if column exists first
+  const columnCheck = await executeSql(`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_name = 'evaluations'
+    AND column_name = 'evaluation_result';
+  `);
+  
+  if (columnCheck.rows.length === 0) {
+    // Column doesn't exist, add it
+    return await executeSql(`
+      ALTER TABLE evaluations
+      ADD COLUMN evaluation_result VARCHAR(20) CHECK (evaluation_result IN ('passed', 'not_ready')),
+      ADD COLUMN updated_at TIMESTAMP;
+    `);
+  }
+  
+  return { success: true, message: 'Column already exists' };
+};
