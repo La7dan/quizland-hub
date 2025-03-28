@@ -3,7 +3,8 @@ import { executeSql } from './apiService';
 
 /**
  * Cleans dummy data from the database while preserving real members
- * This function should only be called manually, not automatically on startup
+ * This function should ONLY be called manually via the DatabaseActions component, 
+ * never automatically on startup or logout.
  */
 export const cleanDummyData = async (): Promise<{ success: boolean; message: string }> => {
   try {

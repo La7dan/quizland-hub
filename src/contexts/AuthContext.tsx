@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    // Remove the call to cleanDummyData - we don't want to delete data on logout
+    // We removed the call to cleanDummyData to preserve quiz data
     const result = await logoutUser();
     
     // Regardless of API result, clear the user state

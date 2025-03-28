@@ -10,7 +10,7 @@ export default function DatabaseActions() {
   const { toast } = useToast();
 
   const handleCleanDummyData = async () => {
-    if (!confirm('Warning: This will delete ALL quizzes and questions. Are you sure you want to proceed?')) {
+    if (!confirm('WARNING: This will permanently delete ALL quizzes, questions, and quiz attempts. This action cannot be undone. Are you sure you want to proceed?')) {
       return;
     }
     
@@ -57,7 +57,7 @@ export default function DatabaseActions() {
         ) : (
           <Trash2 className="h-4 w-4" />
         )}
-        {isCleaningData ? "Cleaning Data..." : "Clean Quiz Data"}
+        {isCleaningData ? "Cleaning Data..." : "Clean Quiz Data (Delete All)"}
       </Button>
     </div>
   );

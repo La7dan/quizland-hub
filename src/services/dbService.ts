@@ -22,5 +22,5 @@ export const initializeDatabase = async () => {
   }
 };
 
-// Export the cleanDummyData function, but make sure it's not called automatically
+// Export the cleanDummyData function, but NEVER call it automatically
 export { cleanDummyData } from './cleanDatabaseService';
