@@ -12,7 +12,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, AlertCircle, User, Trash, UserMinus, Search, ArrowDown, ArrowUp } from 'lucide-react';
+import { RefreshCw, AlertCircle, User, Trash, UserMinus, Search, ArrowDown, ArrowUp, CircleDot } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -31,6 +31,7 @@ const MembersTable: React.FC<MembersTableProps> = ({ onRefresh }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [duplicateMembers, setDuplicateMembers] = useState<Set<string>>(new Set());
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -43,6 +44,24 @@ const MembersTable: React.FC<MembersTableProps> = ({ onRefresh }) => {
 
   const members = data?.members || [];
   const error = queryError ? String(queryError) : (data?.message && !data.success ? data.message : null);
+
+  // Identify duplicate members based on member_id
+  useEffect(() => {
+    const memberIdCounts: Record<string, number> = {};
+    const duplicates = new Set<string>();
+    
+    members.forEach(member => {
+      if (member.member_id) {
+        memberIdCounts[member.member_id] = (memberIdCounts[member.member_id] || 0) + 1;
+        
+        if (memberIdCounts[member.member_id] > 1) {
+          duplicates.add(member.member_id);
+        }
+      }
+    });
+    
+    setDuplicateMembers(duplicates);
+  }, [members]);
 
   // Filter members based on search term
   const filteredMembers = members.filter((member) => {
@@ -285,7 +304,12 @@ const MembersTable: React.FC<MembersTableProps> = ({ onRefresh }) => {
                         aria-label={`Select ${member.name}`}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{member.member_id}</TableCell>
+                    <TableCell className="font-medium flex items-center space-x-1">
+                      {member.member_id}
+                      {member.member_id && duplicateMembers.has(member.member_id) && (
+                        <CircleDot className="h-4 w-4 text-blue-500 ml-1" title="Duplicate member ID" />
+                      )}
+                    </TableCell>
                     <TableCell>{member.name}</TableCell>
                     <TableCell>
                       {member.level_code ? (

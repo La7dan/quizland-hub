@@ -1,5 +1,5 @@
 
-import { Trash } from 'lucide-react';
+import { Trash, CircleDot } from 'lucide-react';
 import { 
   Table, 
   TableBody, 
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MemberResponse } from '@/services/members/memberService';
 import { useDeleteMember } from './hooks/useDeleteMember';
+import { useEffect, useState } from 'react';
 
 interface MemberTableProps {
   membersData?: MemberResponse;
@@ -33,6 +34,27 @@ export const MemberTable = ({
   onRefresh
 }: MemberTableProps) => {
   const { handleDeleteMember } = useDeleteMember({ onRefresh });
+  const [duplicateMembers, setDuplicateMembers] = useState<Set<string>>(new Set());
+
+  // Identify duplicate members based on member_id
+  useEffect(() => {
+    if (membersData?.members) {
+      const memberIdCounts: Record<string, number> = {};
+      const duplicates = new Set<string>();
+      
+      membersData.members.forEach(member => {
+        if (member.member_id) {
+          memberIdCounts[member.member_id] = (memberIdCounts[member.member_id] || 0) + 1;
+          
+          if (memberIdCounts[member.member_id] > 1) {
+            duplicates.add(member.member_id);
+          }
+        }
+      });
+      
+      setDuplicateMembers(duplicates);
+    }
+  }, [membersData?.members]);
 
   if (membersLoading) {
     return <div className="text-center py-4">Loading members...</div>;
@@ -69,7 +91,12 @@ export const MemberTable = ({
                     aria-label={`Select ${member.name}`}
                   />
                 </TableCell>
-                <TableCell>{member.member_id}</TableCell>
+                <TableCell className="flex items-center">
+                  {member.member_id}
+                  {member.member_id && duplicateMembers.has(member.member_id) && (
+                    <CircleDot className="h-4 w-4 text-blue-500 ml-1" title="Duplicate member ID" />
+                  )}
+                </TableCell>
                 <TableCell>{member.name}</TableCell>
                 <TableCell>{member.level_code ? `${member.level_code} - ${member.level_name}` : 'Not assigned'}</TableCell>
                 <TableCell>{member.classes_count || 0}</TableCell>
