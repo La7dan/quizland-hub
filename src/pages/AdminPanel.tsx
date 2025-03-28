@@ -15,6 +15,7 @@ import MemberManagement from '@/components/MemberManagement';
 import MembersTable from '@/components/MembersTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DatabaseSetupButton from '@/components/DatabaseSetupButton';
+import EvaluationManagement from '@/components/EvaluationManagement';
 
 export default function AdminPanel() {
   const { user } = useAuth();
@@ -87,13 +88,7 @@ export default function AdminPanel() {
             </TabsContent>
             
             <TabsContent value="evaluations">
-              <div className="bg-card text-card-foreground border rounded-lg p-6 shadow-sm">
-                <h2 className="text-xl font-semibold mb-4">Evaluation Management</h2>
-                <p className="text-muted-foreground mb-6">Upload and manage member evaluations with PDF documents.</p>
-                <div className="text-center py-12 border-2 border-dashed rounded-lg border-muted">
-                  <p className="text-muted-foreground">Evaluation management will be implemented soon.</p>
-                </div>
-              </div>
+              <EvaluationManagement onRefresh={handleRefresh} />
             </TabsContent>
 
             <TabsContent value="quizzes">

@@ -94,6 +94,20 @@ CREATE TABLE IF NOT EXISTS members (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create evaluations table
+CREATE TABLE IF NOT EXISTS evaluations (
+  id SERIAL PRIMARY KEY,
+  member_id INTEGER REFERENCES members(id) ON DELETE CASCADE,
+  status VARCHAR(20) NOT NULL CHECK (status IN ('pending', 'approved', 'disapproved')),
+  nominated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  approved_at TIMESTAMP,
+  disapproved_at TIMESTAMP,
+  disapproval_reason TEXT,
+  coach_id INTEGER REFERENCES users(id),
+  evaluation_date TIMESTAMP,
+  evaluation_pdf TEXT
+);
+
 -- Insert quiz levels
 INSERT INTO quiz_levels (code, name, description)
 VALUES 
@@ -158,4 +172,13 @@ VALUES (
   80.00,
   'passed'
 )
+ON CONFLICT DO NOTHING;
+
+-- Insert sample evaluations
+INSERT INTO evaluations (member_id, status, coach_id, evaluation_date)
+VALUES 
+  ((SELECT id FROM members WHERE member_id = 'SH123456'), 'pending', 
+   (SELECT id FROM users WHERE role = 'coach' LIMIT 1), NOW() - INTERVAL '3 days'),
+  ((SELECT id FROM members WHERE member_id = 'SH789012'), 'pending', 
+   (SELECT id FROM users WHERE role = 'coach' LIMIT 1), NOW() - INTERVAL '5 days')
 ON CONFLICT DO NOTHING;
