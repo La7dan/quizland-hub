@@ -6,8 +6,6 @@ import { useTheme } from '@/contexts/ThemeContext';
 import Navigation from '@/components/Navigation';
 import { QuizzesList } from '@/components/quiz';
 import { Toggle } from '@/components/ui/toggle';
-import { useEffect } from 'react';
-import { cleanDummyData } from '@/services/dbService';
 import { useQuery } from '@tanstack/react-query';
 import { getQuizzes } from '@/services/quiz';
 import { toast } from 'sonner';
@@ -37,19 +35,7 @@ export default function Index() {
     }
   });
   
-  // Clean dummy data when the app starts
-  useEffect(() => {
-    const cleanData = async () => {
-      try {
-        await cleanDummyData();
-        console.log('Cleaned dummy data on app startup');
-      } catch (error) {
-        console.error('Failed to clean dummy data:', error);
-      }
-    };
-    
-    cleanData();
-  }, []);
+  // Removed the useEffect that was calling cleanDummyData
   
   return (
     <div>
