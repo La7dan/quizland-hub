@@ -292,4 +292,30 @@ router.post('/:id/update-result', requireAuth, async (req, res) => {
   }
 });
 
+// New endpoint to get completed evaluations
+router.get('/completed', requireAuth, async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(`
+      SELECT e.id, e.status, e.nominated_at, e.evaluation_date, e.evaluation_pdf,
+             e.evaluation_result, e.member_id, e.coach_id,
+             m.name as member_name, m.member_id as member_code
+      FROM evaluations e
+      JOIN members m ON e.member_id = m.id
+      WHERE e.status = 'completed' OR e.evaluation_result = 'passed'
+      ORDER BY e.evaluation_date DESC NULLS LAST;
+    `);
+    client.release();
+    
+    res.json({ success: true, evaluations: result.rows });
+  } catch (error) {
+    console.error('Error fetching completed evaluations:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch completed evaluations', 
+      error: error.message 
+    });
+  }
+});
+
 export default router;

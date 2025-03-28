@@ -27,7 +27,7 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch only completed evaluations (those with PDF files)
+  // Fetch completed evaluations - modified to include those with status='completed' or result='passed'
   const { data: completedEvaluations, isLoading } = useQuery({
     queryKey: ['completedEvaluations', searchTerm, refreshTrigger],
     queryFn: async () => {
@@ -37,7 +37,7 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
                m.name as member_name, m.member_id as member_code
         FROM evaluations e
         JOIN members m ON e.member_id = m.id
-        WHERE e.evaluation_pdf IS NOT NULL
+        WHERE e.status = 'completed' OR e.evaluation_result = 'passed'
       `;
       
       if (searchTerm) {
@@ -63,7 +63,8 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
       'Status', 
       'Evaluation Date', 
       'Nominated Date',
-      'Result'
+      'Result',
+      'Has PDF'
     ];
     
     const csvData = completedEvaluations.map((item: EvaluationDisplayItem) => [
@@ -72,7 +73,8 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
       item.status,
       item.evaluation_date ? new Date(item.evaluation_date).toLocaleDateString() : 'Not set',
       new Date(item.nominated_at).toLocaleDateString(),
-      item.evaluation_result || 'Not set'
+      item.evaluation_result || 'Not set',
+      item.evaluation_pdf ? 'Yes' : 'No'
     ]);
     
     const csvContent = [
@@ -218,7 +220,7 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
           <p className="text-muted-foreground mt-1">
             {searchTerm
               ? "Try changing your search"
-              : "Upload evaluation PDFs for members to see completed evaluations here"}
+              : "Mark evaluations as 'completed' or 'passed' to see them here"}
           </p>
         </div>
       )}
@@ -227,3 +229,4 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
 };
 
 export default CompletedEvaluationsTab;
+
