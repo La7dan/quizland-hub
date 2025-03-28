@@ -1,19 +1,15 @@
 
 export interface EvaluationDisplayItem {
   id: number;
-  status: 'pending' | 'approved' | 'disapproved';
+  member_id?: number;
+  status: string;
   nominated_at: string;
   evaluation_date?: string;
+  evaluation_pdf?: string;
+  evaluation_result?: string;
   member_name: string;
   member_code: string;
-  evaluation_pdf?: string;
-  evaluation_result?: 'passed' | 'not_ready';
-  member_id?: number;
   coach_id?: number;
-}
-
-export interface EvaluationUploadFormData {
-  selectedMemberId: string;
-  evaluationDate: string;
-  pdfFile: File | null;
+  member_level?: string;
+  coach_name?: string;
 }

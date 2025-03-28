@@ -23,14 +23,15 @@ const EvaluationManagement: React.FC<EvaluationManagementProps> = ({ onRefresh }
   };
 
   return (
-    <div className="container py-6">
+    <div className="container mx-auto py-6">
       <h1 className="text-2xl font-bold mb-6">Evaluation Management</h1>
       
       <Tabs defaultValue="upload" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="upload">Upload Evaluation</TabsTrigger>
-          <TabsTrigger value="all">Evaluation List</TabsTrigger>
-          <TabsTrigger value="completed">Completed Evaluations</TabsTrigger>
+          <TabsTrigger value="bulk">Bulk Upload</TabsTrigger>
+          <TabsTrigger value="all">All Evaluations</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
         </TabsList>
         
         <TabsContent value="upload">
