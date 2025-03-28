@@ -9,7 +9,7 @@ const getDevelopmentApiUrl = () => {
   // and when deployed if the server is on the same origin
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     // For local development
-    return 'http://localhost:8080/api';
+    return 'http://209.74.89.41:8080/api';
   }
   
   // For development on the project domain or when deployed, use relative URL
