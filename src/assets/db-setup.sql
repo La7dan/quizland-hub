@@ -1,3 +1,4 @@
+
 -- Create users table with roles (super_admin, admin, coach)
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
@@ -108,11 +109,27 @@ VALUES
   ('A3', 'Advanced 3', 'Third step in advanced level')
 ON CONFLICT (code) DO NOTHING;
 
+-- Insert default super admin user if none exists
+INSERT INTO users (username, password, email, role)
+SELECT 'admin', 'admin123', 'admin@example.com', 'super_admin'
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE role = 'super_admin')
+ON CONFLICT DO NOTHING;
+
+-- Insert sample members
+INSERT INTO members (member_id, name, level_id, classes_count, coach_id)
+VALUES 
+  ('SH123456', 'John Smith', (SELECT id FROM quiz_levels WHERE code = 'B1'), 5, NULL),
+  ('SH789012', 'Jane Doe', (SELECT id FROM quiz_levels WHERE code = 'I2'), 12, NULL),
+  ('SH345678', 'Mike Johnson', (SELECT id FROM quiz_levels WHERE code = 'A1'), 20, NULL),
+  ('SH901234', 'Sarah Williams', (SELECT id FROM quiz_levels WHERE code = 'NC'), 2, NULL),
+  ('SH567890', 'David Brown', (SELECT id FROM quiz_levels WHERE code = 'B3'), 8, NULL)
+ON CONFLICT (member_id) DO NOTHING;
+
 -- Insert sample quiz
 INSERT INTO quizzes (title, description, level_id, is_visible, passing_percentage, created_by)
 VALUES ('Basic Grammar Quiz', 'Test your knowledge of basic grammar rules', 
         (SELECT id FROM quiz_levels WHERE code = 'B1'), TRUE, 70, 
-        (SELECT id FROM users WHERE role = 'admin' LIMIT 1))
+        (SELECT id FROM users WHERE role = 'super_admin' LIMIT 1))
 ON CONFLICT DO NOTHING;
 
 -- Insert sample questions

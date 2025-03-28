@@ -12,7 +12,9 @@ import SQLViewerDialog from '@/components/SQLViewerDialog';
 import QuizManagement from '@/components/QuizManagement';
 import QuizAttempts from '@/components/QuizAttempts';
 import MemberManagement from '@/components/MemberManagement';
+import MembersTable from '@/components/MembersTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import DatabaseSetupButton from '@/components/DatabaseSetupButton';
 
 export default function AdminPanel() {
   const { user } = useAuth();
@@ -42,6 +44,7 @@ export default function AdminPanel() {
             onOpenCreateTable={() => setIsCreateTableDialogOpen(true)}
             onOpenSQLDialog={() => setIsSQLDialogOpen(true)}
           />
+          <DatabaseSetupButton />
         </div>
 
         <div className="flex justify-end mb-2">
@@ -77,7 +80,8 @@ export default function AdminPanel() {
               <UserManagement />
             </TabsContent>
 
-            <TabsContent value="members">
+            <TabsContent value="members" className="space-y-4">
+              <MembersTable onRefresh={handleRefresh} />
               <MemberManagement onRefresh={handleRefresh} />
             </TabsContent>
 

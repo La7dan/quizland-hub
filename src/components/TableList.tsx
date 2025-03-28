@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TableListProps {
   onRefresh: () => void;
@@ -25,11 +26,12 @@ const TableList = ({ onRefresh }: TableListProps) => {
   const [clearingTable, setClearingTable] = useState<string | null>(null);
   const [deletingTable, setDeletingTable] = useState<string | null>(null);
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
 
   const fetchTables = async () => {
     setLoading(true);
     try {
-      console.log('Fetching tables...');
+      console.log('Fetching tables... Authentication status:', isAuthenticated);
       const result = await getTables();
       console.log('Fetch tables result:', result);
       if (result.success) {
@@ -45,7 +47,7 @@ const TableList = ({ onRefresh }: TableListProps) => {
       console.error('Error fetching tables:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch tables",
+        description: "Failed to fetch tables. Check console for details.",
         variant: "destructive",
       });
     } finally {
@@ -54,8 +56,10 @@ const TableList = ({ onRefresh }: TableListProps) => {
   };
 
   useEffect(() => {
-    fetchTables();
-  }, []);
+    if (isAuthenticated) {
+      fetchTables();
+    }
+  }, [isAuthenticated]);
 
   const handleClearTable = async (tableName: string) => {
     setClearingTable(tableName);
@@ -127,6 +131,11 @@ const TableList = ({ onRefresh }: TableListProps) => {
     }
   };
 
+  // Fetch tables on manual refresh
+  const handleManualRefresh = () => {
+    fetchTables();
+  };
+
   return (
     <div className="bg-white shadow-md rounded-lg p-4">
       <div className="flex justify-between items-center mb-4">
@@ -135,7 +144,7 @@ const TableList = ({ onRefresh }: TableListProps) => {
           Database Tables
         </h2>
         <button
-          onClick={fetchTables}
+          onClick={handleManualRefresh}
           className="flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-md text-sm transition-colors"
           disabled={loading}
         >
@@ -150,7 +159,7 @@ const TableList = ({ onRefresh }: TableListProps) => {
         </div>
       ) : tables.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
-          <p>No tables found in the database.</p>
+          <p>No tables found in the database. Use the Setup Database button to create tables.</p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg border border-gray-200">

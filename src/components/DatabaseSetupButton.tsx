@@ -16,7 +16,12 @@ const DatabaseSetupButton = () => {
       
       // Fetch the SQL file content
       const response = await fetch('/src/assets/db-setup.sql');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch SQL: ${response.status} ${response.statusText}`);
+      }
+      
       const sqlContent = await response.text();
+      console.log('SQL content loaded, length:', sqlContent.length);
       
       // Execute SQL to set up all tables
       console.log('Executing database setup SQL...');
@@ -26,7 +31,7 @@ const DatabaseSetupButton = () => {
         console.log('Database setup completed successfully');
         toast({
           title: "Success",
-          description: "Database setup completed successfully",
+          description: "Database setup completed successfully. Tables and initial data created.",
         });
       } else {
         console.error('Database setup failed:', result.message);
@@ -40,7 +45,7 @@ const DatabaseSetupButton = () => {
       console.error('Error setting up database:', error);
       toast({
         title: "Error",
-        description: "An error occurred during database setup",
+        description: "An error occurred during database setup: " + (error instanceof Error ? error.message : String(error)),
         variant: "destructive"
       });
     } finally {
