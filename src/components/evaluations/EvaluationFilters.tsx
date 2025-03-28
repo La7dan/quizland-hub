@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Trash } from 'lucide-react';
 import { FilterOptions } from './hooks/useEvaluationFilters';
 
 interface EvaluationFiltersProps {
@@ -25,6 +25,8 @@ interface EvaluationFiltersProps {
   onClearFilters: () => void;
   onExportCSV: () => void;
   exportDisabled: boolean;
+  selectedIds: number[];
+  onDeleteSelected?: () => void;
 }
 
 const EvaluationFilters: React.FC<EvaluationFiltersProps> = ({
@@ -35,7 +37,9 @@ const EvaluationFilters: React.FC<EvaluationFiltersProps> = ({
   filterOptions,
   onClearFilters,
   onExportCSV,
-  exportDisabled
+  exportDisabled,
+  selectedIds,
+  onDeleteSelected
 }) => {
   return (
     <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 mb-6">
@@ -129,6 +133,18 @@ const EvaluationFilters: React.FC<EvaluationFiltersProps> = ({
         >
           Export CSV
         </Button>
+        
+        {selectedIds.length > 0 && onDeleteSelected && (
+          <Button 
+            variant="destructive" 
+            size="sm"
+            onClick={onDeleteSelected}
+            className="flex items-center gap-1"
+          >
+            <Trash className="h-4 w-4" />
+            Delete Selected ({selectedIds.length})
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -3,6 +3,8 @@ import React from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Trash } from 'lucide-react';
 import { format } from 'date-fns';
 import { EvaluationDisplayItem } from './types';
 import EvaluationItem from './EvaluationItem';
@@ -14,6 +16,7 @@ interface EvaluationTableRowProps {
   onSelectOne: (id: number, checked: boolean) => void;
   hasLevels: boolean;
   hasCoaches: boolean;
+  onDelete?: () => void;
 }
 
 const EvaluationTableRow: React.FC<EvaluationTableRowProps> = ({
@@ -22,7 +25,8 @@ const EvaluationTableRow: React.FC<EvaluationTableRowProps> = ({
   isSelected,
   onSelectOne,
   hasLevels,
-  hasCoaches
+  hasCoaches,
+  onDelete
 }) => {
   // Format the approval status for display
   const getApprovalStatus = () => {
@@ -47,7 +51,7 @@ const EvaluationTableRow: React.FC<EvaluationTableRowProps> = ({
   };
 
   return (
-    <TableRow key={evaluation.id}>
+    <TableRow key={evaluation.id} className={isSelected ? "bg-muted/50" : ""}>
       {isAdmin && (
         <TableCell>
           <Checkbox 
@@ -93,8 +97,18 @@ const EvaluationTableRow: React.FC<EvaluationTableRowProps> = ({
         <TableCell>{evaluation.coach_name || 'Not assigned'}</TableCell>
       )}
       <TableCell className="text-right">
-        <div className="flex justify-end">
+        <div className="flex justify-end items-center space-x-2">
           <EvaluationItem evaluation={evaluation} />
+          {isAdmin && onDelete && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onDelete}
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </TableCell>
     </TableRow>

@@ -1,11 +1,24 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Table, TableBody } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { exportToCSV } from './utils';
 import BulkMarkAsPassedButton from './BulkMarkAsPassedButton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { executeSql } from '@/services/apiService';
 
 import { useEvaluationData, useFilterOptions } from './hooks/useEvaluationData';
 import { useEvaluationFilters } from './hooks/useEvaluationFilters';
@@ -20,7 +33,10 @@ interface EvaluationListTabProps {
 
 const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger }) => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   // Fetch data
   const { data, isLoading } = useEvaluationData(refreshTrigger);
@@ -48,6 +64,42 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
     isSelected,
     allSelected
   } = useEvaluationSelection(filteredEvaluations);
+
+  // Delete mutations
+  const deleteMutation = useMutation({
+    mutationFn: async (ids: number[]) => {
+      const query = `DELETE FROM evaluations WHERE id IN (${ids.join(',')}) RETURNING id`;
+      return await executeSql(query);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: `${selectedIds.length} evaluation(s) deleted successfully`,
+      });
+      resetSelection();
+      queryClient.invalidateQueries({ queryKey: ['allEvaluations'] });
+      setIsDeleteDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete evaluations: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive"
+      });
+      setIsDeleteDialogOpen(false);
+    }
+  });
+
+  // Handle bulk delete
+  const handleBulkDelete = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedIds.length > 0) {
+      deleteMutation.mutate(selectedIds);
+    }
+  };
 
   // Handle CSV export
   const handleExportCSV = () => {
@@ -110,6 +162,8 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
         onClearFilters={clearFilters}
         onExportCSV={handleExportCSV}
         exportDisabled={filteredEvaluations.length === 0}
+        selectedIds={selectedIds}
+        onDeleteSelected={isAdmin ? handleBulkDelete : undefined}
       />
 
       {isAdmin && (
@@ -121,34 +175,61 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
         </div>
       )}
       
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <EvaluationTableHeader
-            isAdmin={isAdmin}
-            sortField={sortField}
-            sortOrder={sortOrder}
-            toggleSort={toggleSort}
-            onSelectAll={handleSelectAll}
-            hasLevels={hasLevels}
-            hasCoaches={hasCoaches}
-            allSelected={allSelected}
-          />
-          
-          <TableBody>
-            {filteredEvaluations.map(evaluation => (
-              <EvaluationTableRow
-                key={evaluation.id}
-                evaluation={evaluation}
-                isAdmin={isAdmin}
-                isSelected={isSelected(evaluation.id)}
-                onSelectOne={handleSelectOne}
-                hasLevels={hasLevels}
-                hasCoaches={hasCoaches}
-              />
-            ))}
-          </TableBody>
-        </Table>
+      <div className="rounded-md border overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <EvaluationTableHeader
+              isAdmin={isAdmin}
+              sortField={sortField}
+              sortOrder={sortOrder}
+              toggleSort={toggleSort}
+              onSelectAll={handleSelectAll}
+              hasLevels={hasLevels}
+              hasCoaches={hasCoaches}
+              allSelected={allSelected}
+            />
+            
+            <TableBody>
+              {filteredEvaluations.map(evaluation => (
+                <EvaluationTableRow
+                  key={evaluation.id}
+                  evaluation={evaluation}
+                  isAdmin={isAdmin}
+                  isSelected={isSelected(evaluation.id)}
+                  onSelectOne={handleSelectOne}
+                  hasLevels={hasLevels}
+                  hasCoaches={hasCoaches}
+                  onDelete={isAdmin ? () => {
+                    deleteMutation.mutate([evaluation.id]);
+                  } : undefined}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedIds.length} selected evaluation(s)? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+              {deleteMutation.isPending ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
