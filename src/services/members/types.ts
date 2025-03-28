@@ -1,3 +1,4 @@
+
 export interface Member {
   id?: number;
   member_id: string;
@@ -9,7 +10,9 @@ export interface Member {
   coach_id?: number;
   coach_name?: string;
   created_at?: string;
-  evaluation_date?: string; // Added evaluation date
+  evaluation_date?: string;
+  evaluation_pdf?: string;
+  evaluation_status?: 'pending' | 'approved' | 'rejected';
 }
 
 export interface MemberResponse {
@@ -29,5 +32,12 @@ export interface MemberImportResponse {
   successCount?: number;
   errorCount?: number;
   errors?: string[];
+  message?: string;
+}
+
+export interface EvaluationUploadResponse {
+  success: boolean;
+  evaluation_id?: number;
+  file_url?: string;
   message?: string;
 }

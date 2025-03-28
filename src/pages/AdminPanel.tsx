@@ -32,9 +32,9 @@ export default function AdminPanel() {
       <Navigation />
       
       <div className="container mx-auto p-4 max-w-6xl">
-        <div className="bg-gradient-to-r from-purple-100 to-blue-100 p-6 rounded-lg mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Admin Control Panel</h1>
-          <p className="text-gray-600">
+        <div className="bg-gradient-to-r from-primary/10 to-secondary/30 p-6 rounded-lg mb-6 border border-primary/20 shadow-md">
+          <h1 className="text-2xl font-bold text-primary">Admin Control Panel</h1>
+          <p className="text-muted-foreground mt-2">
             Welcome, {user?.username}. You have super admin access to the system.
           </p>
         </div>
@@ -50,7 +50,7 @@ export default function AdminPanel() {
         <div className="flex justify-end mb-2">
           <button
             onClick={() => setIsSQLViewerOpen(true)}
-            className="text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-md transition-colors flex items-center gap-2"
+            className="text-sm bg-primary hover:bg-primary/80 text-primary-foreground px-3 py-1 rounded-md transition-colors flex items-center gap-2"
           >
             <span className="hidden sm:inline">View SQL Setup File</span>
             <span className="sm:hidden">SQL Setup</span>
@@ -59,10 +59,11 @@ export default function AdminPanel() {
 
         <div className="mt-2">
           <Tabs defaultValue="tables" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="tables">Database Tables</TabsTrigger>
               <TabsTrigger value="users">User Management</TabsTrigger>
               <TabsTrigger value="members">Members</TabsTrigger>
+              <TabsTrigger value="evaluations">Evaluations</TabsTrigger>
               <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
               <TabsTrigger value="attempts">Quiz Attempts</TabsTrigger>
             </TabsList>
@@ -83,6 +84,16 @@ export default function AdminPanel() {
             <TabsContent value="members" className="space-y-4">
               <MembersTable onRefresh={handleRefresh} />
               <MemberManagement onRefresh={handleRefresh} />
+            </TabsContent>
+            
+            <TabsContent value="evaluations">
+              <div className="bg-card text-card-foreground border rounded-lg p-6 shadow-sm">
+                <h2 className="text-xl font-semibold mb-4">Evaluation Management</h2>
+                <p className="text-muted-foreground mb-6">Upload and manage member evaluations with PDF documents.</p>
+                <div className="text-center py-12 border-2 border-dashed rounded-lg border-muted">
+                  <p className="text-muted-foreground">Evaluation management will be implemented soon.</p>
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="quizzes">
