@@ -20,12 +20,18 @@ export const checkAuthStatus = async (): Promise<{ authenticated: boolean; user:
     
     // Log response details for debugging
     console.log('Auth check response status:', response.status);
-    console.log('Auth check response headers:', [...response.headers.entries()]);
     
     // Check if the request was successful
     if (response.status === 401 || response.status === 403) {
       console.log('User is not authenticated (401/403 response)', response.status);
       return { authenticated: false, user: null };
+    }
+    
+    try {
+      // Try to get headers
+      console.log('Auth check response headers:', [...response.headers.entries()]);
+    } catch (e) {
+      console.warn('Could not log response headers:', e);
     }
     
     // Check the content type to avoid parsing HTML as JSON

@@ -5,7 +5,13 @@
 
 // Set default API URL based on environment
 const getDevelopmentApiUrl = () => {
-  // Always use the explicit server IP and port as provided in the error message
+  // Try to use the base URL of the current site
+  const currentHost = window.location.hostname;
+  // If we're at 209.74.89.41, we should use that as the API host too
+  if (currentHost === '209.74.89.41') {
+    return 'http://209.74.89.41:8080/api';
+  }
+  // Default fallback
   return 'http://209.74.89.41:8080/api';
 };
 

@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { Toaster } from 'sonner'
+import { toast } from 'sonner'
 import App from './App.tsx'
 import './index.css'
 import { logEnvironment, ENV } from './config/env'
@@ -43,8 +44,6 @@ const root = createRoot(rootElement);
 const showBackendReminder = () => {
   setTimeout(() => {
     if (ENV.DEBUG) {
-      // Using the correct toast API
-      const { toast } = require('sonner');
       toast("Backend Server Required", {
         description: `This app requires a backend server at ${ENV.API_BASE_URL}. Run "node server.js" to start it.`,
         duration: 10000,
