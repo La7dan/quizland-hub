@@ -43,26 +43,16 @@ const root = createRoot(rootElement);
 const showBackendReminder = () => {
   setTimeout(() => {
     if (ENV.DEBUG) {
-      Toaster.custom((t) => (
-        <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 rounded shadow-md">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm">
-                This app requires a backend server at <strong>{ENV.API_BASE_URL}</strong>
-                <br />
-                Run <code className="bg-amber-50 px-1 rounded">node server.js</code> to start it.
-              </p>
-            </div>
-          </div>
-        </div>
-      ), { duration: 10000 })
+      // Using the correct API for sonner toast
+      Toaster.show({
+        title: "Backend Server Required",
+        description: `This app requires a backend server at ${ENV.API_BASE_URL}. Run "node server.js" to start it.`,
+        duration: 10000,
+        icon: "⚠️",
+        style: { background: "#FEF3C7", color: "#92400E", border: "1px solid #F59E0B" }
+      });
     }
-  }, 2000)
+  }, 2000);
 }
 
 // Render your app with all required providers

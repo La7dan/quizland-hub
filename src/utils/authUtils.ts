@@ -17,21 +17,24 @@ export const checkAuthStatus = async (): Promise<{ authenticated: boolean; user:
       }
     });
     
+    // Check if the request was successful
+    if (response.status === 401 || response.status === 403) {
+      console.log('User is not authenticated (401/403 response)', response.status);
+      return { authenticated: false, user: null };
+    }
+    
     // Check the content type to avoid parsing HTML as JSON
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Auth check response:', data);
-        if (data.authenticated && data.user) {
-          return { authenticated: true, user: data.user };
-        }
-      } else {
-        console.log('Auth check failed with status:', response.status);
-        // For 401 or 403, this is expected for unauthenticated users, so don't show an error
-        if (response.status !== 401 && response.status !== 403) {
-          console.error('Unexpected auth check response:', response.status);
-        }
+      const data = await response.json();
+      console.log('Auth check response:', data);
+      
+      if (data.authenticated && data.user) {
+        return { authenticated: true, user: data.user };
+      } else if (data.success === false && data.message === "Authentication required") {
+        // This is the specific response we're getting from the server
+        console.log('Auth check received "Authentication required" message');
+        return { authenticated: false, user: null };
       }
     } else {
       console.warn('Server returned non-JSON response for auth check. This usually means the server is not running or incorrect API URL configuration.');
