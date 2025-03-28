@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Card,
@@ -44,8 +44,10 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
     }
   });
 
-  // Get completed evaluations (those with PDF files)
+  // Get evaluations by status
   const completedEvaluations = allEvaluations?.filter(e => e.evaluation_pdf) || [];
+  const approvedEvaluations = allEvaluations?.filter(e => e.status === 'approved') || [];
+  const disapprovedEvaluations = allEvaluations?.filter(e => e.status === 'disapproved') || [];
 
   return (
     <Card>
@@ -58,9 +60,11 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
       <CardContent>
         <Tabs defaultValue="pending" className="w-full">
           <TabsList className="mb-4">
-            <TabsTrigger value="pending">Pending Approvals</TabsTrigger>
-            <TabsTrigger value="completed">Completed Evaluations</TabsTrigger>
-            <TabsTrigger value="all">All Evaluations</TabsTrigger>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="approved">Approved</TabsTrigger>
+            <TabsTrigger value="disapproved">Disapproved</TabsTrigger>
+            <TabsTrigger value="completed">With PDF</TabsTrigger>
+            <TabsTrigger value="all">All</TabsTrigger>
           </TabsList>
           
           <TabsContent value="pending">
@@ -72,6 +76,30 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
               <PendingEvaluationsList evaluations={evaluations} />
             ) : (
               <EmptyEvaluations />
+            )}
+          </TabsContent>
+          
+          <TabsContent value="approved">
+            {allEvaluationsLoading ? (
+              <LoadingEvaluations />
+            ) : approvedEvaluations.length > 0 ? (
+              <PendingEvaluationsList evaluations={approvedEvaluations} showAll={true} />
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No approved evaluations found.</p>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="disapproved">
+            {allEvaluationsLoading ? (
+              <LoadingEvaluations />
+            ) : disapprovedEvaluations.length > 0 ? (
+              <PendingEvaluationsList evaluations={disapprovedEvaluations} showAll={true} />
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No disapproved evaluations found.</p>
+              </div>
             )}
           </TabsContent>
           
