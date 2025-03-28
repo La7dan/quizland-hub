@@ -93,6 +93,7 @@ export const parseCSVData = (csvData: string, levelsData: any, coaches: any[]): 
 interface InvalidRecord {
   rowData: Record<string, any>;
   reason: string;
+  rowIndex?: number;
 }
 
 // Excel import functionality
@@ -133,13 +134,26 @@ export const parseExcelFile = (
         const invalidRecords: InvalidRecord[] = [];
         const total = excelData.length;
         
-        for (const row of excelData) {
-          const rowData = row as Record<string, any>;
+        // Verify if levelsData is properly loaded
+        const levelsAvailable = levelsData?.levels && levelsData.levels.length > 0;
+        if (!levelsAvailable) {
+          console.warn('No levels data available for validation!', levelsData);
+        }
+        
+        // Verify if coaches data is properly loaded
+        if (!coaches || coaches.length === 0) {
+          console.warn('No coaches data available for validation!');
+        }
+        
+        for (let i = 0; i < excelData.length; i++) {
+          const rowData = excelData[i] as Record<string, any>;
+          const rowIndex = i + 2; // +2 because Excel rows start at 1 and we have headers
           
           // Check for required fields
           if (!rowData.member_id || !rowData.name) {
             invalidRecords.push({
               rowData,
+              rowIndex,
               reason: `Missing required field: ${!rowData.member_id ? 'member_id' : 'name'}`
             });
             continue;
@@ -153,23 +167,27 @@ export const parseExcelFile = (
           // Match level code if provided
           if (rowData.level_code) {
             const levelCode = String(rowData.level_code).trim();
-            console.log('Excel: Looking for level code:', levelCode);
             
-            const level = levelsData?.levels?.find((l: any) => 
-              l.code.toLowerCase() === levelCode.toLowerCase()
-            );
-            
-            if (level) {
-              member.level_id = level.id;
-              member.level_code = level.code; // Store for display
-              console.log('Excel: Found level:', level);
+            if (levelsAvailable) {
+              const level = levelsData.levels.find((l: any) => 
+                l.code.toLowerCase() === levelCode.toLowerCase()
+              );
+              
+              if (level) {
+                member.level_id = level.id;
+                member.level_code = level.code; // Store for display
+              } else {
+                // We still keep the member, but log that level wasn't found
+                invalidRecords.push({
+                  rowData,
+                  rowIndex,
+                  reason: `Level code "${levelCode}" not found in the system`
+                });
+              }
             } else {
-              console.log('Excel: Level not found for code:', levelCode);
-              // We still keep the member, but log that level wasn't found
-              invalidRecords.push({
-                rowData,
-                reason: `Level code "${levelCode}" not found in the system`
-              });
+              // If levels data isn't available, we still keep the member
+              // but log the issue
+              console.warn(`Cannot validate level code "${levelCode}" - no levels data available`);
             }
           }
           
@@ -182,6 +200,7 @@ export const parseExcelFile = (
               // If classes_count isn't a number, note it but continue
               invalidRecords.push({
                 rowData,
+                rowIndex,
                 reason: `Invalid classes_count: "${rowData.classes_count}" is not a number`
               });
             }
@@ -198,6 +217,7 @@ export const parseExcelFile = (
               // Coach not found
               invalidRecords.push({
                 rowData,
+                rowIndex,
                 reason: `Coach "${coachName}" not found in the system`
               });
             }
@@ -215,6 +235,10 @@ export const parseExcelFile = (
           });
           return;
         }
+        
+        // Log helpful information for debugging
+        console.log(`Excel import summary: ${members.length} valid out of ${total} total records`);
+        console.log(`${invalidRecords.length} records had validation warnings`);
         
         resolve({ members, total, invalidRecords });
       } catch (error) {

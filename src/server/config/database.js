@@ -17,7 +17,7 @@ const getPool = () => {
       password: 'Lal@13161',
       database: 'quiz',
       port: 5432,
-      // Connection configuration
+      // Connection configuration - optimized settings
       connectionTimeoutMillis: 10000,
       idleTimeoutMillis: 30000,
       max: 20, // maximum number of clients in the pool

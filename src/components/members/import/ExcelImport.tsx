@@ -42,15 +42,15 @@ export const ExcelImport = ({
       // Simulate progress during processing
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
-          const nextProgress = prev + 5;
-          return nextProgress < 90 ? nextProgress : prev; // Cap at 90% until complete
+          const nextProgress = prev + 3;
+          return nextProgress < 85 ? nextProgress : prev; // Cap at 85% until complete
         });
       }, 100);
       
       const { members, total, invalidRecords, error } = await parseExcelFile(file, levelsData, coaches);
       
       clearInterval(progressInterval);
-      setUploadProgress(100); // Complete progress
+      setUploadProgress(95); // Almost complete
       
       if (error) {
         toast({
@@ -67,38 +67,59 @@ export const ExcelImport = ({
         return;
       }
       
+      // Group invalid records by reason for better reporting
+      const reasonCounts: Record<string, number> = {};
+      invalidRecords.forEach(record => {
+        reasonCounts[record.reason] = (reasonCounts[record.reason] || 0) + 1;
+      });
+      
+      // Format reasons with counts
+      const formattedReasons = Object.entries(reasonCounts)
+        .map(([reason, count]) => `${reason} (${count} records)`)
+        .slice(0, 5); // Show top 5 reasons
+      
       // Show stats about the import
       setStats({
         total: total,
         valid: members.length,
         invalid: invalidRecords.length,
-        invalidReason: invalidRecords.length > 0 
-          ? invalidRecords.slice(0, 5).map(r => r.reason) // Show first 5 errors
-          : undefined
+        invalidReason: formattedReasons
       });
       
       // Log validation issues for debugging
       if (invalidRecords.length > 0) {
-        console.log('Invalid records:', invalidRecords);
+        console.log('Invalid records summary:', reasonCounts);
+        console.log('Sample invalid records:', invalidRecords.slice(0, 5));
       }
       
-      onImport(members);
+      // Complete progress
+      setUploadProgress(100);
       
-      toast({
-        title: 'Import Processing',
-        description: `Processed ${total} records: ${members.length} valid, ${invalidRecords.length} invalid`,
-        variant: invalidRecords.length > 0 ? 'default' : 'default',
-      });
+      if (members.length > 0) {
+        onImport(members);
+        
+        toast({
+          title: 'Import Processing',
+          description: `Processed ${total} records: ${members.length} valid, ${invalidRecords.length} invalid`,
+          variant: invalidRecords.length > 0 ? 'default' : 'default',
+        });
+      } else {
+        toast({
+          title: 'Import Failed',
+          description: 'No valid records found to import',
+          variant: 'destructive',
+        });
+      }
       
       // Keep progress at 100% for a moment
-      setTimeout(() => {
-        if (invalidRecords.length === 0) {
-          // Only reset if everything was successful
+      if (members.length > 0 && invalidRecords.length === 0) {
+        // Only reset if everything was successful
+        setTimeout(() => {
           setUploadProgress(0);
           setFileName(null);
           setStats(null);
-        }
-      }, 5000);
+        }, 5000);
+      }
     } catch (error) {
       setUploadProgress(0);
       setFileName(null);
@@ -141,17 +162,19 @@ export const ExcelImport = ({
               <p className="font-medium">Import Summary:</p>
               <ul className="mt-1 space-y-1">
                 <li>Total records: {stats.total}</li>
-                <li>Valid records: {stats.valid}</li>
-                <li>Invalid records: {stats.invalid}</li>
+                <li className="text-green-600">Valid records: {stats.valid}</li>
+                {stats.invalid > 0 && (
+                  <li className="text-amber-600">Invalid/skipped records: {stats.invalid}</li>
+                )}
                 {stats.invalidReason && stats.invalidReason.length > 0 && (
                   <li>
-                    <p className="font-medium mt-1">Sample errors:</p>
+                    <p className="font-medium mt-1">Validation issues:</p>
                     <ul className="list-disc pl-5 mt-1">
                       {stats.invalidReason.map((reason, idx) => (
                         <li key={idx} className="text-xs text-destructive">{reason}</li>
                       ))}
-                      {stats.invalid > 5 && (
-                        <li className="text-xs italic">...and {stats.invalid - 5} more</li>
+                      {Object.keys(stats.invalidReason).length > 5 && (
+                        <li className="text-xs italic">...and more validation issues</li>
                       )}
                     </ul>
                   </li>
