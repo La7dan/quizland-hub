@@ -4,7 +4,7 @@ export * from './tableService';
 export * from './userService';
 export * from './members/memberService';
 export * from './evaluations/evaluationService';
-export * from './cleanDatabaseService';
+// export * from './cleanDatabaseService'; // Removed as requested
 export * from './quiz';
 
 // This file serves as a facade to maintain backward compatibility
@@ -22,5 +22,5 @@ export const initializeDatabase = async () => {
   }
 };
 
-// Export the cleanDummyData function, but NEVER call it automatically
-export { cleanDummyData } from './cleanDatabaseService';
+// Do not export the cleanDummyData function anymore
+// export { cleanDummyData } from './cleanDatabaseService';

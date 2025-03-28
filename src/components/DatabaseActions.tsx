@@ -1,63 +1,29 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { cleanDummyData } from '@/services/cleanDatabaseService';
-import { Trash2, RefreshCw } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 export default function DatabaseActions() {
-  const [isCleaningData, setIsCleaningData] = useState(false);
   const { toast } = useToast();
 
-  const handleCleanDummyData = async () => {
-    if (!confirm('WARNING: This will permanently delete ALL quizzes, questions, and quiz attempts. This action cannot be undone. Are you sure you want to proceed?')) {
-      return;
-    }
-    
-    try {
-      setIsCleaningData(true);
-      
-      const result = await cleanDummyData();
-      
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: result.message,
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: result.message,
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Error cleaning dummy data:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred while cleaning data",
-        variant: "destructive"
-      });
-    } finally {
-      setIsCleaningData(false);
-    }
+  const handleInfoClick = () => {
+    toast({
+      title: "Information",
+      description: "The database cleaning functionality has been removed to preserve quiz data.",
+    });
   };
 
   return (
     <div className="flex flex-wrap gap-2 mb-4">
       <Button 
-        variant="destructive" 
+        variant="outline" 
         size="sm" 
-        onClick={handleCleanDummyData}
-        disabled={isCleaningData}
+        onClick={handleInfoClick}
         className="flex items-center gap-2"
       >
-        {isCleaningData ? (
-          <RefreshCw className="h-4 w-4 animate-spin" />
-        ) : (
-          <Trash2 className="h-4 w-4" />
-        )}
-        {isCleaningData ? "Cleaning Data..." : "Clean Quiz Data (Delete All)"}
+        <Info className="h-4 w-4" />
+        Database Information
       </Button>
     </div>
   );
