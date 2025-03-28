@@ -56,15 +56,15 @@ const EvaluationFilters: React.FC<EvaluationFiltersProps> = ({
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center space-x-2">
           <Select 
-            value={filters.status || ''} 
-            onValueChange={(value) => setFilters({...filters, status: value || undefined})}
+            value={filters.status || 'all'} 
+            onValueChange={(value) => setFilters({...filters, status: value === 'all' ? undefined : value})}
           >
             <SelectTrigger className="w-[130px]">
               <Filter className="h-4 w-4 mr-2" />
               <span>Status</span>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Statuses</SelectItem>
+              <SelectItem value="all">All Statuses</SelectItem>
               {filterOptions?.statuses.map((status: string) => (
                 <SelectItem key={status} value={status}>
                   {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -76,15 +76,15 @@ const EvaluationFilters: React.FC<EvaluationFiltersProps> = ({
 
         <div className="flex items-center space-x-2">
           <Select 
-            value={filters.level || ''} 
-            onValueChange={(value) => setFilters({...filters, level: value || undefined})}
+            value={filters.level || 'all'} 
+            onValueChange={(value) => setFilters({...filters, level: value === 'all' ? undefined : value})}
           >
             <SelectTrigger className="w-[130px]">
               <Filter className="h-4 w-4 mr-2" />
               <span>Level</span>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Levels</SelectItem>
+              <SelectItem value="all">All Levels</SelectItem>
               {filterOptions?.levels.map((level: string) => (
                 <SelectItem key={level} value={level}>{level}</SelectItem>
               ))}
@@ -94,15 +94,15 @@ const EvaluationFilters: React.FC<EvaluationFiltersProps> = ({
 
         <div className="flex items-center space-x-2">
           <Select 
-            value={filters.coach || ''} 
-            onValueChange={(value) => setFilters({...filters, coach: value || undefined})}
+            value={filters.coach || 'all'} 
+            onValueChange={(value) => setFilters({...filters, coach: value === 'all' ? undefined : value})}
           >
             <SelectTrigger className="w-[130px]">
               <Filter className="h-4 w-4 mr-2" />
               <span>Coach</span>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Coaches</SelectItem>
+              <SelectItem value="all">All Coaches</SelectItem>
               {filterOptions?.coaches.map((coach) => (
                 <SelectItem key={coach.id} value={coach.id.toString()}>
                   {coach.username}
