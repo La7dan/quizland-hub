@@ -35,6 +35,9 @@ export interface QuizAttempt {
   percentage: number;
   result: 'passed' | 'not_ready';
   attempt_date?: string;
+  total_questions?: number;
+  passed?: boolean;
+  time_taken?: number;
 }
 
 export interface ServiceResponse<T = any> {

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -150,7 +151,10 @@ const QuizPage = () => {
       await saveQuizAttempt({
         quiz_id: quiz.id,
         member_id: memberId,
+        visitor_name: name,
         score: scoreResult.score,
+        percentage: scoreResult.percentage,
+        result: scoreResult.passed ? 'passed' : 'not_ready',
         total_questions: questions.length,
         passed: scoreResult.passed,
         time_taken: 0 // You could add timing functionality if needed
