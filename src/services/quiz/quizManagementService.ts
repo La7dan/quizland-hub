@@ -1,5 +1,5 @@
 
-import { executeSql } from '../apiService';
+import { executeSql, sqlEscape } from '../apiService';
 import { ServiceResponse, Quiz } from './quizTypes';
 
 // Function to create a new quiz
@@ -22,11 +22,11 @@ export const createQuiz = async (quizData: Partial<Quiz>): Promise<ServiceRespon
         is_visible
       )
       VALUES (
-        '${quizData.title}', 
-        '${quizData.description || ''}', 
-        ${quizData.level_id !== null ? quizData.level_id : 'NULL'}, 
-        ${quizData.passing_percentage || 70}, 
-        ${quizData.is_visible !== undefined ? quizData.is_visible : true}
+        ${sqlEscape.string(quizData.title)}, 
+        ${sqlEscape.string(quizData.description || '')}, 
+        ${sqlEscape.number(quizData.level_id)}, 
+        ${sqlEscape.number(quizData.passing_percentage || 70)}, 
+        ${sqlEscape.boolean(quizData.is_visible !== undefined ? quizData.is_visible : true)}
       )
       RETURNING id;
     `);
@@ -64,12 +64,12 @@ export const updateQuiz = async (quizData: Partial<Quiz> & { id: number }): Prom
 
     const result = await executeSql(`
       UPDATE quizzes
-      SET title = '${quizData.title}',
-          description = '${quizData.description || ''}',
-          level_id = ${quizData.level_id !== null ? quizData.level_id : 'NULL'},
-          passing_percentage = ${quizData.passing_percentage || 70},
-          is_visible = ${quizData.is_visible !== undefined ? quizData.is_visible : true}
-      WHERE id = ${quizData.id};
+      SET title = ${sqlEscape.string(quizData.title)},
+          description = ${sqlEscape.string(quizData.description || '')},
+          level_id = ${sqlEscape.number(quizData.level_id)},
+          passing_percentage = ${sqlEscape.number(quizData.passing_percentage || 70)},
+          is_visible = ${sqlEscape.boolean(quizData.is_visible !== undefined ? quizData.is_visible : true)}
+      WHERE id = ${sqlEscape.number(quizData.id)};
     `);
 
     if (result.success) {
@@ -97,13 +97,13 @@ export const deleteQuiz = async (id: number): Promise<ServiceResponse> => {
     // Delete associated questions first
     await executeSql(`
       DELETE FROM questions
-      WHERE quiz_id = ${id};
+      WHERE quiz_id = ${sqlEscape.number(id)};
     `);
     
     // Then delete the quiz
     const result = await executeSql(`
       DELETE FROM quizzes
-      WHERE id = ${id};
+      WHERE id = ${sqlEscape.number(id)};
     `);
 
     if (result.success) {

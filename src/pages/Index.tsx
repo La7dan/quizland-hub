@@ -23,8 +23,8 @@ export default function Index() {
     queryFn: getQuizzes,
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 2, // Retry failed requests up to 2 times
-    onSettled: (data, error) => {
-      if (error) {
+    meta: {
+      onError: (error) => {
         console.error('Failed to fetch quizzes:', error);
         toast('Error loading quizzes', {
           description: 'Unable to connect to the database. Please try again later.',

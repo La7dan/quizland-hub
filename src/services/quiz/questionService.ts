@@ -1,5 +1,5 @@
 
-import { executeSql } from '../apiService';
+import { executeSql, sqlEscape } from '../apiService';
 import * as quizQueries from './quizQueries';
 import { ServiceResponse, Question } from './quizTypes';
 
@@ -8,7 +8,7 @@ export const getQuizQuestions = async (quizId: number): Promise<ServiceResponse<
   try {
     const result = await executeSql(`
       SELECT * FROM questions 
-      WHERE quiz_id = ${quizId}
+      WHERE quiz_id = ${sqlEscape.number(quizId)}
       ORDER BY id;
     `);
     
@@ -83,11 +83,11 @@ export const addQuestion = async (questionData: any): Promise<ServiceResponse<{ 
         points
       )
       VALUES (
-        ${questionData.quiz_id},
-        '${questionData.question_text}',
-        '${questionData.question_type}',
-        ${questionData.is_visible !== undefined ? questionData.is_visible : true},
-        ${questionData.points || 1}
+        ${sqlEscape.number(questionData.quiz_id)},
+        ${sqlEscape.string(questionData.question_text)},
+        ${sqlEscape.string(questionData.question_type)},
+        ${sqlEscape.boolean(questionData.is_visible !== undefined ? questionData.is_visible : true)},
+        ${sqlEscape.number(questionData.points || 1)}
       )
       RETURNING id;
     `);
@@ -105,9 +105,9 @@ export const addQuestion = async (questionData: any): Promise<ServiceResponse<{ 
               is_correct
             )
             VALUES (
-              ${questionId},
-              '${answer.answer_text}',
-              ${answer.is_correct || false}
+              ${sqlEscape.number(questionId)},
+              ${sqlEscape.string(answer.answer_text)},
+              ${sqlEscape.boolean(answer.is_correct || false)}
             );
           `);
         }
@@ -146,18 +146,18 @@ export const updateQuestion = async (questionData: any): Promise<ServiceResponse
     // Update the question
     const result = await executeSql(`
       UPDATE questions
-      SET question_text = '${questionData.question_text}',
-          question_type = '${questionData.question_type}',
-          is_visible = ${questionData.is_visible !== undefined ? questionData.is_visible : true},
-          points = ${questionData.points || 1}
-      WHERE id = ${questionData.id};
+      SET question_text = ${sqlEscape.string(questionData.question_text)},
+          question_type = ${sqlEscape.string(questionData.question_type)},
+          is_visible = ${sqlEscape.boolean(questionData.is_visible !== undefined ? questionData.is_visible : true)},
+          points = ${sqlEscape.number(questionData.points || 1)}
+      WHERE id = ${sqlEscape.number(questionData.id)};
     `);
 
     if (result.success) {
       // If answers are provided, delete existing ones and insert new ones
       if (questionData.answers && Array.isArray(questionData.answers)) {
         // Delete existing answers
-        await executeSql(`DELETE FROM answers WHERE question_id = ${questionData.id};`);
+        await executeSql(`DELETE FROM answers WHERE question_id = ${sqlEscape.number(questionData.id)};`);
         
         // Insert new answers
         for (const answer of questionData.answers) {
@@ -168,9 +168,9 @@ export const updateQuestion = async (questionData: any): Promise<ServiceResponse
               is_correct
             )
             VALUES (
-              ${questionData.id},
-              '${answer.answer_text}',
-              ${answer.is_correct || false}
+              ${sqlEscape.number(questionData.id)},
+              ${sqlEscape.string(answer.answer_text)},
+              ${sqlEscape.boolean(answer.is_correct || false)}
             );
           `);
         }
@@ -198,10 +198,10 @@ export const updateQuestion = async (questionData: any): Promise<ServiceResponse
 export const deleteQuestion = async (id: number): Promise<ServiceResponse> => {
   try {
     // Delete associated answers first
-    await executeSql(`DELETE FROM answers WHERE question_id = ${id};`);
+    await executeSql(`DELETE FROM answers WHERE question_id = ${sqlEscape.number(id)};`);
     
     // Then delete the question
-    const result = await executeSql(`DELETE FROM questions WHERE id = ${id};`);
+    const result = await executeSql(`DELETE FROM questions WHERE id = ${sqlEscape.number(id)};`);
 
     if (result.success) {
       return {

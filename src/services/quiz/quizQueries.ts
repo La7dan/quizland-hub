@@ -1,5 +1,5 @@
 
-import { executeSql } from '../apiService';
+import { executeSql, sqlEscape } from '../apiService';
 
 // Basic quiz retrieval queries
 export const fetchAllQuizzes = async () => {
@@ -19,7 +19,7 @@ export const fetchQuizById = async (id: number) => {
            COUNT(qq.id) as question_count
     FROM quizzes q
     LEFT JOIN questions qq ON q.id = qq.quiz_id
-    WHERE q.id = ${id}
+    WHERE q.id = ${sqlEscape.number(id)}
     GROUP BY q.id;
   `);
 };
@@ -43,7 +43,7 @@ export const fetchQuestionsByQuizId = async (quizId: number) => {
            ) as answers
     FROM questions qq
     LEFT JOIN answers qa ON qq.id = qa.question_id
-    WHERE qq.quiz_id = ${quizId}
+    WHERE qq.quiz_id = ${sqlEscape.number(quizId)}
     GROUP BY qq.id
     ORDER BY qq.id;
   `);
@@ -51,13 +51,13 @@ export const fetchQuestionsByQuizId = async (quizId: number) => {
 
 export const fetchQuestionById = async (id: number) => {
   return await executeSql(`
-    SELECT * FROM questions WHERE id = ${id};
+    SELECT * FROM questions WHERE id = ${sqlEscape.number(id)};
   `);
 };
 
 export const fetchAnswersByQuestionId = async (questionId: number) => {
   return await executeSql(`
-    SELECT * FROM answers WHERE question_id = ${questionId} ORDER BY id;
+    SELECT * FROM answers WHERE question_id = ${sqlEscape.number(questionId)} ORDER BY id;
   `);
 };
 
