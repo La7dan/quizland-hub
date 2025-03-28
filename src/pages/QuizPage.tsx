@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
-import { getQuizById, createQuizAttempt } from '@/services/quizService';
+import { getQuizById, saveQuizAttempt } from '@/services/quizService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -148,13 +148,13 @@ const QuizPage = () => {
     setQuizCompleted(true);
     
     try {
-      await createQuizAttempt({
+      await saveQuizAttempt({
         quiz_id: quiz.id,
-        visitor_name: name,
         member_id: memberId,
         score: scoreResult.score,
-        percentage: scoreResult.percentage,
-        result: scoreResult.result
+        total_questions: questions.length,
+        passed: scoreResult.passed,
+        time_taken: 0 // You could add timing functionality if needed
       });
     } catch (error) {
       console.error('Error recording quiz attempt:', error);

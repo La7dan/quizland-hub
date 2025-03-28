@@ -189,7 +189,8 @@ export const deleteQuiz = async (id: number) => {
 // Function to get quiz details by ID
 export const getQuizById = async (id: number) => {
   try {
-    const result = await executeSql(`
+    // Get quiz data
+    const quizResult = await executeSql(`
       SELECT q.*,
              COUNT(qq.id) as question_count
       FROM quizzes q
@@ -198,10 +199,28 @@ export const getQuizById = async (id: number) => {
       GROUP BY q.id;
     `);
     
-    if (result.success && result.rows && result.rows.length > 0) {
+    if (quizResult.success && quizResult.rows && quizResult.rows.length > 0) {
+      // Get questions for this quiz
+      const questionsResult = await executeSql(`
+        SELECT qq.*, 
+               json_agg(
+                 json_build_object(
+                   'id', qa.id,
+                   'answer_text', qa.answer_text,
+                   'is_correct', qa.is_correct
+                 )
+               ) as answers
+        FROM quiz_questions qq
+        LEFT JOIN quiz_answers qa ON qq.id = qa.question_id
+        WHERE qq.quiz_id = ${id}
+        GROUP BY qq.id
+        ORDER BY qq.question_order;
+      `);
+      
       return {
         success: true,
-        quiz: result.rows[0]
+        quiz: quizResult.rows[0],
+        questions: questionsResult.success ? questionsResult.rows || [] : []
       };
     } else {
       return {
