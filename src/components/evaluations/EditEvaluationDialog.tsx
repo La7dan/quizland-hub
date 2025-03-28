@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,11 +11,12 @@ import { Evaluation } from '@/services/evaluations/types';
 import { updateEvaluationResult } from '@/services/evaluations/evaluationService';
 import { FileUp } from 'lucide-react';
 import { ENV } from '@/config/env';
+import { EvaluationDisplayItem } from './types';
 
 interface EditEvaluationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  evaluation: Evaluation | null;
+  evaluation: EvaluationDisplayItem | null;
 }
 
 const EditEvaluationDialog: React.FC<EditEvaluationDialogProps> = ({
