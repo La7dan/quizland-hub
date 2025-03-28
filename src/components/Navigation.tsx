@@ -63,13 +63,6 @@ export default function Navigation() {
                 >
                   Home
                 </Link>
-                <Link 
-                  to="/quizzes" 
-                  className="text-sm font-medium transition-colors hover:text-primary px-2 py-1.5"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Quizzes
-                </Link>
                 
                 {isAuthenticated ? (
                   <>
@@ -124,12 +117,6 @@ export default function Navigation() {
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Home
-            </Link>
-            <Link 
-              to="/quizzes" 
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Quizzes
             </Link>
             
             {isAuthenticated ? (
