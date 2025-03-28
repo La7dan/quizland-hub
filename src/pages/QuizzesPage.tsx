@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
-import QuizzesList from '@/components/QuizzesList';
+import { QuizzesList } from '@/components/quiz';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { ArrowDown, ArrowUp, Moon, Sun } from 'lucide-react';

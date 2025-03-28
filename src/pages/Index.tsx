@@ -1,10 +1,10 @@
 
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import Navigation from '@/components/Navigation';
-import QuizzesList from '@/components/QuizzesList';
+import { QuizzesList } from '@/components/quiz';
 import { Toggle } from '@/components/ui/toggle';
 import { useEffect } from 'react';
 import { cleanDummyData } from '@/services/dbService';

@@ -1,0 +1,29 @@
+
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+
+export function EmptyQuizState() {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = isAuthenticated && user && (user.role === 'super_admin' || user.role === 'admin');
+  
+  return (
+    <div className="text-center py-12 bg-muted/20 rounded-lg">
+      <h2 className="text-xl font-semibold mb-2">No Quizzes Available</h2>
+      <p className="text-muted-foreground mb-6">
+        {isAdmin
+          ? "Start by creating your first quiz." 
+          : "Check back later for new quizzes."}
+      </p>
+      
+      {isAdmin && (
+        <Button onClick={() => navigate('/admin')} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Create Quiz
+        </Button>
+      )}
+    </div>
+  );
+}
