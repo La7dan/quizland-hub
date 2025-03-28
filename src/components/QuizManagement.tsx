@@ -14,9 +14,10 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, EyeOff, Plus, Trash, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, Plus, Trash, RefreshCw, ListChecks } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import QuizFormDialog from './QuizFormDialog';
+import QuestionManagement from './QuestionManagement';
 
 interface QuizManagementProps {
   onRefresh?: () => void;
@@ -26,6 +27,8 @@ const QuizManagement = ({ onRefresh }: QuizManagementProps) => {
   const [isQuizFormOpen, setIsQuizFormOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
   const [selectedQuizzes, setSelectedQuizzes] = useState<number[]>([]);
+  const [currentView, setCurrentView] = useState<'quizzes' | 'questions'>('quizzes');
+  const [activeQuizId, setActiveQuizId] = useState<number | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -154,6 +157,25 @@ const QuizManagement = ({ onRefresh }: QuizManagementProps) => {
     return level ? `${level.code} - ${level.name}` : 'Unknown';
   };
 
+  const handleManageQuestions = (quizId: number) => {
+    setActiveQuizId(quizId);
+    setCurrentView('questions');
+  };
+
+  if (currentView === 'questions' && activeQuizId !== null) {
+    return (
+      <QuestionManagement 
+        quizId={activeQuizId} 
+        onBack={() => {
+          setCurrentView('quizzes');
+          setActiveQuizId(null);
+          refetchQuizzes();
+        }}
+        onRefresh={handleRefresh}
+      />
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -248,6 +270,15 @@ const QuizManagement = ({ onRefresh }: QuizManagementProps) => {
                 <TableCell>{quiz.question_count || 0}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleManageQuestions(quiz.id)}
+                      className="gap-1"
+                    >
+                      <ListChecks className="h-3 w-3" />
+                      Questions
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
