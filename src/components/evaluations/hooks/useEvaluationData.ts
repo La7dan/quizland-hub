@@ -12,10 +12,11 @@ export const useEvaluationData = (refreshTrigger?: number) => {
         SELECT e.*, 
                m.name as member_name, 
                m.member_id as member_code,
-               m.level as member_level,
+               l.name as member_level,
                u.username as coach_name
         FROM evaluations e
         JOIN members m ON e.member_id = m.id
+        LEFT JOIN quiz_levels l ON m.level_id = l.id
         LEFT JOIN users u ON e.coach_id = u.id
         ORDER BY e.nominated_at DESC
       `);
@@ -38,10 +39,11 @@ export const useFilterOptions = () => {
       `);
       
       const levelsResult = await executeSql(`
-        SELECT DISTINCT m.level 
+        SELECT DISTINCT l.name as level
         FROM members m 
-        JOIN evaluations e ON m.id = e.member_id 
-        ORDER BY m.level
+        JOIN evaluations e ON m.id = e.member_id
+        JOIN quiz_levels l ON m.level_id = l.id
+        ORDER BY l.name
       `);
       
       const statusesResult = await executeSql(`
