@@ -11,16 +11,24 @@ export interface FilterOptions {
   coach?: string;
 }
 
-export const useEvaluationFilters = (evaluations: EvaluationDisplayItem[] | undefined) => {
+export const useEvaluationFilters = (evaluations: EvaluationDisplayItem[] | undefined, refreshTrigger?: number) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('nominated_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [filters, setFilters] = useState<FilterOptions>({});
 
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  // Apply search, filtering and sorting
   const filteredEvaluations = useMemo(() => {
     if (!evaluations) return [];
-    
-    console.log('Processing evaluations data:', evaluations.length, 'records');
     
     return evaluations
       .filter((evaluation) => {
@@ -29,12 +37,15 @@ export const useEvaluationFilters = (evaluations: EvaluationDisplayItem[] | unde
         const matchesSearch = !searchTerm || 
           (evaluation.member_name && evaluation.member_name.toLowerCase().includes(searchLower)) ||
           (evaluation.member_code && evaluation.member_code.toLowerCase().includes(searchLower)) ||
-          (evaluation.coach_name && evaluation.coach_name?.toLowerCase().includes(searchLower));
+          (evaluation.coach_name && evaluation.coach_name && evaluation.coach_name.toLowerCase().includes(searchLower));
         
         // Filter functionality
         const matchesStatus = !filters.status || evaluation.status === filters.status;
         const matchesLevel = !filters.level || evaluation.member_level === filters.level;
-        const matchesCoach = !filters.coach || evaluation.coach_id?.toString() === filters.coach;
+        const matchesCoach = !filters.coach || 
+          (evaluation.coach_id !== undefined && 
+           evaluation.coach_id !== null && 
+           evaluation.coach_id.toString() === filters.coach);
         
         return matchesSearch && matchesStatus && matchesLevel && matchesCoach;
       })
@@ -64,19 +75,6 @@ export const useEvaluationFilters = (evaluations: EvaluationDisplayItem[] | unde
       });
   }, [evaluations, searchTerm, sortField, sortOrder, filters]);
 
-  const toggleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
-    }
-  };
-
-  const clearFilters = () => {
-    setFilters({});
-  };
-
   return {
     searchTerm,
     setSearchTerm,
@@ -84,8 +82,7 @@ export const useEvaluationFilters = (evaluations: EvaluationDisplayItem[] | unde
     sortOrder,
     filters,
     setFilters,
-    filteredEvaluations,
     toggleSort,
-    clearFilters
+    filteredEvaluations
   };
 };
