@@ -128,15 +128,19 @@ router.post('/import', requireAuth, async (req, res) => {
     let errorCount = 0;
     const errors = [];
     
+    console.log('Server: Processing import for', members.length, 'members');
+    
     for (const member of members) {
       try {
         if (!member.member_id || !member.name) {
           throw new Error(`Missing required fields for member: ${JSON.stringify(member)}`);
         }
         
-        // Check if level exists for level_code
-        let levelId = null;
-        if (member.level_code) {
+        // Process level_id - if provided directly, use it
+        let levelId = member.level_id;
+        
+        // If level_id is not provided but level_code is, look up the level
+        if (!levelId && member.level_code) {
           const levelResult = await client.query(
             'SELECT id FROM quiz_levels WHERE code = $1',
             [member.level_code]
@@ -144,15 +148,18 @@ router.post('/import', requireAuth, async (req, res) => {
           
           if (levelResult.rows.length > 0) {
             levelId = levelResult.rows[0].id;
+            console.log(`Found level ID ${levelId} for code ${member.level_code}`);
+          } else {
+            console.log(`No level found for code ${member.level_code}`);
           }
         }
         
         // Check if coach exists
-        let coachId = null;
-        if (member.coach_username) {
+        let coachId = member.coach_id;
+        if (!coachId && member.coach_name) {
           const coachResult = await client.query(
             'SELECT id FROM users WHERE username = $1 AND role IN (\'coach\', \'admin\')',
-            [member.coach_username]
+            [member.coach_name]
           );
           
           if (coachResult.rows.length > 0) {
@@ -160,15 +167,27 @@ router.post('/import', requireAuth, async (req, res) => {
           }
         }
         
+        // Ensure classes_count is a number
+        const classesCount = typeof member.classes_count === 'number' ? member.classes_count : 0;
+        
+        console.log('Inserting member:', {
+          member_id: member.member_id,
+          name: member.name,
+          level_id: levelId,
+          classes_count: classesCount,
+          coach_id: coachId
+        });
+        
         // Insert the member
         await client.query(
           'INSERT INTO members (member_id, name, level_id, classes_count, coach_id) VALUES ($1, $2, $3, $4, $5)',
-          [member.member_id, member.name, levelId, member.classes_count || 0, coachId]
+          [member.member_id, member.name, levelId, classesCount, coachId]
         );
         
         successCount++;
       } catch (error) {
         errorCount++;
+        console.error('Error importing member:', error);
         errors.push(`${member.name || 'Unknown member'}: ${error.message}`);
       }
     }
@@ -176,6 +195,7 @@ router.post('/import', requireAuth, async (req, res) => {
     // Commit or rollback based on success
     if (successCount > 0) {
       await client.query('COMMIT');
+      console.log(`Import successful: ${successCount} members imported, ${errorCount} errors`);
     } else {
       await client.query('ROLLBACK');
       throw new Error('No members were imported successfully');

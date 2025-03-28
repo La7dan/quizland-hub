@@ -1,7 +1,7 @@
 
 import * as XLSX from 'xlsx';
 import { Member } from '@/services/members/memberService';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 // CSV import functionality
 export const parseCSVData = (csvData: string, levelsData: any, coaches: any[]): { members: Member[], error?: string } => {
@@ -38,21 +38,40 @@ export const parseCSVData = (csvData: string, levelsData: any, coaches: any[]): 
         name: values[nameIndex]
       };
       
+      // Process level code to get level_id
       if (levelCodeIndex !== -1 && values[levelCodeIndex]) {
-        const level = levelsData?.levels?.find((l: any) => l.code === values[levelCodeIndex]);
+        const levelCode = values[levelCodeIndex].trim();
+        console.log('Looking for level code:', levelCode);
+        console.log('Available levels:', levelsData?.levels);
+        
+        const level = levelsData?.levels?.find((l: any) => 
+          l.code.toLowerCase() === levelCode.toLowerCase()
+        );
+        
         if (level) {
           member.level_id = level.id;
+          member.level_code = level.code; // Store for display purposes
+          console.log('Found level:', level);
+        } else {
+          console.log('Level not found for code:', levelCode);
         }
       }
       
+      // Process classes count
       if (classesCountIndex !== -1 && values[classesCountIndex]) {
-        member.classes_count = parseInt(values[classesCountIndex]) || 0;
+        const classesCount = parseInt(values[classesCountIndex]);
+        if (!isNaN(classesCount)) {
+          member.classes_count = classesCount;
+        }
       }
       
+      // Process coach
       if (coachIndex !== -1 && values[coachIndex]) {
-        const coach = coaches.find(c => c.username === values[coachIndex]);
+        const coachName = values[coachIndex].trim();
+        const coach = coaches.find(c => c.username.toLowerCase() === coachName.toLowerCase());
         if (coach) {
           member.coach_id = coach.id;
+          member.coach_name = coach.username; // Store for display purposes
         }
       }
       
@@ -109,22 +128,38 @@ export const parseExcelFile = (file: File, levelsData: any, coaches: any[]): Pro
           
           // Match level code if provided
           if (rowData.level_code) {
-            const level = levelsData?.levels?.find((l: any) => l.code === rowData.level_code);
+            const levelCode = String(rowData.level_code).trim();
+            console.log('Excel: Looking for level code:', levelCode);
+            console.log('Excel: Available levels:', levelsData?.levels);
+            
+            const level = levelsData?.levels?.find((l: any) => 
+              l.code.toLowerCase() === levelCode.toLowerCase()
+            );
+            
             if (level) {
               member.level_id = level.id;
+              member.level_code = level.code; // Store for display
+              console.log('Excel: Found level:', level);
+            } else {
+              console.log('Excel: Level not found for code:', levelCode);
             }
           }
           
-          // Set classes count if provided
+          // Set classes count if provided - ensure it's a number
           if (rowData.classes_count !== undefined) {
-            member.classes_count = parseInt(String(rowData.classes_count)) || 0;
+            const classesCount = Number(rowData.classes_count);
+            if (!isNaN(classesCount)) {
+              member.classes_count = classesCount;
+            }
           }
           
           // Match coach if provided
           if (rowData.coach) {
-            const coach = coaches.find(c => c.username === rowData.coach);
+            const coachName = String(rowData.coach).trim();
+            const coach = coaches.find(c => c.username.toLowerCase() === coachName.toLowerCase());
             if (coach) {
               member.coach_id = coach.id;
+              member.coach_name = coach.username; // Store for display
             }
           }
           

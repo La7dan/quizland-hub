@@ -1,7 +1,7 @@
-
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { parseExcelFile, generateSampleExcel } from './importUtils';
 import { Member } from '@/services/members/memberService';
 import { useToast } from '@/hooks/use-toast';
@@ -21,13 +21,29 @@ export const ExcelImport = ({
 }: ExcelImportProps) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [fileName, setFileName] = useState<string | null>(null);
 
   const handleExcelUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
+    
+    setFileName(file.name);
+    setUploadProgress(10); // Start progress
+    
     try {
+      // Simulate progress during processing
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const nextProgress = prev + 10;
+          return nextProgress < 90 ? nextProgress : prev; // Cap at 90% until complete
+        });
+      }, 200);
+      
       const { members, error } = await parseExcelFile(file, levelsData, coaches);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100); // Complete progress
       
       if (error) {
         toast({
@@ -35,11 +51,23 @@ export const ExcelImport = ({
           description: error,
           variant: 'destructive',
         });
+        // Reset after error
+        setTimeout(() => {
+          setUploadProgress(0);
+          setFileName(null);
+        }, 2000);
         return;
       }
       
       onImport(members);
+      // Keep the 100% for a moment
+      setTimeout(() => {
+        setUploadProgress(0);
+        setFileName(null);
+      }, 2000);
     } catch (error) {
+      setUploadProgress(0);
+      setFileName(null);
       toast({
         title: 'Error',
         description: `Failed to process Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -64,6 +92,16 @@ export const ExcelImport = ({
           Sample Excel
         </Button>
       </div>
+      
+      {uploadProgress > 0 && (
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>{fileName}</span>
+            <span>{uploadProgress}%</span>
+          </div>
+          <Progress value={uploadProgress} className="h-2" />
+        </div>
+      )}
       
       <div className="border-2 border-dashed border-primary/30 rounded-lg p-10 text-center">
         <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
