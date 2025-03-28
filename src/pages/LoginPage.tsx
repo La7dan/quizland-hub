@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Shield, LogIn, AlertCircle } from 'lucide-react';
+import { Shield, LogIn, AlertCircle, Info } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Navigation from '@/components/Navigation';
 
@@ -43,7 +43,11 @@ const LoginPage = () => {
     setLoginError('');
     setIsLoggingIn(true);
     try {
+      console.log('Attempting login for user:', username);
       const success = await login(username, password);
+      
+      console.log('Login result:', success ? 'success' : 'failed');
+      
       if (success) {
         navigate(from, { replace: true });
       } else {
@@ -51,8 +55,8 @@ const LoginPage = () => {
         setLoginError('Login failed. Please check your credentials.');
       }
     } catch (error) {
-      setLoginError('An error occurred during login');
       console.error('Login error:', error);
+      setLoginError('An error occurred during login');
     } finally {
       setIsLoggingIn(false);
     }
@@ -80,6 +84,16 @@ const LoginPage = () => {
                   <AlertDescription>{loginError}</AlertDescription>
                 </Alert>
               )}
+              
+              {/* Demo credentials info */}
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  Demo users: <strong>superadmin</strong>, <strong>admin</strong>, or <strong>coach</strong> 
+                  with password: <strong>password123</strong>
+                </AlertDescription>
+              </Alert>
+              
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
                 <Input 

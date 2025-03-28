@@ -44,6 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
+      console.log('Login attempt for user:', username);
       
       // First check if user exists and get user data including password
       // Escape single quotes to prevent SQL injection
@@ -56,12 +57,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         LIMIT 1
       `;
       
-      console.log('Executing login query:', query);
+      console.log('Executing login query');
       const result = await executeSql(query);
-      console.log('Login query result:', result);
+      console.log('Login query result received');
       
-      // Check if user exists
-      if (!result.success || !result.rows || result.rows.length === 0) {
+      // Check if user exists and if the query was successful
+      if (!result.success) {
+        console.error('SQL execution failed:', result.message);
+        toast({
+          title: "Login Failed",
+          description: "Database error occurred",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      if (!result.rows || result.rows.length === 0) {
+        console.log('No user found with username:', username);
         toast({
           title: "Login Failed",
           description: "User not found",
@@ -71,9 +83,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       const userData = result.rows[0];
+      console.log('User found, checking password');
+      
+      // Debug: Log password comparison (for development only, remove in production)
+      console.log('Input password:', password);
+      console.log('Stored password type:', typeof userData.password);
       
       // Verify the password
       if (userData.password !== password) {
+        console.log('Password mismatch');
         toast({
           title: "Login Failed",
           description: "Invalid password",
@@ -81,6 +99,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         return false;
       }
+      
+      console.log('Password verified, login successful');
       
       // Create a clean user object without the password
       const cleanUserData = {
