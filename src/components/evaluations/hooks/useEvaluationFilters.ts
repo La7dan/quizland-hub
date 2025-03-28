@@ -9,6 +9,7 @@ export interface FilterOptions {
   status?: string;
   level?: string;
   coach?: string;
+  result?: string; // Adding result filter
 }
 
 export const useEvaluationFilters = (evaluations: EvaluationDisplayItem[] | undefined, refreshTrigger?: number) => {
@@ -52,7 +53,10 @@ export const useEvaluationFilters = (evaluations: EvaluationDisplayItem[] | unde
            evaluation.coach_id !== null && 
            String(evaluation.coach_id) === filters.coach);
         
-        return matchesSearch && matchesStatus && matchesLevel && matchesCoach;
+        // Result filter (passed or not_ready)
+        const matchesResult = !filters.result || evaluation.evaluation_result === filters.result;
+        
+        return matchesSearch && matchesStatus && matchesLevel && matchesCoach && matchesResult;
       })
       .sort((a, b) => {
         // Apply sorting

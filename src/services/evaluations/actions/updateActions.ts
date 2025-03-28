@@ -15,10 +15,13 @@ export const updateEvaluationResult = async (
       };
     }
 
+    // When marking as passed, set status to approved (completed)
+    const status = result === 'passed' ? 'approved' : 'approved';
+
     const query = `
       UPDATE evaluations
       SET 
-        status = 'approved',
+        status = ${sqlEscape.string(status)},
         evaluation_result = ${sqlEscape.string(result)},
         evaluation_pdf = ${pdfFileName ? sqlEscape.string(pdfFileName) : 'evaluation_pdf'},
         updated_at = NOW()
@@ -57,6 +60,7 @@ export const bulkMarkEvaluationsAsPassed = async (
       };
     }
 
+    // When bulk marking as passed, also set status to approved (completed)
     const query = `
       UPDATE evaluations
       SET 

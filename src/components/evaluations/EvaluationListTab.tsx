@@ -26,6 +26,14 @@ import { useEvaluationSelection } from './hooks/useEvaluationSelection';
 import EvaluationTableHeader from './EvaluationTableHeader';
 import EvaluationTableRow from './EvaluationTableRow';
 import EvaluationFilters from './EvaluationFilters';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { Filter } from 'lucide-react';
 
 interface EvaluationListTabProps {
   refreshTrigger?: number;
@@ -153,18 +161,45 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
 
   return (
     <div>
-      <EvaluationFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filters={filters}
-        setFilters={setFilters}
-        filterOptions={filterOptions}
-        onClearFilters={clearFilters}
-        onExportCSV={handleExportCSV}
-        exportDisabled={filteredEvaluations.length === 0}
-        selectedIds={selectedIds}
-        onDeleteSelected={isAdmin ? handleBulkDelete : undefined}
-      />
+      <div className="mb-6 flex flex-col md:flex-row gap-4 justify-between">
+        <EvaluationFilters
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          filters={filters}
+          setFilters={setFilters}
+          filterOptions={filterOptions}
+          onClearFilters={clearFilters}
+          onExportCSV={handleExportCSV}
+          exportDisabled={filteredEvaluations.length === 0}
+          selectedIds={selectedIds}
+          onDeleteSelected={isAdmin ? handleBulkDelete : undefined}
+        />
+
+        <div className="flex flex-wrap gap-2">
+          {/* Result filter dropdown */}
+          <Select
+            value={filters.result || "all"}
+            onValueChange={(value) => {
+              setFilters({
+                ...filters,
+                result: value === "all" ? undefined : value
+              });
+            }}
+          >
+            <SelectTrigger className="w-[150px]">
+              <div className="flex items-center gap-1">
+                <Filter className="h-4 w-4" />
+                <span>{filters.result ? filters.result : "Result"}</span>
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Results</SelectItem>
+              <SelectItem value="passed">Passed</SelectItem>
+              <SelectItem value="not_ready">Not Ready</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       {isAdmin && selectedIds.length > 0 && (
         <div className="flex justify-end mb-4">
