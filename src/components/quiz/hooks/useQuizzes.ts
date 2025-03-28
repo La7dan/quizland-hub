@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { getQuizzes, getQuizLevels } from '@/services/quiz';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { checkConnection } from '@/services/apiService';
 
 export function useQuizzes({ 
   sortBy = "default", 
@@ -29,6 +30,13 @@ export function useQuizzes({
 
   const fetchLevelCodes = async () => {
     try {
+      // Check connection first
+      const connectionResult = await checkConnection();
+      if (!connectionResult.success) {
+        setConnectionError(true);
+        throw new Error("Database connection failed");
+      }
+      
       const response = await getQuizLevels();
       if (response && response.success) {
         const levelsMap: {[key: number]: string} = {};
@@ -53,6 +61,14 @@ export function useQuizzes({
       setError(null);
       setConnectionError(false);
       setLoading(true);
+      
+      // Check connection first
+      const connectionResult = await checkConnection();
+      if (!connectionResult.success) {
+        setConnectionError(true);
+        throw new Error("Database connection failed");
+      }
+      
       const response = await getQuizzes();
       processQuizzes(response);
     } catch (error) {
@@ -119,9 +135,9 @@ export function useQuizzes({
       let comparison = 0;
       
       if (sortByField === "level") {
-        comparison = a.level_id - b.level_id;
+        comparison = (a.level_id || 0) - (b.level_id || 0);
       } else if (sortByField === "pass") {
-        comparison = a.passing_percentage - b.passing_percentage;
+        comparison = (a.passing_percentage || 0) - (b.passing_percentage || 0);
       }
       
       return order === "asc" ? comparison : -comparison;

@@ -1,6 +1,6 @@
 
 import { useNavigate } from 'react-router-dom';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, ServerOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import Navigation from '@/components/Navigation';
@@ -9,21 +9,32 @@ import { Toggle } from '@/components/ui/toggle';
 import { useQuery } from '@tanstack/react-query';
 import { getQuizzes } from '@/services/quiz';
 import { toast } from 'sonner';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { checkConnection } from '@/services/apiService';
 
 export default function Index() {
   const { isAuthenticated } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   
+  // Check database connection first
+  const { data: connectionData, error: connectionError, refetch: refetchConnection } = useQuery({
+    queryKey: ['database-connection'],
+    queryFn: checkConnection,
+    staleTime: 1000 * 60, // 1 minute
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+  
   // Fetch quizzes from database when app loads with improved error handling
   const { data: quizzesData, isLoading, error, refetch } = useQuery({
     queryKey: ['quizzes'],
     queryFn: getQuizzes,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 3, // Retry failed requests up to 3 times
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    retry: 1,
+    enabled: connectionData?.success === true,
+    refetchOnWindowFocus: false,
     meta: {
       onError: (error) => {
         console.error('Failed to fetch quizzes:', error);
@@ -35,7 +46,18 @@ export default function Index() {
     }
   });
   
-  // Removed the useEffect that was calling cleanDummyData
+  const handleRetryConnection = () => {
+    toast('Reconnecting...', {
+      description: 'Attempting to connect to the database',
+    });
+    refetchConnection().then(() => {
+      if (connectionData?.success) {
+        refetch();
+      }
+    });
+  };
+  
+  const hasConnectionIssue = connectionError || !connectionData?.success;
   
   return (
     <div>
@@ -60,6 +82,28 @@ export default function Index() {
               {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Toggle>
           </div>
+          
+          {hasConnectionIssue && (
+            <Alert variant="destructive" className="mb-8">
+              <ServerOff className="h-5 w-5" />
+              <AlertTitle>Connection Error</AlertTitle>
+              <AlertDescription className="mt-2">
+                <p>Unable to connect to the database server. This may be due to:</p>
+                <ul className="list-disc pl-5 mt-2 mb-3">
+                  <li>The server is currently down or restarting</li>
+                  <li>Network connectivity issues</li>
+                  <li>Firewall restrictions</li>
+                </ul>
+                <Button 
+                  variant="outline" 
+                  onClick={handleRetryConnection}
+                  className="mt-2"
+                >
+                  Retry Connection
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
           
           <QuizzesList 
             isLoading={isLoading} 
