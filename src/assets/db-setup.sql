@@ -129,56 +129,5 @@ SELECT 'admin', 'admin123', 'admin@example.com', 'super_admin'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE role = 'super_admin')
 ON CONFLICT DO NOTHING;
 
--- Insert sample members
-INSERT INTO members (member_id, name, level_id, classes_count, coach_id)
-VALUES 
-  ('SH123456', 'John Smith', (SELECT id FROM quiz_levels WHERE code = 'B1'), 5, NULL),
-  ('SH789012', 'Jane Doe', (SELECT id FROM quiz_levels WHERE code = 'I2'), 12, NULL),
-  ('SH345678', 'Mike Johnson', (SELECT id FROM quiz_levels WHERE code = 'A1'), 20, NULL),
-  ('SH901234', 'Sarah Williams', (SELECT id FROM quiz_levels WHERE code = 'NC'), 2, NULL),
-  ('SH567890', 'David Brown', (SELECT id FROM quiz_levels WHERE code = 'B3'), 8, NULL)
-ON CONFLICT (member_id) DO NOTHING;
-
--- Insert sample quiz
-INSERT INTO quizzes (title, description, level_id, is_visible, passing_percentage, created_by)
-VALUES ('Basic Grammar Quiz', 'Test your knowledge of basic grammar rules', 
-        (SELECT id FROM quiz_levels WHERE code = 'B1'), TRUE, 70, 
-        (SELECT id FROM users WHERE role = 'super_admin' LIMIT 1))
-ON CONFLICT DO NOTHING;
-
--- Insert sample questions
-INSERT INTO questions (question_text, quiz_id, question_type, is_visible, points)
-VALUES ('What is the past tense of "go"?', 
-        (SELECT id FROM quizzes WHERE title = 'Basic Grammar Quiz' LIMIT 1), 
-        'multiple_choice', TRUE, 2)
-ON CONFLICT DO NOTHING;
-
--- Insert sample answers
-INSERT INTO answers (question_id, answer_text, is_correct)
-VALUES 
-  ((SELECT id FROM questions WHERE question_text = 'What is the past tense of "go"?' LIMIT 1), 'goed', FALSE),
-  ((SELECT id FROM questions WHERE question_text = 'What is the past tense of "go"?' LIMIT 1), 'went', TRUE),
-  ((SELECT id FROM questions WHERE question_text = 'What is the past tense of "go"?' LIMIT 1), 'gone', FALSE),
-  ((SELECT id FROM questions WHERE question_text = 'What is the past tense of "go"?' LIMIT 1), 'going', FALSE)
-ON CONFLICT DO NOTHING;
-
--- Insert sample quiz attempt
-INSERT INTO quiz_attempts (quiz_id, visitor_name, member_id, score, percentage, result)
-VALUES (
-  (SELECT id FROM quizzes WHERE title = 'Basic Grammar Quiz' LIMIT 1),
-  'John Smith',
-  'SH123456',
-  8,
-  80.00,
-  'passed'
-)
-ON CONFLICT DO NOTHING;
-
--- Insert sample evaluations
-INSERT INTO evaluations (member_id, status, coach_id, evaluation_date)
-VALUES 
-  ((SELECT id FROM members WHERE member_id = 'SH123456'), 'pending', 
-   (SELECT id FROM users WHERE role = 'coach' LIMIT 1), NOW() - INTERVAL '3 days'),
-  ((SELECT id FROM members WHERE member_id = 'SH789012'), 'pending', 
-   (SELECT id FROM users WHERE role = 'coach' LIMIT 1), NOW() - INTERVAL '5 days')
-ON CONFLICT DO NOTHING;
+-- Note: All dummy data for members, quizzes, questions, answers, and attempts have been removed
+-- Only the essential schema and default admin user are kept
