@@ -31,16 +31,16 @@ const LoginForm: React.FC<LoginFormProps> = ({
   onSubmit
 }) => {
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-5">
       {loginError && lockoutTime === null && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="animate-in fade-in-50">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{loginError}</AlertDescription>
         </Alert>
       )}
       
       {lockoutTime !== null && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="animate-in fade-in-50">
           <Lock className="h-4 w-4" />
           <AlertDescription>
             Account is temporarily locked. Please try again in {lockoutTime} seconds.
@@ -49,34 +49,40 @@ const LoginForm: React.FC<LoginFormProps> = ({
       )}
       
       <div className="space-y-2">
-        <Label htmlFor="username" className="text-sm sm:text-base">Username</Label>
+        <Label htmlFor="username" className="text-sm font-medium">
+          Username
+        </Label>
         <Input
           id="username"
           type="text"
           placeholder="Enter your username"
-          className="h-9 sm:h-10 text-sm sm:text-base"
+          className="h-10 text-base"
           {...register("username", { required: true })}
           disabled={lockoutTime !== null}
+          autoComplete="username"
         />
         {errors.username && (
-          <p className="text-xs sm:text-sm text-red-500">Username is required</p>
+          <p className="text-sm text-red-500 mt-1">Username is required</p>
         )}
       </div>
       
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor="password" className="text-sm sm:text-base">Password</Label>
+          <Label htmlFor="password" className="text-sm font-medium">
+            Password
+          </Label>
         </div>
         <Input
           id="password"
           type="password"
           placeholder="Enter your password"
-          className="h-9 sm:h-10 text-sm sm:text-base"
+          className="h-10 text-base"
           {...register("password", { required: true })}
           disabled={lockoutTime !== null}
+          autoComplete="current-password"
         />
         {errors.password && (
-          <p className="text-xs sm:text-sm text-red-500">Password is required</p>
+          <p className="text-sm text-red-500 mt-1">Password is required</p>
         )}
       </div>
       
@@ -99,19 +105,20 @@ const LoginForm: React.FC<LoginFormProps> = ({
       
       <Button 
         type="submit" 
-        className="w-full mt-2" 
+        className="w-full py-2 h-11"
+        size="lg"
         disabled={isLoggingIn || lockoutTime !== null}
       >
         {isLoggingIn ? (
-          <>
+          <div className="flex items-center justify-center">
             <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-            Logging in...
-          </>
+            <span>Signing in...</span>
+          </div>
         ) : (
-          <>
-            <LogIn className="mr-2 h-4 w-4" />
-            Login
-          </>
+          <div className="flex items-center justify-center">
+            <LogIn className="mr-2 h-5 w-5" />
+            <span>Sign in</span>
+          </div>
         )}
       </Button>
     </form>

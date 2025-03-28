@@ -66,10 +66,6 @@ const LoginPage = () => {
             setRememberMe={setRememberMe}
             onSubmit={handleSubmit(onSubmit)}
           />
-          
-          <div className="mt-8 text-center text-sm text-muted-foreground">
-            <p>Default admin account: username "admin" password "admin123"</p>
-          </div>
         </div>
       </div>
     </div>
