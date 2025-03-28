@@ -1,5 +1,5 @@
 // API base URL - always pointing to the database server IP
-const API_BASE_URL = 'https://209.74.89.41:8080/api';
+const API_BASE_URL = 'http://209.74.89.41:8080/api';
 
 export interface TableColumn {
   name: string;

@@ -1,4 +1,3 @@
-
 import { executeSql } from './dbService';
 
 // Function to get all quizzes
@@ -9,7 +8,7 @@ export const getQuizzes = async () => {
       SELECT q.*, 
              COUNT(qq.id) as question_count
       FROM quizzes q
-      LEFT JOIN quiz_questions qq ON q.id = qq.quiz_id
+      LEFT JOIN questions qq ON q.id = qq.quiz_id
       GROUP BY q.id
       ORDER BY q.id;
     `);
@@ -157,7 +156,7 @@ export const deleteQuiz = async (id: number) => {
   try {
     // Delete associated questions first
     await executeSql(`
-      DELETE FROM quiz_questions
+      DELETE FROM questions
       WHERE quiz_id = ${id};
     `);
     
@@ -194,7 +193,7 @@ export const getQuizById = async (id: number) => {
       SELECT q.*,
              COUNT(qq.id) as question_count
       FROM quizzes q
-      LEFT JOIN quiz_questions qq ON q.id = qq.quiz_id
+      LEFT JOIN questions qq ON q.id = qq.quiz_id
       WHERE q.id = ${id}
       GROUP BY q.id;
     `);
@@ -210,11 +209,11 @@ export const getQuizById = async (id: number) => {
                    'is_correct', qa.is_correct
                  )
                ) as answers
-        FROM quiz_questions qq
-        LEFT JOIN quiz_answers qa ON qq.id = qa.question_id
+        FROM questions qq
+        LEFT JOIN answers qa ON qq.id = qa.question_id
         WHERE qq.quiz_id = ${id}
         GROUP BY qq.id
-        ORDER BY qq.question_order;
+        ORDER BY qq.id;
       `);
       
       return {
@@ -241,9 +240,9 @@ export const getQuizById = async (id: number) => {
 export const getQuizQuestions = async (quizId: number) => {
   try {
     const result = await executeSql(`
-      SELECT * FROM quiz_questions 
+      SELECT * FROM questions 
       WHERE quiz_id = ${quizId}
-      ORDER BY question_order;
+      ORDER BY id;
     `);
     
     if (result.success) {
@@ -281,20 +280,18 @@ export const saveQuizAttempt = async (attemptData: any) => {
       INSERT INTO quiz_attempts (
         quiz_id,
         member_id,
+        visitor_name,
         score,
-        total_questions,
-        passed,
-        time_taken,
-        completed_at
+        percentage,
+        result
       )
       VALUES (
         ${attemptData.quiz_id},
         '${attemptData.member_id}',
+        '${attemptData.visitor_name || "Unknown"}',
         ${attemptData.score || 0},
-        ${attemptData.total_questions || 0},
-        ${attemptData.passed !== undefined ? attemptData.passed : false},
-        ${attemptData.time_taken || 0},
-        NOW()
+        ${attemptData.percentage || 0},
+        '${attemptData.passed ? "passed" : "not_ready"}'
       )
       RETURNING id;
     `);
@@ -329,7 +326,7 @@ export const getQuizAttempts = async () => {
       FROM quiz_attempts a
       JOIN quizzes q ON a.quiz_id = q.id
       JOIN members m ON a.member_id = m.member_id
-      ORDER BY a.completed_at DESC;
+      ORDER BY a.attempt_date DESC;
     `);
     
     if (result.success) {
