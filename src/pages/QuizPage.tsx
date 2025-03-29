@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
-import { getQuizById, saveQuizAttempt } from '@/services/quiz';
+import { getQuizById, saveQuizAttempt, getQuizQuestions } from '@/services/quiz';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -42,20 +42,32 @@ const QuizPage = () => {
     setConnectionError(false);
     setError(null);
     try {
-      const response = await getQuizById(quizId);
+      // First get the quiz details
+      const quizResponse = await getQuizById(quizId);
       
-      if (response.success && response.quiz) {
-        const visibleQuestions = response.questions 
-          ? response.questions.filter(q => q.is_visible)
-          : [];
+      if (quizResponse.success && quizResponse.quiz) {
+        setQuiz(quizResponse.quiz);
         
-        setQuiz(response.quiz);
-        setQuestions(visibleQuestions);
+        // Then load the questions separately
+        const questionsResponse = await getQuizQuestions(quizId);
+        
+        if (questionsResponse.success) {
+          console.log("Loaded questions:", questionsResponse.questions);
+          setQuestions(questionsResponse.questions);
+        } else {
+          console.error("Failed to load questions:", questionsResponse.message);
+          setError(questionsResponse.message || "Failed to load quiz questions");
+          toast({
+            title: "Error",
+            description: "Failed to load quiz questions",
+            variant: "destructive",
+          });
+        }
       } else {
-        setError(response.message || "Quiz not found");
+        setError(quizResponse.message || "Quiz not found");
         toast({
           title: "Error",
-          description: response.message || "Quiz not found or has been removed",
+          description: quizResponse.message || "Quiz not found or has been removed",
           variant: "destructive",
         });
       }
@@ -340,7 +352,7 @@ const QuizPage = () => {
     );
   }
 
-  if (!questions || questions.length === 0 || currentQuestion >= questions.length) {
+  if (!questions || questions.length === 0) {
     return (
       <div className="container mx-auto p-4 max-w-4xl text-center py-24">
         <h1 className="text-2xl font-bold mb-4">No Questions Available</h1>
@@ -351,12 +363,24 @@ const QuizPage = () => {
   }
 
   const currentQuestionData = questions[currentQuestion];
-  if (!currentQuestionData || !currentQuestionData.answers) {
+  
+  if (!currentQuestionData) {
     return (
       <div className="container mx-auto p-4 max-w-4xl text-center py-24">
         <h1 className="text-2xl font-bold mb-4">Question Error</h1>
         <p className="mb-8">There was a problem loading this question. Please try again later.</p>
         <Button onClick={() => navigate('/quizzes')}>Return to Quizzes</Button>
+      </div>
+    );
+  }
+
+  // Check if the current question has answers
+  if (!currentQuestionData.answers || currentQuestionData.answers.length === 0) {
+    return (
+      <div className="container mx-auto p-4 max-w-4xl text-center py-24">
+        <h1 className="text-2xl font-bold mb-4">Question Error</h1>
+        <p className="mb-8">This question has no answer options. Please contact the quiz administrator.</p>
+        <Button onClick={handleRetry}>Try Again</Button>
       </div>
     );
   }

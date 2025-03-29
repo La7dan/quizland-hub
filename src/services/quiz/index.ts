@@ -1,7 +1,6 @@
 
-// Re-export all quiz-related services and types
-export * from './quizTypes';
-export * from './quizService';
+// Re-export all quiz-related services
 export * from './quizManagementService';
-export * from './questionService';
 export * from './quizAttemptService';
+export * from './question';
+export * from './quizService';
