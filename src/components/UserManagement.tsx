@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { User, Delete, Edit, UserPlus, RefreshCw, Upload } from 'lucide-react';
 import { useUserManagement } from './users/hooks/useUserManagement';
@@ -11,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import UserForm from './users/UserForm';
+import { UserForm } from './users/UserForm';
 import { Badge } from '@/components/ui/badge';
 import { ImportUsersDialog } from './users/import/ImportUsersDialog';
 
