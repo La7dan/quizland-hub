@@ -35,6 +35,10 @@ interface EvaluationFiltersProps {
   setFilters: (filters: Filters) => void;
   clearFilters: () => void;
   filterOptions: FilterOptions;
+  onExportCSV?: () => void;
+  exportDisabled?: boolean;
+  selectedIds?: number[];
+  onDeleteSelected?: () => void;
 }
 
 export function EvaluationFilters({
@@ -46,7 +50,11 @@ export function EvaluationFilters({
   filters,
   setFilters,
   clearFilters,
-  filterOptions
+  filterOptions,
+  onExportCSV,
+  exportDisabled,
+  selectedIds,
+  onDeleteSelected
 }: EvaluationFiltersProps) {
   const [hasFilters, setHasFilters] = useState(false);
 

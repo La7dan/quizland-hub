@@ -37,14 +37,17 @@ const FilterToolbar: React.FC<FilterToolbarProps> = ({
         <EvaluationFilters
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
+          sortField={'nominated_at'} // Provide default sortField
+          sortOrder={'desc'} // Provide default sortOrder
+          toggleSort={() => {}} // Provide empty function
           filters={{
             status: filters.status || 'all', // Always provide status
             level: filters.level, // Optional level
             result: filters.result // Optional result
           }}
           setFilters={setFilters}
+          clearFilters={onClearFilters} // Changed from onClearFilters to clearFilters
           filterOptions={filterOptions}
-          onClearFilters={onClearFilters}
           onExportCSV={onExportCSV}
           exportDisabled={exportDisabled}
           selectedIds={selectedIds}
