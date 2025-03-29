@@ -1,5 +1,5 @@
 
 import EvaluationResultsForm from './EvaluationResultsForm';
-import { EvaluationResultsDisplay } from './EvaluationResultsDisplay';
+import EvaluationResultsDisplay from './EvaluationResultsDisplay';
 
 export { EvaluationResultsForm, EvaluationResultsDisplay };
