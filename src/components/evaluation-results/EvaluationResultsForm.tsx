@@ -77,7 +77,7 @@ const EvaluationResultsForm: React.FC<EvaluationResultsFormProps> = ({
             <SelectContent>
               {isLoadingCoaches ? (
                 <div className="p-2 text-center text-muted-foreground">
-                  <SelectItem value="loading">Loading coaches...</SelectItem>
+                  <p>Loading coaches...</p>
                 </div>
               ) : coaches && coaches.length > 0 ? (
                 coaches.map((coach) => (
@@ -87,7 +87,7 @@ const EvaluationResultsForm: React.FC<EvaluationResultsFormProps> = ({
                 ))
               ) : (
                 <div className="p-2 text-center text-muted-foreground">
-                  <SelectItem value="no_coaches_found">No coaches found</SelectItem>
+                  <p>No coaches found</p>
                 </div>
               )}
             </SelectContent>

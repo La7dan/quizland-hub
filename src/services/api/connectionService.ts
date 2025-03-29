@@ -31,6 +31,12 @@ export const checkConnection = async (): Promise<{ success: boolean; message: st
       });
       clearTimeout(timeoutId);
       
+      // Check if the response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Received non-JSON response from server");
+      }
+      
       const data = await response.json();
       
       // Cache the result
@@ -40,6 +46,22 @@ export const checkConnection = async (): Promise<{ success: boolean; message: st
       return data;
     } catch (error) {
       clearTimeout(timeoutId);
+      
+      // If we got a response but not JSON, assume server is up but not returning expected response
+      if (error.message && (
+          error.message.includes("Unexpected token") || 
+          error.message.includes("invalid JSON")
+        )) {
+        console.warn("Server returned non-JSON response");
+        const fallbackResult = { 
+          success: false, 
+          message: "Server returned unexpected response format"
+        };
+        lastConnectionCheck = now;
+        cachedConnectionStatus = fallbackResult;
+        return fallbackResult;
+      }
+      
       throw error;
     }
   } catch (error) {

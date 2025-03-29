@@ -15,6 +15,9 @@ const CONNECTION_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Test database connection - public endpoint, no auth required
 router.get('/check-connection', async (req, res) => {
+  // Make sure the content type is set to JSON
+  res.setHeader('Content-Type', 'application/json');
+  
   const now = Date.now();
   const { isConnected } = getConnectionStatus();
   
