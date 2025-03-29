@@ -194,13 +194,7 @@ export default function Navigation() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </>
-            ) : (
-              shouldShowLoginButton && (
-                <Button onClick={() => navigate('/login')} className="ml-4" variant="default">
-                  Login
-                </Button>
-              )
-            )}
+            ) : null}
           </nav>
         )}
       </div>

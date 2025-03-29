@@ -93,17 +93,6 @@ export default function Index() {
             </div>
             
             <div className="flex items-center gap-4">
-              {!isAuthenticated && (
-                <Button 
-                  variant="outline"
-                  onClick={handleLogin}
-                  className="flex items-center gap-2"
-                >
-                  <LogIn className="h-4 w-4" />
-                  Login
-                </Button>
-              )}
-              
               <Toggle
                 aria-label="Toggle theme"
                 pressed={theme === "dark"}
