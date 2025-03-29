@@ -48,7 +48,8 @@ export const executeSql = async (
     fetchOptions.signal = controller.signal;
     
     try {
-      const response = await fetch(`${API_BASE_URL}/execute-sql`, fetchOptions);
+      // Updated URL to match the actual server endpoint
+      const response = await fetch(`${API_BASE_URL}/database/execute-sql`, fetchOptions);
       clearTimeout(timeoutId);
       
       if (!response.ok) {
