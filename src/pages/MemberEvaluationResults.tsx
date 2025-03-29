@@ -39,6 +39,7 @@ const MemberEvaluationResults: React.FC = () => {
   const { data: coaches, isLoading: isLoadingCoaches } = useQuery({
     queryKey: ['coaches'],
     queryFn: async () => {
+      console.log('Fetching coaches from database');
       const result = await executeSql(`
         SELECT id, name FROM users 
         WHERE role = 'coach' OR role = 'admin' OR role = 'super_admin'
@@ -46,9 +47,11 @@ const MemberEvaluationResults: React.FC = () => {
       `, { isPublicQuery: true });
       
       if (!result.success) {
+        console.error('Error fetching coaches:', result.message);
         throw new Error(result.message);
       }
       
+      console.log('Coaches fetched successfully:', result.rows?.length || 0);
       return result.rows || [];
     }
   });
@@ -67,6 +70,8 @@ const MemberEvaluationResults: React.FC = () => {
         throw new Error('Please fill in all fields');
       }
       
+      console.log('Fetching evaluation results for:', { memberName, memberCode, coachId });
+      
       const result = await executeSql(`
         SELECT e.id, e.status, e.nominated_at, e.evaluation_date, e.evaluation_result,
                m.name as member_name, m.member_id as member_code,
@@ -82,13 +87,16 @@ const MemberEvaluationResults: React.FC = () => {
       `, { isPublicQuery: true });
       
       if (!result.success) {
+        console.error('Error fetching evaluation:', result.message);
         throw new Error(result.message);
       }
       
       if (!result.rows || result.rows.length === 0) {
+        console.warn('No evaluation found for:', { memberName, memberCode, coachId });
         throw new Error('No evaluation found with the provided details. Please check your information and try again.');
       }
       
+      console.log('Evaluation result found:', result.rows[0]);
       return result.rows[0];
     },
     enabled: submitted,
@@ -186,12 +194,16 @@ const MemberEvaluationResults: React.FC = () => {
                           <Loader2 className="h-4 w-4 animate-spin" />
                           <span className="ml-2">Loading coaches...</span>
                         </div>
-                      ) : (
-                        coaches?.map((coach: Coach) => (
+                      ) : coaches && coaches.length > 0 ? (
+                        coaches.map((coach: Coach) => (
                           <SelectItem key={coach.id} value={coach.id.toString()}>
                             {coach.name}
                           </SelectItem>
                         ))
+                      ) : (
+                        <div className="p-2 text-center text-muted-foreground">
+                          No coaches found
+                        </div>
                       )}
                     </SelectContent>
                   </Select>
