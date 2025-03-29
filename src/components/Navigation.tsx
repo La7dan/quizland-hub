@@ -43,6 +43,9 @@ export default function Navigation() {
   
   // Only show login button for non-authenticated users
   const shouldShowLoginButton = !isAuthenticated;
+  
+  // Log the state to troubleshoot
+  console.log("Navigation rendering with:", { isAuthenticated, shouldShowLoginButton, user, isAdmin, isCoach });
 
   return (
     <div className="border-b bg-background shadow-sm">

@@ -75,6 +75,9 @@ export default function Index() {
   const hasAuthIssue = error && error instanceof Error && 
                        error.message.includes('Authentication required');
   
+  // Debug logs
+  console.log("Index page rendering:", { isAuthenticated, user });
+  
   return (
     <div>
       <Navigation />
