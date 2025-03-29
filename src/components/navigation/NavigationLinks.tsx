@@ -1,6 +1,6 @@
 
 import { Link } from 'react-router-dom';
-import { Shield, User } from 'lucide-react';
+import { Shield, User, CheckSquare } from 'lucide-react';
 
 interface NavigationLinksProps {
   isAdmin: boolean;
@@ -17,6 +17,15 @@ export function NavigationLinks({ isAdmin, isCoach, onLinkClick }: NavigationLin
         onClick={onLinkClick}
       >
         Home
+      </Link>
+      
+      <Link 
+        to="/results" 
+        className="text-sm font-medium transition-colors hover:text-primary ml-4 flex items-center"
+        onClick={onLinkClick}
+      >
+        <CheckSquare className="mr-1 h-4 w-4" />
+        Check Results
       </Link>
       
       {isAdmin && (

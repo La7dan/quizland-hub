@@ -32,6 +32,55 @@ router.get('/pending/:coachId', requireAuth, async (req, res) => {
   }
 });
 
+// Public endpoint to check evaluation results for members
+router.post('/check-results', async (req, res) => {
+  const { memberName, memberCode, coachId } = req.body;
+  
+  if (!memberName || !memberCode || !coachId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Member name, code, and coach ID are required'
+    });
+  }
+  
+  try {
+    const client = await pool.connect();
+    const result = await client.query(`
+      SELECT e.id, e.status, e.nominated_at, e.evaluation_date, e.evaluation_result,
+             m.name as member_name, m.member_id as member_code,
+             u.name as coach_name
+      FROM evaluations e
+      JOIN members m ON e.member_id = m.id
+      JOIN users u ON e.coach_id = u.id
+      WHERE LOWER(m.name) = LOWER($1)
+      AND LOWER(m.member_id) = LOWER($2)
+      AND e.coach_id = $3
+      ORDER BY e.evaluation_date DESC
+      LIMIT 1
+    `, [memberName.trim(), memberCode.trim(), coachId]);
+    client.release();
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No evaluation found with the provided details'
+      });
+    }
+    
+    res.json({
+      success: true,
+      evaluation: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error fetching evaluation results:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch evaluation results',
+      error: error.message
+    });
+  }
+});
+
 // Delete a single evaluation
 router.delete('/:id', requireAuth, async (req, res) => {
   // Only allow admins to delete evaluations

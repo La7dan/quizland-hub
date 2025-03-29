@@ -16,6 +16,7 @@ import AdminPanel from "./pages/AdminPanel";
 import CoachDashboard from "./pages/CoachDashboard";
 import NotFound from "./pages/NotFound";
 import QuizPreviewPage from "./pages/QuizPreviewPage";
+import MemberEvaluationResults from "./pages/MemberEvaluationResults";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -48,6 +49,7 @@ const App: React.FC = () => {
               } 
             />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/results" element={<MemberEvaluationResults />} />
             <Route 
               path="/admin" 
               element={
