@@ -71,12 +71,20 @@ export default function Index() {
     navigate('/login');
   };
   
-  const hasConnectionIssue = connectionError || (connectionData && !connectionData.success);
+  // Fixed: Don't show connection error if quizzes actually loaded successfully
+  const hasQuizzes = quizzesData?.quizzes && quizzesData.quizzes.length > 0;
+  const hasConnectionIssue = !hasQuizzes && (connectionError || (connectionData && !connectionData.success));
   const hasAuthIssue = quizzesError && quizzesError instanceof Error && 
                        quizzesError.message.includes('Authentication required');
   
   // Debug logs
-  console.log("Index page rendering:", { isAuthenticated, user, quizzesLoaded: !!quizzesData });
+  console.log("Index page rendering:", { 
+    isAuthenticated, 
+    user, 
+    quizzesLoaded: !!quizzesData,
+    hasQuizzes,
+    connectionStatus: connectionData?.success ? 'connected' : 'issue'
+  });
   
   return (
     <div>

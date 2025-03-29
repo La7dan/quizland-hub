@@ -56,7 +56,9 @@ export function QuizzesList({
     return <LoadingState />;
   }
 
-  if (error && !connectionError) {
+  // Only show error state if there's an error but no quizzes were loaded
+  // This prevents showing error when quizzes are actually displayed
+  if (error && !connectionError && quizzes.length === 0) {
     return <ErrorState errorMessage={error} onRetry={handleRetry} />;
   }
 

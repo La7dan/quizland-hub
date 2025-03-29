@@ -92,6 +92,11 @@ export function useQuizzes({
       // Apply filtering based on user role and visibility
       filteredQuizzes = applyFilters(filteredQuizzes);
       
+      // Fix: If quizzes loaded successfully, clear connection error
+      if (filteredQuizzes.length > 0) {
+        setConnectionError(false);
+      }
+      
       const sortedQuizzes = sortQuizzes(filteredQuizzes, sortBy, sortOrder);
       setQuizzes(sortedQuizzes);
     } else {
