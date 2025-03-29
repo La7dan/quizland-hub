@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, LogOut, Shield, Menu, X, BookOpen } from 'lucide-react';
+import { User, LogOut, Shield, Menu, X } from 'lucide-react';
 import JumpingHorse from './icons/JumpingHorse';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,6 +40,9 @@ export default function Navigation() {
   };
 
   const isCoach = user?.role === 'coach';
+  
+  // Only show login button for non-authenticated users
+  const shouldShowLoginButton = !isAuthenticated;
 
   return (
     <div className="border-b bg-background shadow-sm">
@@ -69,15 +72,6 @@ export default function Navigation() {
                   onClick={() => setIsOpen(false)}
                 >
                   Home
-                </Link>
-                
-                <Link 
-                  to="/quizzes" 
-                  className="text-sm font-medium transition-colors hover:text-primary px-2 py-1.5 flex items-center"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <BookOpen className="mr-1 h-4 w-4" />
-                  Quizzes
                 </Link>
                 
                 {isAuthenticated ? (
@@ -122,16 +116,18 @@ export default function Navigation() {
                     </Button>
                   </>
                 ) : (
-                  <Button 
-                    onClick={() => {
-                      navigate('/login');
-                      setIsOpen(false);
-                    }} 
-                    className="w-full" 
-                    variant="default"
-                  >
-                    Login
-                  </Button>
+                  shouldShowLoginButton && (
+                    <Button 
+                      onClick={() => {
+                        navigate('/login');
+                        setIsOpen(false);
+                      }} 
+                      className="w-full" 
+                      variant="default"
+                    >
+                      Login
+                    </Button>
+                  )
                 )}
               </div>
             </CollapsibleContent>
@@ -143,14 +139,6 @@ export default function Navigation() {
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Home
-            </Link>
-            
-            <Link 
-              to="/quizzes" 
-              className="text-sm font-medium transition-colors hover:text-primary flex items-center"
-            >
-              <BookOpen className="mr-1 h-4 w-4" />
-              Quizzes
             </Link>
             
             {isAuthenticated ? (
@@ -204,9 +192,11 @@ export default function Navigation() {
                 </DropdownMenu>
               </>
             ) : (
-              <Button onClick={() => navigate('/login')} className="ml-4" variant="default">
-                Login
-              </Button>
+              shouldShowLoginButton && (
+                <Button onClick={() => navigate('/login')} className="ml-4" variant="default">
+                  Login
+                </Button>
+              )
             )}
           </nav>
         )}
