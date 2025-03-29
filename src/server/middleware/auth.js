@@ -21,6 +21,10 @@ const requireAuth = async (req, res, next) => {
     }
     
     req.user = result.rows[0];
+    // Add helper properties for role checking
+    req.user.isAdmin = req.user.role === 'admin' || req.user.role === 'super_admin';
+    req.user.isSuperAdmin = req.user.role === 'super_admin';
+    
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
@@ -28,4 +32,20 @@ const requireAuth = async (req, res, next) => {
   }
 };
 
-export { requireAuth };
+// Admin-only middleware
+const requireAdmin = (req, res, next) => {
+  if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
+    return res.status(403).json({ success: false, message: 'Admin access required' });
+  }
+  next();
+};
+
+// Super admin-only middleware
+const requireSuperAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== 'super_admin') {
+    return res.status(403).json({ success: false, message: 'Super admin access required' });
+  }
+  next();
+};
+
+export { requireAuth, requireAdmin, requireSuperAdmin };

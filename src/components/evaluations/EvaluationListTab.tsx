@@ -29,10 +29,9 @@ interface EvaluationListTabProps {
 }
 
 const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger }) => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
   
   // Redirect non-admin users
   useEffect(() => {

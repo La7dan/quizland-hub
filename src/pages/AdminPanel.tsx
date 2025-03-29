@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
@@ -16,7 +17,7 @@ import DatabaseSetupButton from '@/components/DatabaseSetupButton';
 import EvaluationManagement from '@/components/evaluations/EvaluationManagement';
 
 export default function AdminPanel() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [isCreateTableDialogOpen, setIsCreateTableDialogOpen] = useState(false);
   const [isSQLDialogOpen, setIsSQLDialogOpen] = useState(false);
   const [isSQLViewerOpen, setIsSQLViewerOpen] = useState(false);
@@ -26,6 +27,19 @@ export default function AdminPanel() {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  // Redirect if not an admin or super admin
+  if (user && !isAdmin) {
+    return (
+      <div className="container mx-auto p-4 max-w-6xl">
+        <Navigation />
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-8">
+          <p className="font-bold">Access Denied</p>
+          <p>You don't have permission to access the admin panel.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <Navigation />
@@ -34,7 +48,7 @@ export default function AdminPanel() {
         <div className="bg-gradient-to-r from-primary/10 to-secondary/30 p-6 rounded-lg mb-6 border border-primary/20 shadow-md">
           <h1 className="text-2xl font-bold text-primary">Admin Control Panel</h1>
           <p className="text-muted-foreground mt-2">
-            Welcome, {user?.username}. You have super admin access to the system.
+            Welcome, {user?.username}. You have {user?.role === 'super_admin' ? 'super admin' : 'admin'} access to the system.
           </p>
         </div>
 

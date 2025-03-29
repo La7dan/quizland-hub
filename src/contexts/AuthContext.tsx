@@ -42,7 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Show different message based on user role
         let welcomeMsg = `Welcome back, ${result.user.username}`;
-        if (result.user.role === 'super_admin') {
+        if (result.user.role === 'super_admin' || result.user.role === 'admin') {
           welcomeMsg += ". You've been redirected to the admin panel.";
         }
         
@@ -93,7 +93,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     isAuthenticated: !!user,
-    isSuperAdmin: user?.role === 'super_admin'
+    isSuperAdmin: user?.role === 'super_admin',
+    isAdmin: user?.role === 'super_admin' || user?.role === 'admin'
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -5,6 +5,7 @@ import { executeSql } from '@/services/apiService';
 import { EvaluationDisplayItem } from './types';
 import LoadingEvaluationState from './LoadingEvaluationState';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { ENV } from '@/config/env';
 
 // Import newly created components
@@ -22,6 +23,7 @@ const ITEMS_PER_PAGE = 10;
 
 const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refreshTrigger }) => {
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteEvaluationId, setDeleteEvaluationId] = useState<number | null>(null);
@@ -77,6 +79,15 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
 
   // Handle delete
   const handleDelete = (id: number) => {
+    if (!isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "Only admins can delete evaluations",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     deleteMutation.mutate(id);
   };
 
@@ -115,7 +126,7 @@ const CompletedEvaluationsTab: React.FC<CompletedEvaluationsTabProps> = ({ refre
         <>
           <EvaluationsTable 
             evaluations={paginatedEvaluations} 
-            onDelete={handleDelete}
+            onDelete={isAdmin ? handleDelete : undefined}
             isDeleting={deleteMutation.isPending}
           />
           

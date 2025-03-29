@@ -26,7 +26,7 @@ export function useQuizzes({
   const [levelCodes, setLevelCodes] = useState<{[key: number]: string}>({});
   const [connectionError, setConnectionError] = useState(false);
   const { toast } = useToast();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useAuth();
 
   const fetchLevelCodes = async () => {
     try {
@@ -109,7 +109,7 @@ export function useQuizzes({
     let filtered = [...quizzesArray];
     
     // Filter based on user authentication and visibility
-    if (!isUserAdmin()) {
+    if (!isAdmin) {
       filtered = filtered.filter((quiz: any) => quiz.is_visible);
     }
     
@@ -121,11 +121,6 @@ export function useQuizzes({
     }
     
     return filtered;
-  };
-
-  // Check if current user is admin
-  const isUserAdmin = () => {
-    return isAuthenticated && user && (user.role === 'super_admin' || user.role === 'admin');
   };
 
   const sortQuizzes = (quizzesArray: any[], sortByField: string, order: "asc" | "desc") => {

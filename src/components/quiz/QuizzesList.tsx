@@ -6,6 +6,7 @@ import { DeleteQuizDialog } from './DeleteQuizDialog';
 import { EmptyQuizState } from './EmptyQuizState';
 import { ErrorState } from './ErrorState';
 import { LoadingState } from './LoadingState';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface QuizzesListProps {
   sortBy?: string;
@@ -24,6 +25,8 @@ export function QuizzesList({
   error: propError,
   quizzesData
 }: QuizzesListProps) {
+  const { isAdmin } = useAuth();
+  
   const { 
     quizzes, 
     loading, 
@@ -66,7 +69,8 @@ export function QuizzesList({
       <QuizGrid 
         quizzes={quizzes}
         levelCodes={levelCodes}
-        onDeleteClick={confirmDeleteQuiz}
+        onDeleteClick={isAdmin ? confirmDeleteQuiz : undefined}
+        isAdmin={isAdmin}
       />
 
       <DeleteQuizDialog 
@@ -81,11 +85,13 @@ export function QuizzesList({
 function QuizGrid({ 
   quizzes, 
   levelCodes, 
-  onDeleteClick 
+  onDeleteClick,
+  isAdmin
 }: { 
   quizzes: any[]; 
   levelCodes: {[key: number]: string}; 
-  onDeleteClick: (quizId: number) => void;
+  onDeleteClick?: (quizId: number) => void;
+  isAdmin?: boolean;
 }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -95,6 +101,7 @@ function QuizGrid({
           quiz={quiz} 
           levelCodes={levelCodes} 
           onDeleteClick={onDeleteClick} 
+          isAdmin={isAdmin}
         />
       ))}
     </div>
