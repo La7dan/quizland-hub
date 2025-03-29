@@ -1,3 +1,4 @@
+
 import { User } from '@/types/auth';
 import { ENV } from '@/config/env';
 
@@ -141,22 +142,5 @@ export const logoutUser = async (): Promise<{ success: boolean; message?: string
   } catch (error) {
     console.error('Logout error:', error);
     return { success: false, message: "There was an error communicating with the server" };
-  }
-};
-
-// Test login function - can be used to test login directly in the console
-export const testLogin = async (username: string, password: string): Promise<void> => {
-  console.log(`Testing login for ${username}...`);
-  try {
-    const result = await loginUser(username, password, false);
-    console.log('Login test result:', result);
-    
-    if (result.success) {
-      console.log('✅ Login successful for user:', result.user);
-    } else {
-      console.log('❌ Login failed:', result.message);
-    }
-  } catch (error) {
-    console.error('Login test error:', error);
   }
 };

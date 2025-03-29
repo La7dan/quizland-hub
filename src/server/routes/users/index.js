@@ -20,6 +20,6 @@ router.use('/get', getRoutes);
 router.use('/update', updateRoutes);
 router.use('/delete', deleteRoutes);
 router.use('/import', importRoutes);
-router.use('/setup', setupRoutes); // Add setup routes
+router.use('/setup', setupRoutes); // Setup routes should be accessible without authentication
 
 export default router;
