@@ -1,44 +1,36 @@
 
-import pool from '@/server/config/database.js';
+// Client-safe login debugger utility that doesn't use Node.js-specific modules
 
-// Utility function to debug authentication issues
+// Function to debug authentication issues through the API
 export const debugLogin = async (username: string, password: string): Promise<string> => {
   console.log(`Debugging login for user: ${username}`);
   
   try {
-    // Connect directly to the database for verification without using the API
-    const client = await pool.connect();
+    // Use fetch API to call the server endpoint instead of directly using pg
+    const response = await fetch('/api/auth/debug-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+      credentials: 'include', // Include cookies for session checks
+    });
     
-    // Query the users table with prepared statement to prevent SQL injection
-    const result = await client.query(
-      'SELECT id, username, email, role, password FROM users WHERE username = $1 LIMIT 1',
-      [username]
-    );
-    
-    client.release();
-    
-    if (result.rows.length === 0) {
-      return `User '${username}' not found in the database`;
+    if (!response.ok) {
+      const errorText = await response.text();
+      return `Login verification failed: ${errorText || response.statusText}`;
     }
     
-    const userData = result.rows[0];
+    const result = await response.json();
     
-    // Check if password matches (for demo purposes, we're doing direct comparison)
-    // In production, you would use bcrypt.compare here
-    const isDefaultAdmin = username === 'admin' && password === 'admin123' && userData.username === 'admin';
-    const passwordMatch = isDefaultAdmin || userData.password === password;
-    
-    if (!passwordMatch) {
-      return `Password mismatch for user '${username}'`;
+    if (result.success) {
+      return `✅ Login verification successful:
+      - User exists with ID: ${result.user.id}
+      - Role: ${result.user.role}
+      - Email: ${result.user.email}
+      
+      If login still fails through the UI, it may be an issue with the session handling or cookies.`;
+    } else {
+      return `Login verification failed: ${result.message}`;
     }
-    
-    // If we got here, direct verification through SQL succeeded
-    return `✅ Login verification through direct DB check successful:
-    - User exists with ID: ${userData.id}
-    - Role: ${userData.role}
-    - Email: ${userData.email}
-    
-    If login still fails through the UI, it may be an issue with the session handling or cookies.`;
   } catch (error) {
     console.error('Login debug error:', error);
     return `Error during login debugging: ${error instanceof Error ? error.message : 'Unknown error'}`;

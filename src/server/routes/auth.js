@@ -1,4 +1,3 @@
-
 import express from 'express';
 import pool from '../config/database.js';
 import bcrypt from 'bcrypt';
@@ -177,6 +176,102 @@ router.get('/check', async (req, res) => {
     res.status(500).json({ 
       authenticated: false, 
       message: 'Server error' 
+    });
+  }
+});
+
+// New endpoint for login debugging
+router.post('/debug-login', async (req, res) => {
+  const { username, password } = req.body;
+  
+  if (!username || !password) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Username and password are required' 
+    });
+  }
+  
+  try {
+    console.log(`Server-side login debug for user: ${username}`);
+    
+    // Special case for default admin account during initial setup
+    if (username === 'admin' && password === 'admin123') {
+      // Check if admin exists in the database
+      const client = await pool.connect();
+      const adminResult = await client.query(
+        'SELECT id, username, email, role FROM users WHERE username = $1 LIMIT 1',
+        ['admin']
+      );
+      client.release();
+      
+      if (adminResult.rows.length > 0) {
+        const adminUser = adminResult.rows[0];
+        return res.json({ 
+          success: true, 
+          user: adminUser,
+          message: 'Default admin account verified' 
+        });
+      }
+    }
+    
+    // Regular account verification
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT id, username, email, role, password FROM users WHERE username = $1 LIMIT 1',
+      [username]
+    );
+    client.release();
+    
+    if (result.rows.length === 0) {
+      return res.status(401).json({ 
+        success: false, 
+        message: `User '${username}' not found in the database` 
+      });
+    }
+    
+    const userData = result.rows[0];
+    
+    // Check if password matches
+    let passwordMatch = false;
+    
+    // For bcrypt passwords (using try-catch to handle potential errors with bcrypt)
+    if (bcrypt.compareSync) {
+      try {
+        passwordMatch = await bcrypt.compare(password, userData.password);
+      } catch (err) {
+        console.warn('Error comparing passwords with bcrypt, falling back to direct comparison:', err);
+        passwordMatch = userData.password === password;
+      }
+    } else {
+      // Direct comparison as fallback
+      passwordMatch = userData.password === password;
+    }
+    
+    if (!passwordMatch) {
+      return res.status(401).json({ 
+        success: false, 
+        message: `Password mismatch for user '${username}'` 
+      });
+    }
+    
+    // Create a clean user object without the password
+    const cleanUserData = {
+      id: userData.id,
+      username: userData.username,
+      email: userData.email,
+      role: userData.role
+    };
+    
+    res.json({ 
+      success: true, 
+      user: cleanUserData,
+      message: 'User verified successfully'
+    });
+  } catch (error) {
+    console.error('Login debug error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: `Error during login debugging: ${error.message || 'Unknown error'}` 
     });
   }
 });
