@@ -18,10 +18,11 @@ interface FilterOptions {
   results: string[];
 }
 
+// Update the Filters interface to make all properties optional except status
 interface Filters {
   status: string;
-  level: string;
-  result: string;
+  level?: string;
+  result?: string;
 }
 
 interface EvaluationFiltersProps {

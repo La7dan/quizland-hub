@@ -38,8 +38,9 @@ const FilterToolbar: React.FC<FilterToolbarProps> = ({
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           filters={{
-            ...filters,
-            status: filters.status || 'all' // Ensure status is required by providing a default
+            status: filters.status || 'all', // Always provide status
+            level: filters.level, // Optional level
+            result: filters.result // Optional result
           }}
           setFilters={setFilters}
           filterOptions={filterOptions}
