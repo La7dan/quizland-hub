@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, LogOut, Shield, Menu, X } from 'lucide-react';
+import { User, LogOut, Shield, Menu, X, BookOpen } from 'lucide-react';
 import JumpingHorse from './icons/JumpingHorse';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,7 +23,7 @@ import {
 
 export default function Navigation() {
   const { toast } = useToast();
-  const { user, logout, isAuthenticated, isSuperAdmin } = useAuth();
+  const { user, logout, isAuthenticated, isSuperAdmin, isAdmin } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
@@ -71,9 +71,18 @@ export default function Navigation() {
                   Home
                 </Link>
                 
+                <Link 
+                  to="/quizzes" 
+                  className="text-sm font-medium transition-colors hover:text-primary px-2 py-1.5 flex items-center"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <BookOpen className="mr-1 h-4 w-4" />
+                  Quizzes
+                </Link>
+                
                 {isAuthenticated ? (
                   <>
-                    {isSuperAdmin && (
+                    {isAdmin && (
                       <Link 
                         to="/admin" 
                         className="text-sm font-medium transition-colors hover:text-primary px-2 py-1.5 flex items-center"
@@ -136,9 +145,17 @@ export default function Navigation() {
               Home
             </Link>
             
+            <Link 
+              to="/quizzes" 
+              className="text-sm font-medium transition-colors hover:text-primary flex items-center"
+            >
+              <BookOpen className="mr-1 h-4 w-4" />
+              Quizzes
+            </Link>
+            
             {isAuthenticated ? (
               <>
-                {isSuperAdmin && (
+                {isAdmin && (
                   <Link 
                     to="/admin" 
                     className="text-sm font-medium transition-colors hover:text-primary ml-4 flex items-center"

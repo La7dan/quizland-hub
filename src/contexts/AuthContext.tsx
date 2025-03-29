@@ -23,6 +23,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (authenticated && user) {
           setUser(user);
         }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
       } finally {
         setLoading(false);
       }
@@ -73,19 +75,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    // We removed the call to cleanDummyData to preserve quiz data
-    const result = await logoutUser();
-    
-    // Regardless of API result, clear the user state
-    setUser(null);
-    
-    toast({
-      title: "Logged Out",
-      description: result.success 
-        ? "You have been successfully logged out"
-        : "You have been logged out, but there was an error communicating with the server",
-    });
+    try {
+      // We removed the call to cleanDummyData to preserve quiz data
+      const result = await logoutUser();
+      
+      // Regardless of API result, clear the user state
+      setUser(null);
+      
+      toast({
+        title: "Logged Out",
+        description: result.success 
+          ? "You have been successfully logged out"
+          : "You have been logged out, but there was an error communicating with the server",
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      setUser(null);
+      toast({
+        title: "Logged Out",
+        description: "You have been logged out",
+      });
+    }
   };
+
+  const isAdmin = user?.role === 'super_admin' || user?.role === 'admin';
+  const isSuperAdmin = user?.role === 'super_admin';
 
   const value = {
     user,
@@ -93,8 +107,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     isAuthenticated: !!user,
-    isSuperAdmin: user?.role === 'super_admin',
-    isAdmin: user?.role === 'super_admin' || user?.role === 'admin'
+    isSuperAdmin,
+    isAdmin
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

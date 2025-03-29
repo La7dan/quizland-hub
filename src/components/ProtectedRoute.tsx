@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requireSuperAdmin = false, requireAdmin = false }: ProtectedRouteProps) => {
-  const { isAuthenticated, user, loading } = useAuth();
+  const { isAuthenticated, user, loading, isAdmin, isSuperAdmin } = useAuth();
   const location = useLocation();
   
   useEffect(() => {
@@ -20,9 +20,11 @@ const ProtectedRoute = ({ children, requireSuperAdmin = false, requireAdmin = fa
       userRole: user?.role,
       requireSuperAdmin,
       requireAdmin,
+      isAdmin,
+      isSuperAdmin,
       currentPath: location.pathname
     });
-  }, [isAuthenticated, user, requireSuperAdmin, requireAdmin, location]);
+  }, [isAuthenticated, user, requireSuperAdmin, requireAdmin, isAdmin, isSuperAdmin, location]);
   
   // If still loading authentication state, show loading indicator
   if (loading) {
@@ -40,13 +42,13 @@ const ProtectedRoute = ({ children, requireSuperAdmin = false, requireAdmin = fa
   }
   
   // Check for super admin access if required
-  if (requireSuperAdmin && user?.role !== 'super_admin') {
+  if (requireSuperAdmin && !isSuperAdmin) {
     console.log('Not a super admin, redirecting to home');
     return <Navigate to="/" replace />;
   }
   
   // Check for admin access if required (both admin and super_admin roles qualify)
-  if (requireAdmin && user?.role !== 'super_admin' && user?.role !== 'admin') {
+  if (requireAdmin && !isAdmin) {
     console.log('Not an admin, redirecting to home');
     return <Navigate to="/" replace />;
   }
