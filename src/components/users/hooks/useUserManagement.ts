@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { User, getUsers, createUser, updateUser, deleteUser, initializeUserTables } from '@/services/userService';
+import { User, getUsers, createUser, updateUser, deleteUser, initializeUserTables, createManyUsers } from '@/services/userService';
 import { useToast } from '@/hooks/use-toast';
 
 export const useUserManagement = () => {
@@ -15,6 +14,7 @@ export const useUserManagement = () => {
     email: '',
     role: 'coach'
   });
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const setupUserTables = async () => {
@@ -95,6 +95,45 @@ export const useUserManagement = () => {
       password: '' // Don't populate password for security
     });
     setIsEditDialogOpen(true);
+  };
+
+  const handleOpenImportDialog = () => {
+    setIsImportDialogOpen(true);
+  };
+
+  const handleImportUsers = async (users: User[]) => {
+    try {
+      if (users.length === 0) {
+        toast({
+          title: "Error",
+          description: "No users to import",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const result = await createManyUsers(users);
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: `Successfully imported ${result.count || users.length} users`,
+        });
+        fetchUsers();
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to import users",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error importing users:', error);
+      toast({
+        title: "Error",
+        description: "Failed to import users",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAddUser = async () => {
@@ -223,6 +262,8 @@ export const useUserManagement = () => {
     setIsAddDialogOpen,
     isEditDialogOpen,
     setIsEditDialogOpen,
+    isImportDialogOpen,
+    setIsImportDialogOpen,
     formData,
     currentUser,
     setupUserTables,
@@ -231,8 +272,10 @@ export const useUserManagement = () => {
     handleRoleChange,
     handleOpenAddDialog,
     handleOpenEditDialog,
+    handleOpenImportDialog,
     handleAddUser,
     handleUpdateUser,
-    handleDeleteUser
+    handleDeleteUser,
+    handleImportUsers
   };
 };

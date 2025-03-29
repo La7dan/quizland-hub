@@ -1,4 +1,3 @@
-
 import { executeSql } from './apiService';
 
 export interface User {
@@ -130,5 +129,48 @@ export const deleteUser = async (userId: number): Promise<{ success: boolean; me
   } catch (error) {
     console.error('Delete user error:', error);
     return { success: false, message: `Failed to delete user: ${error instanceof Error ? error.message : 'Unknown error'}` };
+  }
+};
+
+// Add a function to create multiple users at once
+export const createManyUsers = async (users: User[]): Promise<{ success: boolean; count?: number; message?: string }> => {
+  try {
+    // Generate SQL with multiple INSERT statements
+    const valueStrings = users.map(user => {
+      const username = user.username.replace(/'/g, "''");
+      const password = user.password.replace(/'/g, "''");
+      const email = user.email.replace(/'/g, "''");
+      const role = user.role || 'coach';
+      
+      return `('${username}', '${password}', '${email}', '${role}')`;
+    });
+    
+    if (valueStrings.length === 0) {
+      return { success: false, message: 'No valid users to import' };
+    }
+    
+    // Use a transaction for the batch insert
+    const result = await executeSql(`
+      WITH imported_users AS (
+        INSERT INTO users (username, password, email, role)
+        VALUES ${valueStrings.join(',\n')}
+        ON CONFLICT (username) DO UPDATE
+        SET password = EXCLUDED.password,
+            email = EXCLUDED.email,
+            role = EXCLUDED.role
+        RETURNING id
+      )
+      SELECT COUNT(*) as count FROM imported_users;
+    `);
+    
+    if (result.success && result.rows?.length) {
+      const count = parseInt(result.rows[0].count);
+      return { success: true, count };
+    } else {
+      return { success: false, message: result.message || 'Unknown error occurred' };
+    }
+  } catch (error) {
+    console.error('Error creating multiple users:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error occurred' };
   }
 };

@@ -1,6 +1,5 @@
-
 import { useEffect } from 'react';
-import { User, Delete, Edit, UserPlus, RefreshCw } from 'lucide-react';
+import { User, Delete, Edit, UserPlus, RefreshCw, Upload } from 'lucide-react';
 import { useUserManagement } from './users/hooks/useUserManagement';
 import {
   Table,
@@ -14,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import UserForm from './users/UserForm';
 import { Badge } from '@/components/ui/badge';
+import { ImportUsersDialog } from './users/import/ImportUsersDialog';
 
 const UserManagement = () => {
   const {
@@ -23,6 +23,8 @@ const UserManagement = () => {
     setIsAddDialogOpen,
     isEditDialogOpen,
     setIsEditDialogOpen,
+    isImportDialogOpen,
+    setIsImportDialogOpen,
     formData,
     currentUser,
     setupUserTables,
@@ -31,12 +33,13 @@ const UserManagement = () => {
     handleRoleChange,
     handleOpenAddDialog,
     handleOpenEditDialog,
+    handleOpenImportDialog,
     handleAddUser,
     handleUpdateUser,
-    handleDeleteUser
+    handleDeleteUser,
+    handleImportUsers
   } = useUserManagement();
 
-  // Initialize user tables and fetch users on component mount
   useEffect(() => {
     const init = async () => {
       await setupUserTables();
@@ -45,7 +48,6 @@ const UserManagement = () => {
     init();
   }, []);
 
-  // Function to render role badge with appropriate color
   const renderRoleBadge = (role: string) => {
     let badgeClass = "";
     
@@ -87,6 +89,15 @@ const UserManagement = () => {
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
+          </Button>
+          <Button
+            onClick={handleOpenImportDialog}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+          >
+            <Upload className="h-4 w-4" />
+            Import
           </Button>
           <Button
             onClick={handleOpenAddDialog}
@@ -156,7 +167,6 @@ const UserManagement = () => {
         )}
       </div>
 
-      {/* Add User Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -179,7 +189,6 @@ const UserManagement = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit User Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -202,6 +211,12 @@ const UserManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ImportUsersDialog
+        isOpen={isImportDialogOpen}
+        setIsOpen={setIsImportDialogOpen}
+        onImportComplete={fetchUsers}
+      />
     </div>
   );
 };
