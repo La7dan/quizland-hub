@@ -19,14 +19,15 @@ export const checkConnection = async (): Promise<{ success: boolean; message: st
   }
   
   try {
-    console.log(`Connecting to: ${API_BASE_URL}/check-connection`);
+    // Changed from check-connection to database/check-connection to match server route
+    console.log(`Connecting to: ${API_BASE_URL}/database/check-connection`);
     
     // Add timeout to prevent long hanging request
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
     
     try {
-      const response = await fetch(`${API_BASE_URL}/check-connection`, {
+      const response = await fetch(`${API_BASE_URL}/database/check-connection`, {
         signal: controller.signal
       });
       clearTimeout(timeoutId);

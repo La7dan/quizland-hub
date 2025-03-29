@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { getQuizzes, getQuizLevels } from '@/services/quiz';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { checkConnection } from '@/services/apiService';
+import { checkConnection } from '@/services/api/index';
 
 export function useQuizzes({ 
   sortBy = "default", 
