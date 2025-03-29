@@ -11,10 +11,17 @@ const sanitizeSqlString = (value: string): string => {
   return value.replace(/'/g, "''");
 };
 
+// Updated type definition to include params
+interface SqlExecuteOptions {
+  timeout?: number;
+  isPublicQuery?: boolean;
+  params?: any[];
+}
+
 // Execute custom SQL with improved error handling and input sanitization
 export const executeSql = async (
   sql: string,
-  options?: { timeout?: number, isPublicQuery?: boolean }
+  options?: SqlExecuteOptions
 ): Promise<{ success: boolean; message: string; rows?: any[]; rowCount?: number }> => {
   try {
     console.log('Executing SQL on server:', API_BASE_URL);
@@ -29,7 +36,8 @@ export const executeSql = async (
       credentials: 'include', // Include cookies for authentication
       body: JSON.stringify({ 
         sql,
-        isPublicQuery: options?.isPublicQuery || false
+        isPublicQuery: options?.isPublicQuery || false,
+        params: options?.params || []  // Pass parameters to server
       }),
     };
     
