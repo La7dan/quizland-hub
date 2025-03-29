@@ -1,4 +1,5 @@
 
+// This file should only be imported on the server side
 import pool, { getConnectionStatus } from '../config/database.js';
 
 export async function initializeDatabase() {

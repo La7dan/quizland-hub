@@ -1,14 +1,16 @@
 
 import express from 'express';
-import connectionRoutes from './connection.js';
-import tableRoutes from './tables.js';
+import tablesRoutes from './tables.js';
 import sqlRoutes from './sql.js';
+import connectionRoutes from './connection.js';
+import initializeRoutes from './initialize.js';
 
 const router = express.Router();
 
-// Mount the modular routes
-router.use(connectionRoutes);
-router.use(tableRoutes);
+// Mount all database-related routes
+router.use(tablesRoutes);
 router.use(sqlRoutes);
+router.use(connectionRoutes);
+router.use(initializeRoutes);
 
 export default router;

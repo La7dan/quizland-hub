@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Database, RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { executeSql } from '@/services/apiService';
-import { initializeDatabase } from '@/server/utils/databaseInit';
 
 const DatabaseSetupButton = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,8 +14,9 @@ const DatabaseSetupButton = () => {
       setIsLoading(true);
       console.log('Setting up database tables...');
       
-      // First initialize the database structure (add missing columns)
-      const initResult = await initializeDatabase();
+      // First initialize the database structure through the API
+      const initResponse = await fetch('/api/database/initialize');
+      const initResult = await initResponse.json();
       
       if (!initResult.success) {
         toast({

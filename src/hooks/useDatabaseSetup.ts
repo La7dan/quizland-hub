@@ -5,7 +5,6 @@ import { executeSql } from '@/services/apiService';
 import { toast } from 'sonner';
 import { ENV } from '@/config/env';
 import { useQueryClient } from '@tanstack/react-query';
-import { initializeDatabase } from '@/server/utils/databaseInit';
 
 export const useDatabaseSetup = () => {
   const { toast: uiToast } = useToast();
@@ -17,14 +16,20 @@ export const useDatabaseSetup = () => {
       try {
         setIsConnecting(true);
         
-        // Try to initialize the database
-        const initResult = await initializeDatabase();
-        
-        if (!initResult.success) {
-          console.warn('Database initialization warning:', initResult.message);
-          // Continue despite the error - we'll try to use the database anyway
-        } else {
-          console.log('Database initialized successfully');
+        // Try to initialize the database through an API endpoint
+        try {
+          const initResponse = await fetch('/api/database/initialize');
+          const initResult = await initResponse.json();
+          
+          if (!initResult.success) {
+            console.warn('Database initialization warning:', initResult.message);
+            // Continue despite the error - we'll try to use the database anyway
+          } else {
+            console.log('Database initialized successfully');
+          }
+        } catch (error) {
+          console.warn('Database initialization API error:', error);
+          // Continue despite the error
         }
         
         // Try to fetch the SQL file, but don't throw an error if it fails
