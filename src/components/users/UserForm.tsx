@@ -1,74 +1,93 @@
 
-import React from 'react';
-import { User } from '@/services/userService';
+import { useState } from 'react';
+import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { User } from '@/types/auth';
 
 interface UserFormProps {
   formData: User;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleRoleChange: (value: string) => void;
+  handleRoleChange: (value: 'super_admin' | 'admin' | 'coach') => void;
   isEdit?: boolean;
 }
 
 export const UserForm = ({ formData, handleInputChange, handleRoleChange, isEdit = false }: UserFormProps) => {
+  const [showPassword, setShowPassword] = useState(false);
+  
   return (
-    <div className="grid gap-4 py-4">
-      <div className="grid gap-2">
-        <label htmlFor={isEdit ? "edit-username" : "username"} className="text-sm font-medium">
-          Username
-        </label>
+    <div className="space-y-4 py-2 pb-4">
+      <div className="space-y-2">
+        <Label htmlFor="username">Username</Label>
         <Input
-          id={isEdit ? "edit-username" : "username"}
+          id="username"
           name="username"
           value={formData.username || ''}
           onChange={handleInputChange}
-          placeholder="Enter username"
+          disabled={isEdit} // Username cannot be changed once created
+          required
         />
       </div>
-      <div className="grid gap-2">
-        <label htmlFor={isEdit ? "edit-email" : "email"} className="text-sm font-medium">
-          Email
-        </label>
+      
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
         <Input
-          id={isEdit ? "edit-email" : "email"}
+          id="email"
           name="email"
           type="email"
           value={formData.email || ''}
           onChange={handleInputChange}
-          placeholder="Enter email"
+          required
         />
       </div>
-      <div className="grid gap-2">
-        <label htmlFor={isEdit ? "edit-password" : "password"} className="text-sm font-medium">
-          {isEdit ? "Password (Leave empty to keep current)" : "Password"}
-        </label>
-        <Input
-          id={isEdit ? "edit-password" : "password"}
-          name="password"
-          type="password"
-          value={formData.password || ''}
-          onChange={handleInputChange}
-          placeholder={isEdit ? "Enter new password" : "Enter password"}
-        />
+      
+      <div className="space-y-2">
+        <Label htmlFor="password">Password {isEdit && "(Leave blank to keep unchanged)"}</Label>
+        <div className="flex space-x-2">
+          <Input
+            id="password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            value={formData.password || ''}
+            onChange={handleInputChange}
+            required={!isEdit}
+            className="flex-1"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="px-3 py-2 text-xs bg-secondary text-secondary-foreground rounded-md"
+          >
+            {showPassword ? 'Hide' : 'Show'}
+          </button>
+        </div>
+        {!isEdit && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Password must be at least 6 characters
+          </p>
+        )}
       </div>
-      <div className="grid gap-2">
-        <label htmlFor={isEdit ? "edit-role" : "role"} className="text-sm font-medium">
-          Role
-        </label>
-        <Select
-          value={formData.role || "admin"} 
-          onValueChange={handleRoleChange}
+      
+      <div className="space-y-2">
+        <Label>Role</Label>
+        <RadioGroup 
+          value={formData.role} 
+          onValueChange={(value) => handleRoleChange(value as 'super_admin' | 'admin' | 'coach')}
+          className="flex flex-col space-y-1"
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Select a role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="super_admin">Super Admin</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-            <SelectItem value="coach">Coach</SelectItem>
-          </SelectContent>
-        </Select>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="coach" id="coach" />
+            <Label htmlFor="coach" className="cursor-pointer">Coach</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="admin" id="admin" />
+            <Label htmlFor="admin" className="cursor-pointer">Admin</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="super_admin" id="super_admin" />
+            <Label htmlFor="super_admin" className="cursor-pointer">Super Admin</Label>
+          </div>
+        </RadioGroup>
       </div>
     </div>
   );

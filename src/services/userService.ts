@@ -1,3 +1,4 @@
+
 import { executeSql } from './apiService';
 import { ENV } from '@/config/env';
 
@@ -56,6 +57,9 @@ export const getUsers = async (): Promise<{ success: boolean; users: User[]; mes
 export const createUser = async (user: User): Promise<{ success: boolean; message: string; userId?: number }> => {
   try {
     const { username, password, email, role } = user;
+    
+    // In a real app, we would hash passwords here before storing
+    // But for simplicity in this demo, we'll store it directly
     
     const result = await executeSql(`
       INSERT INTO users (username, password, email, role)
@@ -159,5 +163,49 @@ export const createManyUsers = async (users: User[]): Promise<{ success: boolean
   } catch (error) {
     console.error('Error creating multiple users:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Unknown error occurred' };
+  }
+};
+
+// Add a user verification function to help with debugging
+export const verifyUserLogin = async (username: string, password: string): Promise<{ 
+  success: boolean; 
+  message: string;
+  user?: { id: number; username: string; role: string; email: string; }
+}> => {
+  try {
+    const result = await executeSql(`
+      SELECT id, username, role, email, password 
+      FROM users 
+      WHERE username = '${username}'
+    `);
+    
+    if (!result.success) {
+      throw new Error(result.message);
+    }
+    
+    if (!result.rows || result.rows.length === 0) {
+      return { success: false, message: 'User not found' };
+    }
+    
+    const user = result.rows[0];
+    
+    // Check if password matches (basic check for demo purposes)
+    if (user.password !== password) {
+      return { success: false, message: 'Invalid password' };
+    }
+    
+    return { 
+      success: true, 
+      message: 'User verified successfully',
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        email: user.email
+      }
+    };
+  } catch (error) {
+    console.error('Verify user error:', error);
+    return { success: false, message: `Failed to verify user: ${error instanceof Error ? error.message : 'Unknown error'}` };
   }
 };

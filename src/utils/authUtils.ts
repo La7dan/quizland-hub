@@ -79,12 +79,19 @@ export const loginUser = async (
     
     // Log complete response for debugging
     console.log('Login response status:', response.status);
-    console.log('Login response headers:', [...response.headers.entries()]);
+    
+    try {
+      // Try to get headers
+      console.log('Login response headers:', [...response.headers.entries()]);
+    } catch (e) {
+      console.warn('Could not log response headers:', e);
+    }
     
     // Check the content type to avoid parsing HTML as JSON
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       console.error('Server returned non-JSON response. This usually means the server is not running or incorrect API URL configuration.');
+      console.log('Response body:', await response.text());
       return { 
         success: false, 
         user: null, 
@@ -164,5 +171,22 @@ export const logoutUser = async (): Promise<{ success: boolean; message?: string
   } catch (error) {
     console.error('Logout error:', error);
     return { success: false, message: "There was an error communicating with the server" };
+  }
+};
+
+// Test login function - can be used to test login directly in the console
+export const testLogin = async (username: string, password: string): Promise<void> => {
+  console.log(`Testing login for ${username}...`);
+  try {
+    const result = await loginUser(username, password, false);
+    console.log('Login test result:', result);
+    
+    if (result.success) {
+      console.log('✅ Login successful for user:', result.user);
+    } else {
+      console.log('❌ Login failed:', result.message);
+    }
+  } catch (error) {
+    console.error('Login test error:', error);
   }
 };
