@@ -1,4 +1,14 @@
 
 // Re-export all attempt-related services
-export * from './quizAttemptService';
-export * from './quizAttemptDeletionService';
+// Explicitly re-export individual functions to prevent name collisions
+export { 
+  saveQuizAttempt,
+  getQuizAttemptsByMember,
+  getQuizAttemptsByQuiz,
+  getQuizAttempts
+} from './quizAttemptService';
+
+export {
+  deleteQuizAttempt,
+  bulkDeleteQuizAttempts
+} from './quizAttemptDeletionService';
