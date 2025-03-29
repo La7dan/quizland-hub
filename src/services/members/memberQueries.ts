@@ -45,7 +45,9 @@ export const deleteMemberQuery = async (id: number) => {
 export const importMemberQuery = async (member: Member) => {
   return await executeSql(`
     INSERT INTO members (member_id, name, level_id, classes_count, coach_id)
-    VALUES ('${member.member_id}', '${member.name}', ${member.level_id || 'NULL'}, ${member.classes_count || 0}, ${member.coach_id || 'NULL'})
+    VALUES (${sqlEscape.string(member.member_id)}, ${sqlEscape.string(member.name)}, 
+            ${sqlEscape.number(member.level_id)}, ${sqlEscape.number(member.classes_count || 0)}, 
+            ${sqlEscape.number(member.coach_id)})
     ON CONFLICT (member_id) DO UPDATE
     SET name = EXCLUDED.name,
         level_id = EXCLUDED.level_id,
