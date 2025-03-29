@@ -1,6 +1,5 @@
-
 // Re-export everything from our service modules
-export * from './apiService';
+export * from './api'; // Updated path to use the new index.ts
 export * from './tableService';
 export * from './userService';
 export * from './members/memberService';
