@@ -1,13 +1,17 @@
 
-import { useEffect } from 'react';
-import { User, Delete, Edit, UserPlus, RefreshCw, Upload } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { User, Delete, Edit, UserPlus, RefreshCw, Upload, Trash2 } from 'lucide-react';
 import { useUserManagement } from './hooks/useUserManagement';
 import { UserList } from './UserList';
 import { Button } from '@/components/ui/button';
 import { ImportUsersDialog } from './import/ImportUsersDialog';
 import { UserDialogs } from './UserDialogs';
+import { useBulkDeleteUsers } from './hooks/useBulkDeleteUsers';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const UserManagement = () => {
+  const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+  
   const {
     users,
     loading,
@@ -32,6 +36,11 @@ const UserManagement = () => {
     handleImportUsers
   } = useUserManagement();
 
+  const { bulkDeleteUsersMutation } = useBulkDeleteUsers({
+    onRefresh: fetchUsers,
+    onSuccess: () => setSelectedUsers([])
+  });
+
   useEffect(() => {
     const init = async () => {
       await setupUserTables();
@@ -39,6 +48,32 @@ const UserManagement = () => {
     };
     init();
   }, []);
+
+  const toggleUserSelection = (userId: number) => {
+    setSelectedUsers(prev => {
+      if (prev.includes(userId)) {
+        return prev.filter(id => id !== userId);
+      } else {
+        return [...prev, userId];
+      }
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (users.length > 0) {
+      if (selectedUsers.length === users.length) {
+        setSelectedUsers([]);
+      } else {
+        setSelectedUsers(users.map(user => user.id!).filter(Boolean));
+      }
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedUsers.length > 0) {
+      bulkDeleteUsersMutation.mutate(selectedUsers);
+    }
+  };
 
   return (
     <div className="rounded-md border">
@@ -48,6 +83,38 @@ const UserManagement = () => {
           User Management
         </h2>
         <div className="flex gap-2">
+          {selectedUsers.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="flex items-center gap-1"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete Selected ({selectedUsers.length})
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Bulk Delete Users</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete {selectedUsers.length} selected users? 
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleBulkDelete}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           <Button
             onClick={fetchUsers}
             variant="outline"
@@ -81,6 +148,9 @@ const UserManagement = () => {
       <UserList 
         users={users} 
         loading={loading} 
+        selectedUsers={selectedUsers}
+        toggleUserSelection={toggleUserSelection}
+        toggleSelectAll={toggleSelectAll}
         handleOpenEditDialog={handleOpenEditDialog} 
         handleDeleteUser={handleDeleteUser} 
       />

@@ -5,15 +5,27 @@ import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Delete } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface UserListProps {
   users: User[];
   loading: boolean;
+  selectedUsers: number[];
+  toggleUserSelection: (userId: number) => void;
+  toggleSelectAll: () => void;
   handleOpenEditDialog: (user: User) => void;
   handleDeleteUser: (userId: number) => void;
 }
 
-export const UserList = ({ users, loading, handleOpenEditDialog, handleDeleteUser }: UserListProps) => {
+export const UserList = ({ 
+  users, 
+  loading, 
+  selectedUsers,
+  toggleUserSelection,
+  toggleSelectAll,
+  handleOpenEditDialog, 
+  handleDeleteUser 
+}: UserListProps) => {
   const renderRoleBadge = (role: string) => {
     let badgeClass = "";
     
@@ -52,6 +64,13 @@ export const UserList = ({ users, loading, handleOpenEditDialog, handleDeleteUse
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-12">
+              <Checkbox 
+                checked={users.length > 0 && selectedUsers.length === users.length}
+                onCheckedChange={toggleSelectAll}
+                aria-label="Select all users"
+              />
+            </TableHead>
             <TableHead>Username</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Role</TableHead>
@@ -61,7 +80,14 @@ export const UserList = ({ users, loading, handleOpenEditDialog, handleDeleteUse
         <TableBody>
           {users.length > 0 ? (
             users.map((user) => (
-              <TableRow key={user.id}>
+              <TableRow key={user.id} className={selectedUsers.includes(user.id || -1) ? "bg-muted/50" : ""}>
+                <TableCell>
+                  <Checkbox 
+                    checked={selectedUsers.includes(user.id || -1)}
+                    onCheckedChange={() => toggleUserSelection(user.id || -1)}
+                    aria-label={`Select ${user.username}`}
+                  />
+                </TableCell>
                 <TableCell className="font-medium">{user.username}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{renderRoleBadge(user.role)}</TableCell>
@@ -110,7 +136,7 @@ export const UserList = ({ users, loading, handleOpenEditDialog, handleDeleteUse
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={4} className="text-center py-6">
+              <TableCell colSpan={5} className="text-center py-6">
                 No users found. Click "Add User" to create one.
               </TableCell>
             </TableRow>
