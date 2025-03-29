@@ -1,6 +1,5 @@
-
 import * as XLSX from 'xlsx';
-import { User } from '@/services/userService';
+import { User } from '@/types/auth';
 
 // Function to parse Excel file
 export const parseExcelFile = (file: File): Promise<{

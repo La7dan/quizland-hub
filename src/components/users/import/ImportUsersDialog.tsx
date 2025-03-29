@@ -6,7 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User, createManyUsers } from '@/services/userService';
+import { User } from '@/types/auth';
+import { createManyUsers } from '@/services/userService';
 import { parseExcelFile, generateSampleExcel } from './importUtils';
 
 interface ImportUsersDialogProps {

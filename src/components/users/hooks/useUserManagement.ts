@@ -1,5 +1,7 @@
+
 import { useState } from 'react';
-import { User, getUsers, createUser, updateUser, deleteUser, initializeUserTables, createManyUsers } from '@/services/userService';
+import { User } from '@/types/auth';
+import { getUsers, createUser, updateUser, deleteUser, initializeUserTables, createManyUsers } from '@/services/userService';
 import { useToast } from '@/hooks/use-toast';
 
 export const useUserManagement = () => {
