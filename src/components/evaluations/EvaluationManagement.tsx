@@ -6,13 +6,15 @@ import EvaluationUploadTab from './EvaluationUploadTab';
 import BulkEvaluationTab from './BulkEvaluationTab';
 import EvaluationListTab from './EvaluationListTab';
 import CompletedEvaluationsTab from './CompletedEvaluationsTab';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EvaluationManagementProps {
   onRefresh?: () => void;
 }
 
 const EvaluationManagement: React.FC<EvaluationManagementProps> = ({ onRefresh }) => {
-  const [activeTab, setActiveTab] = useState('upload');
+  const { isSuperAdmin } = useAuth();
+  const [activeTab, setActiveTab] = useState(isSuperAdmin ? 'upload' : 'all');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Function to trigger refresh after operations
@@ -27,41 +29,49 @@ const EvaluationManagement: React.FC<EvaluationManagementProps> = ({ onRefresh }
     <div className="container mx-auto py-6">
       <h1 className="text-2xl font-bold mb-6">Evaluation Management</h1>
       
-      <Tabs defaultValue="upload" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="upload">Upload Evaluation</TabsTrigger>
-          <TabsTrigger value="bulk">Bulk Upload</TabsTrigger>
+      <Tabs defaultValue={isSuperAdmin ? 'upload' : 'all'} value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full" style={{ gridTemplateColumns: isSuperAdmin ? "repeat(4, 1fr)" : "repeat(2, 1fr)" }}>
+          {isSuperAdmin && (
+            <>
+              <TabsTrigger value="upload">Upload Evaluation</TabsTrigger>
+              <TabsTrigger value="bulk">Bulk Upload</TabsTrigger>
+            </>
+          )}
           <TabsTrigger value="all">All Evaluations</TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="upload">
-          <Card>
-            <CardHeader>
-              <CardTitle>Upload Evaluation</CardTitle>
-              <CardDescription>
-                Upload evaluation PDFs and assign them to members
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <EvaluationUploadTab onUploadSuccess={handleRefresh} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="bulk">
-          <Card>
-            <CardHeader>
-              <CardTitle>Bulk Evaluation Upload</CardTitle>
-              <CardDescription>
-                Upload multiple evaluations at once
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <BulkEvaluationTab onSuccess={handleRefresh} />
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {isSuperAdmin && (
+          <>
+            <TabsContent value="upload">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Upload Evaluation</CardTitle>
+                  <CardDescription>
+                    Upload evaluation PDFs and assign them to members
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <EvaluationUploadTab onUploadSuccess={handleRefresh} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="bulk">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Bulk Evaluation Upload</CardTitle>
+                  <CardDescription>
+                    Upload multiple evaluations at once
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <BulkEvaluationTab onSuccess={handleRefresh} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </>
+        )}
         
         <TabsContent value="all">
           <Card>

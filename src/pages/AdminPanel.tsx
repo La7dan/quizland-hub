@@ -17,7 +17,7 @@ import DatabaseSetupButton from '@/components/DatabaseSetupButton';
 import EvaluationManagement from '@/components/evaluations/EvaluationManagement';
 
 export default function AdminPanel() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isSuperAdmin } = useAuth();
   const [isCreateTableDialogOpen, setIsCreateTableDialogOpen] = useState(false);
   const [isSQLDialogOpen, setIsSQLDialogOpen] = useState(false);
   const [isSQLViewerOpen, setIsSQLViewerOpen] = useState(false);
@@ -71,27 +71,35 @@ export default function AdminPanel() {
         </div>
 
         <div className="mt-2">
-          <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="users">User Management</TabsTrigger>
-              <TabsTrigger value="members">Members</TabsTrigger>
-              <TabsTrigger value="evaluations">Evaluations</TabsTrigger>
+          <Tabs defaultValue={isSuperAdmin ? "users" : "quizzes"} className="w-full">
+            <TabsList className="grid w-full" style={{ gridTemplateColumns: isSuperAdmin ? "repeat(5, 1fr)" : "repeat(2, 1fr)" }}>
+              {isSuperAdmin && (
+                <>
+                  <TabsTrigger value="users">User Management</TabsTrigger>
+                  <TabsTrigger value="members">Members</TabsTrigger>
+                  <TabsTrigger value="evaluations">Evaluations</TabsTrigger>
+                </>
+              )}
               <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
               <TabsTrigger value="attempts">Quiz Attempts</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="users">
-              <UserManagement />
-            </TabsContent>
+            {isSuperAdmin && (
+              <>
+                <TabsContent value="users">
+                  <UserManagement />
+                </TabsContent>
 
-            <TabsContent value="members" className="space-y-4">
-              <MembersTable onRefresh={handleRefresh} />
-              <MemberManagement onRefresh={handleRefresh} />
-            </TabsContent>
-            
-            <TabsContent value="evaluations">
-              <EvaluationManagement onRefresh={handleRefresh} />
-            </TabsContent>
+                <TabsContent value="members" className="space-y-4">
+                  <MembersTable onRefresh={handleRefresh} />
+                  <MemberManagement onRefresh={handleRefresh} />
+                </TabsContent>
+                
+                <TabsContent value="evaluations">
+                  <EvaluationManagement onRefresh={handleRefresh} />
+                </TabsContent>
+              </>
+            )}
 
             <TabsContent value="quizzes">
               <QuizManagement onRefresh={handleRefresh} />
