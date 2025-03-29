@@ -43,7 +43,7 @@ export const useEvaluationResults = () => {
       
       if (!result.success) {
         console.error('Error fetching coaches:', result.message);
-        throw new Error(result.message);
+        throw new Error(result.message || 'Failed to fetch coaches');
       }
       
       console.log('Coaches fetched successfully:', result.rows?.length || 0);
@@ -98,7 +98,7 @@ export const useEvaluationResults = () => {
       
       if (!result.success) {
         console.error('Error fetching evaluation:', result.message);
-        throw new Error(result.message);
+        throw new Error(result.message || 'Database error occurred');
       }
       
       if (!result.rows || result.rows.length === 0) {

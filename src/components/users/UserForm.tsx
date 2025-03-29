@@ -21,7 +21,7 @@ export const UserForm = ({ formData, handleInputChange, handleRoleChange, isEdit
         <Input
           id={isEdit ? "edit-username" : "username"}
           name="username"
-          value={formData.username}
+          value={formData.username || ''}
           onChange={handleInputChange}
           placeholder="Enter username"
         />
@@ -34,7 +34,7 @@ export const UserForm = ({ formData, handleInputChange, handleRoleChange, isEdit
           id={isEdit ? "edit-email" : "email"}
           name="email"
           type="email"
-          value={formData.email}
+          value={formData.email || ''}
           onChange={handleInputChange}
           placeholder="Enter email"
         />
@@ -47,7 +47,7 @@ export const UserForm = ({ formData, handleInputChange, handleRoleChange, isEdit
           id={isEdit ? "edit-password" : "password"}
           name="password"
           type="password"
-          value={formData.password}
+          value={formData.password || ''}
           onChange={handleInputChange}
           placeholder={isEdit ? "Enter new password" : "Enter password"}
         />

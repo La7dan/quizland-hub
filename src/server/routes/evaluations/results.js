@@ -21,7 +21,7 @@ router.post('/check-results', async (req, res) => {
     const result = await client.query(`
       SELECT e.id, e.status, e.nominated_at, e.evaluation_date, e.evaluation_result,
              m.name as member_name, m.member_id as member_code,
-             u.name as coach_name
+             u.username as coach_name
       FROM evaluations e
       JOIN members m ON e.member_id = m.id
       JOIN users u ON e.coach_id = u.id

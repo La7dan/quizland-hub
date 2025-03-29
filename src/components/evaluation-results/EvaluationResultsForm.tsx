@@ -86,7 +86,7 @@ const EvaluationResultsForm: React.FC<EvaluationResultsFormProps> = ({
                   ))
                 ) : (
                   <div className="p-2 text-center text-muted-foreground">
-                    No coaches found
+                    <SelectItem value="no_coaches">No coaches found</SelectItem>
                   </div>
                 )}
               </SelectContent>

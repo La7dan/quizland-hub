@@ -73,7 +73,7 @@ const EvaluationFilters: React.FC<EvaluationFiltersProps> = ({
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 {filterOptions?.statuses.map((status: string) => (
-                  <SelectItem key={status} value={status || 'unknown'}>
+                  <SelectItem key={status || 'unknown'} value={status || 'unknown'}>
                     {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown'}
                   </SelectItem>
                 ))}
@@ -93,7 +93,7 @@ const EvaluationFilters: React.FC<EvaluationFiltersProps> = ({
               <SelectContent>
                 <SelectItem value="all">All Levels</SelectItem>
                 {filterOptions?.levels.map((level: string) => (
-                  <SelectItem key={level} value={level || 'unknown'}>
+                  <SelectItem key={level || 'unknown'} value={level || 'unknown'}>
                     {level || 'Unknown'}
                   </SelectItem>
                 ))}
