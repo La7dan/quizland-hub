@@ -49,7 +49,14 @@ const App: React.FC = () => {
               } 
             />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/results" element={<MemberEvaluationResults />} />
+            <Route 
+              path="/results" 
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <MemberEvaluationResults />
+                </ProtectedRoute>
+              } 
+            />
             <Route 
               path="/admin" 
               element={

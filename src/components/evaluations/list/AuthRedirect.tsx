@@ -17,7 +17,7 @@ const AuthRedirect: React.FC<AuthRedirectProps> = ({ isAdmin, children }) => {
     if (!isAdmin) {
       toast({
         title: "Access Denied",
-        description: "You don't have permission to view evaluations.",
+        description: "You don't have permission to view this page.",
         variant: "destructive"
       });
       navigate('/');
