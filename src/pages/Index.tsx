@@ -18,22 +18,12 @@ export default function Index() {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   
-  // Check database connection first
-  const { data: connectionData, error: connectionError, refetch: refetchConnection } = useQuery({
-    queryKey: ['database-connection'],
-    queryFn: checkConnection,
-    staleTime: 1000 * 60, // 1 minute
-    retry: 1,
-    refetchOnWindowFocus: false,
-  });
-  
-  // Fetch quizzes from database when app loads with improved error handling
-  const { data: quizzesData, isLoading, error, refetch } = useQuery({
+  // First load quizzes from database when app loads with improved error handling
+  const { data: quizzesData, isLoading: quizzesLoading, error: quizzesError, refetch: refetchQuizzes } = useQuery({
     queryKey: ['quizzes'],
     queryFn: getQuizzes,
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 1,
-    enabled: connectionData?.success === true,
     refetchOnWindowFocus: false,
     meta: {
       onError: (error) => {
@@ -48,12 +38,22 @@ export default function Index() {
           });
         } else {
           toast.error('Error loading quizzes', {
-            description: 'Unable to connect to the database. Please try again later.',
+            description: 'Unable to load quizzes. Please try again later.',
             duration: 5000,
           });
         }
       }
     }
+  });
+  
+  // Check database connection only after quizzes attempt
+  const { data: connectionData, error: connectionError, refetch: refetchConnection } = useQuery({
+    queryKey: ['database-connection'],
+    queryFn: checkConnection,
+    staleTime: 1000 * 60, // 1 minute
+    retry: 1,
+    refetchOnWindowFocus: false,
+    enabled: quizzesError !== undefined, // Only run connection check if there was an error with quizzes
   });
   
   const handleRetryConnection = () => {
@@ -62,7 +62,7 @@ export default function Index() {
     });
     refetchConnection().then(() => {
       if (connectionData?.success) {
-        refetch();
+        refetchQuizzes();
       }
     });
   };
@@ -71,12 +71,12 @@ export default function Index() {
     navigate('/login');
   };
   
-  const hasConnectionIssue = connectionError || !connectionData?.success;
-  const hasAuthIssue = error && error instanceof Error && 
-                       error.message.includes('Authentication required');
+  const hasConnectionIssue = connectionError || (connectionData && !connectionData.success);
+  const hasAuthIssue = quizzesError && quizzesError instanceof Error && 
+                       quizzesError.message.includes('Authentication required');
   
   // Debug logs
-  console.log("Index page rendering:", { isAuthenticated, user });
+  console.log("Index page rendering:", { isAuthenticated, user, quizzesLoaded: !!quizzesData });
   
   return (
     <div>
@@ -144,8 +144,8 @@ export default function Index() {
           )}
           
           <QuizzesList 
-            isLoading={isLoading} 
-            error={error} 
+            isLoading={quizzesLoading} 
+            error={quizzesError} 
             quizzesData={quizzesData} 
           />
         </div>
