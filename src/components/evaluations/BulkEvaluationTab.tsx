@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -205,7 +206,7 @@ const BulkEvaluationTab: React.FC<BulkEvaluationTabProps> = ({ onSuccess }) => {
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem value="none" disabled>No coaches found</SelectItem>
+                    <SelectItem value="no_coaches">No coaches found</SelectItem>
                   )}
                 </SelectContent>
               </Select>

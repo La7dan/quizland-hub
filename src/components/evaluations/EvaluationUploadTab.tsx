@@ -303,7 +303,7 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
                   </SelectItem>
                 ))
               ) : (
-                <SelectItem value="none" disabled>
+                <SelectItem value="no_members" disabled>
                   No eligible members found
                 </SelectItem>
               )}
