@@ -20,6 +20,7 @@ interface LoginFormProps {
   rememberMe: boolean;
   setRememberMe: (value: boolean) => void;
   onSubmit: React.FormEventHandler<HTMLFormElement>;
+  loginWithAdminCredentials?: () => Promise<void>;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({
@@ -30,11 +31,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
   isLoggingIn,
   rememberMe,
   setRememberMe,
-  onSubmit
+  onSubmit,
+  loginWithAdminCredentials
 }) => {
   const { toast } = useToast();
   const [isDebugMode, setIsDebugMode] = useState(false);
   const [debugResult, setDebugResult] = useState<string | null>(null);
+  const [isDebugLoading, setIsDebugLoading] = useState(false);
   
   // Function to handle the debug button click
   const handleDebugLogin = async (event: React.MouseEvent) => {
@@ -57,6 +60,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
       return;
     }
     
+    setIsDebugLoading(true);
+    
     try {
       const result = await debugLogin(username, password);
       setDebugResult(result);
@@ -66,11 +71,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
       });
     } catch (error) {
       console.error('Debug error:', error);
+      setDebugResult(`Error connecting to database: ${error instanceof Error ? error.message : "Unknown error occurred"}`);
       toast({
         title: "Debug Error",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
+        description: "Could not connect to the database. Is the server running?",
         variant: "destructive"
       });
+    } finally {
+      setIsDebugLoading(false);
     }
   };
   
@@ -168,6 +176,21 @@ const LoginForm: React.FC<LoginFormProps> = ({
         )}
       </Button>
       
+      {loginWithAdminCredentials && (
+        <Button 
+          type="button" 
+          variant="outline"
+          className="w-full py-2 h-11 mt-2"
+          onClick={() => loginWithAdminCredentials()}
+          disabled={isLoggingIn || lockoutTime !== null}
+        >
+          <div className="flex items-center justify-center">
+            <LogIn className="mr-2 h-5 w-5" />
+            <span>Quick Login (admin)</span>
+          </div>
+        </Button>
+      )}
+      
       {/* Debug section */}
       <div className="pt-2 border-t mt-4">
         <div className="flex justify-between items-center">
@@ -187,8 +210,16 @@ const LoginForm: React.FC<LoginFormProps> = ({
               variant="outline"
               onClick={handleDebugLogin}
               className="text-xs py-1 h-7"
+              disabled={isDebugLoading}
             >
-              Verify Credentials
+              {isDebugLoading ? (
+                <div className="flex items-center">
+                  <div className="mr-1 h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                  <span>Checking...</span>
+                </div>
+              ) : (
+                'Verify Credentials'
+              )}
             </Button>
           )}
         </div>

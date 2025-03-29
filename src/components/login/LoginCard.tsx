@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Shield } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +17,7 @@ interface LoginCardProps {
   rememberMe: boolean;
   setRememberMe: (value: boolean) => void;
   onSubmit: React.FormEventHandler<HTMLFormElement>;
+  loginWithAdminCredentials?: () => Promise<void>;
 }
 
 const LoginCard: React.FC<LoginCardProps> = ({
@@ -27,7 +29,8 @@ const LoginCard: React.FC<LoginCardProps> = ({
   isLoggingIn,
   rememberMe,
   setRememberMe,
-  onSubmit
+  onSubmit,
+  loginWithAdminCredentials
 }) => {
   return (
     <Card className="w-full">
@@ -52,6 +55,7 @@ const LoginCard: React.FC<LoginCardProps> = ({
           rememberMe={rememberMe}
           setRememberMe={setRememberMe}
           onSubmit={onSubmit}
+          loginWithAdminCredentials={loginWithAdminCredentials}
         />
       </CardContent>
     </Card>

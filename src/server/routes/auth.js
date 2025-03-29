@@ -1,3 +1,4 @@
+
 import express from 'express';
 import pool from '../config/database.js';
 import bcrypt from 'bcrypt';
@@ -13,6 +14,60 @@ router.post('/login', async (req, res) => {
   }
   
   try {
+    console.log(`Login attempt for user: ${username}, Remember me: ${rememberMe}`);
+    
+    // Special case for default admin account during initial setup
+    if (username === 'admin' && password === 'admin123') {
+      try {
+        const client = await pool.connect();
+        
+        // Check if admin already exists
+        const adminResult = await client.query(
+          'SELECT id, username, email, role FROM users WHERE username = $1 LIMIT 1',
+          ['admin']
+        );
+        
+        let adminUser;
+        
+        // If admin doesn't exist yet, create it
+        if (adminResult.rows.length === 0) {
+          console.log('Creating default admin account...');
+          
+          const insertResult = await client.query(
+            `INSERT INTO users (username, password, email, role) 
+             VALUES ($1, $2, $3, $4) 
+             RETURNING id, username, email, role`,
+            ['admin', 'admin123', 'admin@example.com', 'super_admin']
+          );
+          
+          adminUser = insertResult.rows[0];
+          console.log('Default admin account created:', adminUser);
+        } else {
+          adminUser = adminResult.rows[0];
+          console.log('Using existing admin account:', adminUser);
+        }
+        
+        client.release();
+        
+        // Set user ID in session
+        req.session.userId = adminUser.id;
+        
+        // Extend session if "Remember Me" is checked
+        if (rememberMe) {
+          req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+        }
+        
+        return res.json({ 
+          success: true, 
+          user: adminUser,
+          message: 'Logged in with default admin account' 
+        });
+      } catch (error) {
+        console.error('Error with default admin account:', error);
+      }
+    }
+    
+    // Regular login flow for non-default accounts
     const client = await pool.connect();
     
     // Query the users table with prepared statement to prevent SQL injection
@@ -24,28 +79,27 @@ router.post('/login', async (req, res) => {
     client.release();
     
     if (result.rows.length === 0) {
+      console.log(`User not found: ${username}`);
       return res.status(401).json({ success: false, message: 'User not found' });
     }
     
     const userData = result.rows[0];
     
-    // Check if this is the default admin account (unsafe for production but useful for demo)
-    const isDefaultAdmin = username === 'admin' && password === 'admin123' && userData.username === 'admin';
+    // Check if password matches
+    let passwordMatch = false;
     
-    // For all users, verify the password
-    let passwordMatch = isDefaultAdmin; // Default admin bypasses normal password check
-    
-    if (!isDefaultAdmin && bcrypt.compareSync) {
-      // If bcrypt is properly installed, use it to compare
+    // For bcrypt passwords (using try-catch to handle potential errors with bcrypt)
+    if (bcrypt.compareSync) {
       try {
+        // Try using bcrypt for password that might be hashed
         passwordMatch = await bcrypt.compare(password, userData.password);
       } catch (err) {
-        console.error('Error comparing passwords with bcrypt:', err);
-        // Fallback to direct comparison if bcrypt fails
+        console.warn('Error comparing passwords with bcrypt, falling back to direct comparison:', err);
+        // Fallback to direct comparison
         passwordMatch = userData.password === password;
       }
-    } else if (!isDefaultAdmin) {
-      // Direct comparison as fallback (not secure but allows testing)
+    } else {
+      // Direct comparison as fallback
       passwordMatch = userData.password === password;
     }
     
