@@ -41,7 +41,7 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
     filteredEvaluations,
     toggleSort,
     clearFilters
-  } = useEvaluationFilters(data);
+  } = useEvaluationFilters(data || []);
   
   // Set up selection
   const {
@@ -51,7 +51,7 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
     resetSelection,
     isSelected,
     allSelected
-  } = useEvaluationSelection(filteredEvaluations);
+  } = useEvaluationSelection(filteredEvaluations || []);
 
   // Set up deletion
   const {
@@ -71,10 +71,10 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
   return (
     <AuthRedirect isAdmin={isAdmin}>
       <EvaluationListContainer
-        data={data}
+        data={data || []}
         isLoading={isLoading}
         isAdmin={isAdmin}
-        filterOptions={filterOptions}
+        filterOptions={filterOptions || { statuses: [], levels: [], results: [] }}
         refreshTrigger={refreshTrigger}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -82,7 +82,7 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
         sortOrder={sortOrder}
         filters={filters}
         setFilters={setFilters}
-        filteredEvaluations={filteredEvaluations}
+        filteredEvaluations={filteredEvaluations || []}
         toggleSort={toggleSort}
         clearFilters={clearFilters}
         selectedIds={selectedIds}

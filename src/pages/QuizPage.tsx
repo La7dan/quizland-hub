@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -44,8 +45,9 @@ const QuizPage = () => {
       const response = await getQuizById(quizId);
       
       if (response.success && response.quiz) {
-        const visibleQuestions = (response.questions || [])
-          .filter(q => q.is_visible);
+        const visibleQuestions = response.questions 
+          ? response.questions.filter(q => q.is_visible)
+          : [];
         
         setQuiz(response.quiz);
         setQuestions(visibleQuestions);
@@ -132,7 +134,7 @@ const QuizPage = () => {
       totalPoints += question.points;
       
       const selectedAnswerId = answers[question.id];
-      if (selectedAnswerId) {
+      if (selectedAnswerId && question.answers) {
         const correctAnswer = question.answers.find(
           (a: any) => a.is_correct && a.id === parseInt(selectedAnswerId)
         );
@@ -144,7 +146,7 @@ const QuizPage = () => {
     });
     
     const percentage = totalPoints > 0 ? (score / totalPoints) * 100 : 0;
-    const passed = percentage >= quiz.passing_percentage;
+    const passed = percentage >= (quiz?.passing_percentage || 0);
     
     return {
       score,
@@ -162,7 +164,7 @@ const QuizPage = () => {
     
     try {
       console.log('Submitting quiz attempt with data:', {
-        quiz_id: quiz.id,
+        quiz_id: quiz?.id,
         member_id: memberId,
         visitor_name: name,
         score: scoreResult.score,
@@ -172,7 +174,7 @@ const QuizPage = () => {
       });
       
       const response = await saveQuizAttempt({
-        quiz_id: quiz.id,
+        quiz_id: quiz?.id || 0,
         member_id: memberId,
         visitor_name: name,
         score: scoreResult.score,
@@ -338,7 +340,27 @@ const QuizPage = () => {
     );
   }
 
+  if (!questions || questions.length === 0 || currentQuestion >= questions.length) {
+    return (
+      <div className="container mx-auto p-4 max-w-4xl text-center py-24">
+        <h1 className="text-2xl font-bold mb-4">No Questions Available</h1>
+        <p className="mb-8">This quiz doesn't have any questions available at the moment.</p>
+        <Button onClick={() => navigate('/quizzes')}>Return to Quizzes</Button>
+      </div>
+    );
+  }
+
   const currentQuestionData = questions[currentQuestion];
+  if (!currentQuestionData || !currentQuestionData.answers) {
+    return (
+      <div className="container mx-auto p-4 max-w-4xl text-center py-24">
+        <h1 className="text-2xl font-bold mb-4">Question Error</h1>
+        <p className="mb-8">There was a problem loading this question. Please try again later.</p>
+        <Button onClick={() => navigate('/quizzes')}>Return to Quizzes</Button>
+      </div>
+    );
+  }
+
   const isLastQuestion = currentQuestion === questions.length - 1;
   const isQuestionAnswered = answers[currentQuestionData.id] !== undefined;
   const allQuestionsAnswered = questions.every(q => answers[q.id] !== undefined);

@@ -26,16 +26,16 @@ const AllEvaluationsTab: React.FC<AllEvaluationsTabProps> = ({
     // Convert Evaluation to EvaluationDisplayItem
     const displayItem: EvaluationDisplayItem = {
       id: evaluation.id || 0, // Provide a default value since id is optional in Evaluation but required in EvaluationDisplayItem
-      status: evaluation.status,
-      nominated_at: evaluation.nominated_at,
-      evaluation_date: evaluation.evaluation_date,
-      evaluation_pdf: evaluation.evaluation_pdf,
-      evaluation_result: evaluation.evaluation_result as 'passed' | 'not_ready',
+      status: evaluation.status || 'pending',
+      nominated_at: evaluation.nominated_at || '',
+      evaluation_date: evaluation.evaluation_date || '',
+      evaluation_pdf: evaluation.evaluation_pdf || '',
+      evaluation_result: evaluation.evaluation_result as 'passed' | 'not_ready' || 'not_ready',
       member_name: evaluation.member_name || '',
       member_code: evaluation.member_code || '',
-      member_id: evaluation.member_id,
-      coach_id: evaluation.coach_id,
-      classes_count: evaluation.classes_count
+      member_id: evaluation.member_id || 0,
+      coach_id: evaluation.coach_id || 0,
+      classes_count: evaluation.classes_count || 0
     };
     
     setEditingEvaluation(displayItem);
@@ -50,10 +50,10 @@ const AllEvaluationsTab: React.FC<AllEvaluationsTabProps> = ({
         <>
           <div className="space-y-4">
             {allEvaluations.map(evaluation => (
-              <div key={evaluation.id} className="flex items-center justify-between p-3 border rounded-md">
+              <div key={evaluation.id || 'unknown'} className="flex items-center justify-between p-3 border rounded-md">
                 <div>
-                  <div className="font-medium">{evaluation.member_name}</div>
-                  <div className="text-sm text-muted-foreground">{evaluation.member_code}</div>
+                  <div className="font-medium">{evaluation.member_name || 'Unknown Name'}</div>
+                  <div className="text-sm text-muted-foreground">{evaluation.member_code || 'Unknown Code'}</div>
                 </div>
                 <Button 
                   variant="outline" 

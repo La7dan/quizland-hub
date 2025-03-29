@@ -1,5 +1,6 @@
 
-import React from 'react';
+import { useState } from 'react';
+import { ArrowDown, ArrowUp, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -9,172 +10,233 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Filter, Trash } from 'lucide-react';
-import { FilterOptions } from './hooks/useEvaluationFilters';
+import { Badge } from '@/components/ui/badge';
+
+interface FilterOptions {
+  statuses: string[];
+  levels: string[];
+  results: string[];
+}
+
+interface Filters {
+  status: string;
+  level: string;
+  result: string;
+}
 
 interface EvaluationFiltersProps {
   searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  filters: FilterOptions;
-  setFilters: (filters: FilterOptions) => void;
-  filterOptions: {
-    statuses: string[];
-    levels: string[];
-    coaches: { id: number; username: string }[];
-    results?: string[];
-  } | undefined;
-  onClearFilters: () => void;
-  onExportCSV: () => void;
-  exportDisabled: boolean;
-  selectedIds: number[];
-  onDeleteSelected?: () => void;
+  setSearchTerm: (value: string) => void;
+  sortField: string;
+  sortOrder: 'asc' | 'desc';
+  toggleSort: (field: string) => void;
+  filters: Filters;
+  setFilters: (filters: Filters) => void;
+  clearFilters: () => void;
+  filterOptions: FilterOptions;
 }
 
-const EvaluationFilters: React.FC<EvaluationFiltersProps> = ({
+export function EvaluationFilters({
   searchTerm,
   setSearchTerm,
+  sortField,
+  sortOrder,
+  toggleSort,
   filters,
   setFilters,
-  filterOptions,
-  onClearFilters,
-  onExportCSV,
-  exportDisabled,
-  selectedIds,
-  onDeleteSelected
-}) => {
+  clearFilters,
+  filterOptions
+}: EvaluationFiltersProps) {
+  const [hasFilters, setHasFilters] = useState(false);
+
+  const handleFilterChange = (key: keyof Filters, value: string) => {
+    setFilters({ ...filters, [key]: value });
+    
+    // Check if there are active filters
+    const newFilters = { ...filters, [key]: value };
+    const activeFilters = Object.values(newFilters).some(filter => filter !== 'all');
+    setHasFilters(activeFilters);
+  };
+
+  const handleClearFilters = () => {
+    clearFilters();
+    setHasFilters(false);
+  };
+
   return (
-    <div className="flex flex-col space-y-4 mb-6">
-      {/* Search and filters row */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-        {/* Search box */}
-        <div className="flex items-center max-w-[250px]">
-          <div className="relative w-full">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search members..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 w-full"
-            />
-          </div>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-grow">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search evaluations..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8"
+          />
+          {searchTerm && (
+            <Button
+              variant="ghost"
+              className="absolute right-0 top-0 h-9 w-9 p-0"
+              onClick={() => setSearchTerm('')}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Clear</span>
+            </Button>
+          )}
         </div>
-
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center">
-            <Select 
-              value={filters.status || 'all'} 
-              onValueChange={(value) => setFilters({...filters, status: value === 'all' ? undefined : value})}
-            >
-              <SelectTrigger className="w-[130px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <span>Status</span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                {filterOptions?.statuses.map((status: string) => (
-                  <SelectItem key={status || 'unknown'} value={status || 'unknown'}>
-                    {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown'}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center">
-            <Select 
-              value={filters.level || 'all'} 
-              onValueChange={(value) => setFilters({...filters, level: value === 'all' ? undefined : value})}
-            >
-              <SelectTrigger className="w-[130px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <span>Level</span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Levels</SelectItem>
-                {filterOptions?.levels.map((level: string) => (
-                  <SelectItem key={level || 'unknown'} value={level || 'unknown'}>
-                    {level || 'Unknown'}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center">
-            <Select 
-              value={filters.coach || 'all'} 
-              onValueChange={(value) => setFilters({...filters, coach: value === 'all' ? undefined : value})}
-            >
-              <SelectTrigger className="w-[130px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <span>Coach</span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Coaches</SelectItem>
-                {filterOptions?.coaches.map((coach) => (
-                  <SelectItem key={coach.id} value={coach.id.toString()}>
-                    {coach.username}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Result filter */}
-          <div className="flex items-center">
-            <Select 
-              value={filters.result || 'all'} 
-              onValueChange={(value) => setFilters({...filters, result: value === 'all' ? undefined : value})}
-            >
-              <SelectTrigger className="w-[130px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <span>Result</span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Results</SelectItem>
-                <SelectItem value="passed">Passed</SelectItem>
-                <SelectItem value="not_ready">Not Ready</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onClearFilters}
-            disabled={Object.keys(filters).length === 0}
+        
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="whitespace-nowrap"
+            onClick={() => toggleSort('nominated_at')}
           >
-            Clear Filters
+            {sortField === 'nominated_at' ? (
+              <>
+                Date {sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3.5 w-3.5" /> : <ArrowDown className="ml-1 h-3.5 w-3.5" />}
+              </>
+            ) : (
+              'Sort by Date'
+            )}
           </Button>
-
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onExportCSV}
-            disabled={exportDisabled}
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => toggleSort('status')}
           >
-            Export CSV
+            {sortField === 'status' ? (
+              <>
+                Status {sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3.5 w-3.5" /> : <ArrowDown className="ml-1 h-3.5 w-3.5" />}
+              </>
+            ) : (
+              'Sort by Status'
+            )}
           </Button>
         </div>
       </div>
       
-      {/* Delete selected row - only shown when items are selected */}
-      {selectedIds.length > 0 && onDeleteSelected && (
-        <div className="flex justify-end">
-          <Button 
-            variant="destructive" 
-            size="sm"
-            onClick={onDeleteSelected}
-            className="flex items-center gap-1"
+      <div className="flex flex-wrap gap-2">
+        <div className="w-full sm:w-auto">
+          <Select
+            value={filters.status}
+            onValueChange={(value) => handleFilterChange('status', value)}
           >
-            <Trash className="h-4 w-4" />
-            Delete Selected ({selectedIds.length})
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filter by Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              {(filterOptions?.statuses || []).map((status: string) => (
+                <SelectItem key={status || 'unknown'} value={status || 'unknown'}>
+                  {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-full sm:w-auto">
+          <Select
+            value={filters.level}
+            onValueChange={(value) => handleFilterChange('level', value)}
+          >
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filter by Level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Levels</SelectItem>
+              {(filterOptions?.levels || []).map((level: string) => (
+                <SelectItem key={level || 'unknown'} value={level || 'unknown'}>
+                  {level || 'Unknown'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-full sm:w-auto">
+          <Select
+            value={filters.result}
+            onValueChange={(value) => handleFilterChange('result', value)}
+          >
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filter by Result" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Results</SelectItem>
+              {(filterOptions?.results || []).map((result: string) => (
+                <SelectItem key={result || 'unknown'} value={result || 'unknown'}>
+                  {result ? result.charAt(0).toUpperCase() + result.slice(1) : 'Unknown'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {hasFilters && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleClearFilters}
+            className="ml-auto"
+          >
+            <X className="mr-1 h-3.5 w-3.5" />
+            Clear Filters
           </Button>
+        )}
+      </div>
+      
+      {hasFilters && (
+        <div className="flex flex-wrap gap-2">
+          {filters.status !== 'all' && (
+            <Badge variant="secondary" className="gap-1">
+              Status: {filters.status}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-4 w-4 p-0 ml-1"
+                onClick={() => handleFilterChange('status', 'all')}
+              >
+                <X className="h-3 w-3" />
+                <span className="sr-only">Remove</span>
+              </Button>
+            </Badge>
+          )}
+          
+          {filters.level !== 'all' && (
+            <Badge variant="secondary" className="gap-1">
+              Level: {filters.level}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-4 w-4 p-0 ml-1"
+                onClick={() => handleFilterChange('level', 'all')}
+              >
+                <X className="h-3 w-3" />
+                <span className="sr-only">Remove</span>
+              </Button>
+            </Badge>
+          )}
+          
+          {filters.result !== 'all' && (
+            <Badge variant="secondary" className="gap-1">
+              Result: {filters.result}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-4 w-4 p-0 ml-1"
+                onClick={() => handleFilterChange('result', 'all')}
+              >
+                <X className="h-3 w-3" />
+                <span className="sr-only">Remove</span>
+              </Button>
+            </Badge>
+          )}
         </div>
       )}
     </div>
   );
-};
-
-export default EvaluationFilters;
+}
