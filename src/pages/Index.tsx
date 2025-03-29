@@ -1,4 +1,5 @@
 
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Moon, Sun, ServerOff, LogIn } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
