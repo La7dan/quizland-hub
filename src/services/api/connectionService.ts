@@ -1,17 +1,16 @@
 
 import { ENV } from '@/config/env';
 
-// Connection status caching
+// Improved connection status caching with more robust timing
 let lastConnectionCheck = 0;
-let cachedConnectionStatus = null;
-const CONNECTION_CACHE_TTL = 30000; // 30 seconds
+let cachedConnectionStatus: { success: boolean; message: string } | null = null;
 
 // Check database connection with improved error handling
 export const checkConnection = async (): Promise<{ success: boolean; message: string; cached?: boolean }> => {
   const now = Date.now();
   
   // Return cached result if available and not expired
-  if (cachedConnectionStatus && now - lastConnectionCheck < CONNECTION_CACHE_TTL) {
+  if (cachedConnectionStatus && now - lastConnectionCheck < ENV.CACHE_DURATION) {
     return { ...cachedConnectionStatus, cached: true };
   }
   
@@ -20,13 +19,17 @@ export const checkConnection = async (): Promise<{ success: boolean; message: st
     
     // Add timeout to prevent long hanging request
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), ENV.CONNECTION_TIMEOUT);
     
     try {
       // Use relative URL to avoid port issues
       const response = await fetch(`/api/database/check-connection`, {
         signal: controller.signal,
-        credentials: 'include' // Include cookies for authentication
+        credentials: 'include', // Include cookies for authentication
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
       });
       clearTimeout(timeoutId);
       
@@ -47,28 +50,31 @@ export const checkConnection = async (): Promise<{ success: boolean; message: st
     } catch (error) {
       clearTimeout(timeoutId);
       
-      // If we got a response but it's not JSON, the server might be running but not properly configured
-      if (error.message && error.message.includes("Received non-JSON response")) {
-        console.error("Server is running but not configured correctly for API requests");
-        const fallbackResult = { 
-          success: false, 
-          message: "The server is running but not configured for API requests. Please check server configuration."
-        };
-        lastConnectionCheck = now;
-        cachedConnectionStatus = fallbackResult;
-        return fallbackResult;
-      }
-      
-      // Handle connection abort (timeout)
-      if (error.name === 'AbortError') {
-        console.error("Connection timeout when checking database connection");
-        const timeoutResult = {
-          success: false,
-          message: "Connection timed out. The database server may be overloaded or unreachable."
-        };
-        lastConnectionCheck = now;
-        cachedConnectionStatus = timeoutResult;
-        return timeoutResult;
+      // Handle different error types
+      if (error instanceof Error) {
+        // If we got a response but it's not JSON, the server might be running but not properly configured
+        if (error.message && error.message.includes("Received non-JSON response")) {
+          console.error("Server is running but not configured correctly for API requests");
+          const fallbackResult = { 
+            success: false, 
+            message: "The server is running but not configured for API requests. Please check server configuration."
+          };
+          lastConnectionCheck = now;
+          cachedConnectionStatus = fallbackResult;
+          return fallbackResult;
+        }
+        
+        // Handle connection abort (timeout)
+        if (error.name === 'AbortError') {
+          console.error("Connection timeout when checking database connection");
+          const timeoutResult = {
+            success: false,
+            message: `Connection timed out after ${ENV.CONNECTION_TIMEOUT/1000}s. The database server may be overloaded or unreachable.`
+          };
+          lastConnectionCheck = now;
+          cachedConnectionStatus = timeoutResult;
+          return timeoutResult;
+        }
       }
       
       throw error;
@@ -79,10 +85,14 @@ export const checkConnection = async (): Promise<{ success: boolean; message: st
     // Create appropriate error message based on error type
     let errorMessage = 'Failed to connect to the server';
     
-    if (error.message && error.message.includes('404')) {
-      errorMessage = 'API endpoint not found. The server might not be properly configured.';
-    } else if (error.message && error.message.includes('Failed to fetch')) {
-      errorMessage = 'Network error. The server might be down or unreachable.';
+    if (error instanceof Error) {
+      if (error.message.includes('404')) {
+        errorMessage = 'API endpoint not found. The server might not be properly configured.';
+      } else if (error.message.includes('Failed to fetch')) {
+        errorMessage = 'Network error. The server might be down or unreachable.';
+      } else {
+        errorMessage = `Connection error: ${error.message}`;
+      }
     }
     
     // Cache the negative result too, but for a shorter time
@@ -91,4 +101,10 @@ export const checkConnection = async (): Promise<{ success: boolean; message: st
     
     return cachedConnectionStatus;
   }
+};
+
+// Clear connection cache - useful when manually triggering new connection checks
+export const clearConnectionCache = (): void => {
+  cachedConnectionStatus = null;
+  lastConnectionCheck = 0;
 };
