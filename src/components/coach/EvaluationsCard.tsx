@@ -47,12 +47,17 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
                 m.classes_count
           FROM evaluations e
           JOIN members m ON e.member_id = m.id
-          WHERE m.coach_id = ${coachId}
+          WHERE e.coach_id = ${coachId}
           ORDER BY e.nominated_at DESC
         `;
         
         const result = await executeSql(query);
         console.log('All evaluations fetch result:', result);
+        
+        if (!result.success) {
+          throw new Error(result.message || 'Failed to fetch evaluations');
+        }
+        
         return result.rows || [];
       } catch (err) {
         console.error('Error fetching all evaluations:', err);
@@ -87,6 +92,10 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
   const hasConnectionError = error?.message?.includes('Failed to fetch') || 
                             allEvaluationsError?.message?.includes('Failed to fetch');
 
+  // Check for permissions error                            
+  const hasPermissionError = error?.message?.includes('Access denied') ||
+                            allEvaluationsError?.message?.includes('Access denied');
+
   return (
     <Card>
       <CardHeader>
@@ -101,6 +110,15 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               Unable to connect to the database. Please check your network connection and try again.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {hasPermissionError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              You don't have permission to access this data. Please contact an administrator.
             </AlertDescription>
           </Alert>
         )}
@@ -130,7 +148,7 @@ const EvaluationsCard: React.FC<EvaluationsCardProps> = ({
               isLoading={isLoading}
               error={error}
               evaluations={evaluations}
-              hasConnectionError={hasConnectionError}
+              hasConnectionError={hasConnectionError || hasPermissionError}
             />
           </TabsContent>
           

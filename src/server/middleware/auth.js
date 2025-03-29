@@ -24,6 +24,7 @@ const requireAuth = async (req, res, next) => {
     // Add helper properties for role checking
     req.user.isAdmin = req.user.role === 'admin' || req.user.role === 'super_admin';
     req.user.isSuperAdmin = req.user.role === 'super_admin';
+    req.user.isCoach = req.user.role === 'coach';
     
     next();
   } catch (error) {
@@ -48,4 +49,12 @@ const requireSuperAdmin = (req, res, next) => {
   next();
 };
 
-export { requireAuth, requireAdmin, requireSuperAdmin };
+// Coach or admin middleware - allows both coaches and admins to access
+const requireCoachOrAdmin = (req, res, next) => {
+  if (!req.user || (req.user.role !== 'coach' && req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
+    return res.status(403).json({ success: false, message: 'Coach or admin access required' });
+  }
+  next();
+};
+
+export { requireAuth, requireAdmin, requireSuperAdmin, requireCoachOrAdmin };

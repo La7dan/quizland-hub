@@ -1,9 +1,6 @@
 
 import { ENV } from '@/config/env';
 
-// Get API base URL from environment config
-const API_BASE_URL = ENV.API_BASE_URL;
-
 // Helper to sanitize SQL inputs
 const sanitizeSqlString = (value: string): string => {
   if (!value) return '';
@@ -24,7 +21,7 @@ export const executeSql = async (
   options?: SqlExecuteOptions
 ): Promise<{ success: boolean; message: string; rows?: any[]; rowCount?: number }> => {
   try {
-    console.log('Executing SQL on server:', API_BASE_URL);
+    console.log('Executing SQL on server');
     
     // For debugging - log truncated SQL
     const truncatedSql = sql.length > 100 ? sql.substring(0, 100) + '...' : sql;
@@ -48,8 +45,8 @@ export const executeSql = async (
     fetchOptions.signal = controller.signal;
     
     try {
-      // Updated URL to match the actual server endpoint
-      const response = await fetch(`${API_BASE_URL}/database/execute-sql`, fetchOptions);
+      // Use relative URL instead of hardcoded URL
+      const response = await fetch(`/api/database/execute-sql`, fetchOptions);
       clearTimeout(timeoutId);
       
       if (!response.ok) {

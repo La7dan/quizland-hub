@@ -15,7 +15,16 @@ export const useDatabaseSetup = () => {
         }
 
         // Clean up any admin accounts
-        await fetch('http://209.74.89.41:8080/api/users/setup/cleanup-admin-accounts', {
+        await fetch('/api/users/setup/cleanup-admin-accounts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        // Ensure a coach account exists for testing
+        await fetch('/api/users/setup/ensure-coach-account', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
