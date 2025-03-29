@@ -1,9 +1,10 @@
 
-import React from 'react';
 import { User } from '@/services/userService';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Edit, Delete } from 'lucide-react';
 
 interface UserListProps {
   users: User[];
@@ -12,108 +13,110 @@ interface UserListProps {
   handleDeleteUser: (userId: number) => void;
 }
 
-const UserList = ({ users, loading, handleOpenEditDialog, handleDeleteUser }: UserListProps) => {
+export const UserList = ({ users, loading, handleOpenEditDialog, handleDeleteUser }: UserListProps) => {
+  const renderRoleBadge = (role: string) => {
+    let badgeClass = "";
+    
+    switch(role) {
+      case 'super_admin':
+        badgeClass = "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
+        break;
+      case 'admin':
+        badgeClass = "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+        break;
+      case 'coach':
+        badgeClass = "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+        break;
+      default:
+        badgeClass = "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
+    }
+    
+    return (
+      <Badge className={`${badgeClass} font-medium`}>
+        {role.replace('_', ' ')}
+      </Badge>
+    );
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center py-8">
-        <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
-
-  if (users.length === 0) {
-    return (
-      <div className="text-center py-8 text-gray-500">
-        <p>No users found.</p>
+      <div className="py-8 text-center">
+        <div className="animate-spin h-8 w-8 rounded-full border-2 border-primary border-t-transparent mx-auto"></div>
+        <p className="mt-2 text-sm text-muted-foreground">Loading users...</p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Username
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Email
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Role
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Created
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {users.map((user) => (
-            <tr key={user.id} className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm font-medium text-gray-900">{user.username}</div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-500">{user.email}</div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                  ${user.role === 'super_admin' ? 'bg-purple-100 text-purple-800' : 
-                  user.role === 'admin' ? 'bg-blue-100 text-blue-800' : 
-                  'bg-green-100 text-green-800'}`}
-                >
-                  {user.role.replace('_', ' ')}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-500">
-                  {user.created_at && new Date(user.created_at).toLocaleDateString()}
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleOpenEditDialog(user)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Trash2 className="h-4 w-4 text-red-600" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete User</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete user "{user.username}"? 
-                        This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => user.id && handleDeleteUser(user.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+    <div className="p-0">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Username</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users.length > 0 ? (
+            users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell className="font-medium">{user.username}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{renderRoleBadge(user.role)}</TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    onClick={() => handleOpenEditDialog(user)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 mr-1"
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span className="sr-only">Edit</span>
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
                       >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                        <Delete className="h-4 w-4" />
+                        <span className="sr-only">Delete</span>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete User</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete user "{user.username}"? 
+                          This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => user.id && handleDeleteUser(user.id)}
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center py-6">
+                No users found. Click "Add User" to create one.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 };
-
-export default UserList;

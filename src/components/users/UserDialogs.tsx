@@ -3,7 +3,7 @@ import React from 'react';
 import { User } from '@/services/userService';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import UserForm from './UserForm';
+import { UserForm } from './UserForm';
 
 interface UserDialogsProps {
   isAddDialogOpen: boolean;
@@ -17,7 +17,7 @@ interface UserDialogsProps {
   handleUpdateUser: () => void;
 }
 
-const UserDialogs = ({
+export const UserDialogs = ({
   isAddDialogOpen,
   setIsAddDialogOpen,
   isEditDialogOpen,
@@ -79,5 +79,3 @@ const UserDialogs = ({
     </>
   );
 };
-
-export default UserDialogs;

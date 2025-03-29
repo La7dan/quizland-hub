@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import DatabaseSetupButton from '@/components/DatabaseSetupButton';
 import SQLExecuteDialog from '@/components/SQLExecuteDialog';
-import UserManagement from '@/components/UserManagement';
+import { UserManagement } from '@/components/users';
 import SQLViewerDialog from '@/components/SQLViewerDialog';
 import QuizManagement from '@/components/QuizManagement';
 import QuizAttempts from '@/components/QuizAttempts';

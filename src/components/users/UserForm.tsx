@@ -11,7 +11,7 @@ interface UserFormProps {
   isEdit?: boolean;
 }
 
-const UserForm = ({ formData, handleInputChange, handleRoleChange, isEdit = false }: UserFormProps) => {
+export const UserForm = ({ formData, handleInputChange, handleRoleChange, isEdit = false }: UserFormProps) => {
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-2">
@@ -73,5 +73,3 @@ const UserForm = ({ formData, handleInputChange, handleRoleChange, isEdit = fals
     </div>
   );
 };
-
-export default UserForm;
