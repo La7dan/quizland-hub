@@ -93,15 +93,29 @@ const MemberEvaluationResults: React.FC = () => {
     },
     enabled: submitted,
     retry: false,
-    onError: (err: Error) => {
+    meta: {
+      onError: (err: Error) => {
+        toast({
+          title: "Error",
+          description: err.message,
+          variant: "destructive",
+        });
+        setSubmitted(false);
+      }
+    }
+  });
+  
+  // Effect to handle errors from the query
+  React.useEffect(() => {
+    if (error) {
       toast({
         title: "Error",
-        description: err.message,
+        description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
       setSubmitted(false);
     }
-  });
+  }, [error, toast]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
