@@ -1,3 +1,5 @@
 
-export { default as EvaluationResultsForm } from './EvaluationResultsForm';
-export { default as EvaluationResultsDisplay } from './EvaluationResultsDisplay';
+import EvaluationResultsForm from './EvaluationResultsForm';
+import { EvaluationResultsDisplay } from './EvaluationResultsDisplay';
+
+export { EvaluationResultsForm, EvaluationResultsDisplay };

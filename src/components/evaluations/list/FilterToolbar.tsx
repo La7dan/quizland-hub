@@ -1,6 +1,6 @@
 
 import React from 'react';
-import EvaluationFilters from '../EvaluationFilters';
+import { EvaluationFilters } from '../EvaluationFilters';
 import BulkMarkAsPassedButton from '../BulkMarkAsPassedButton';
 import { FilterOptions } from '../hooks/useEvaluationFilters';
 

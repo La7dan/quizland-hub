@@ -32,7 +32,7 @@ interface EvaluationResultsFormProps {
   onSubmit: (memberCode: string, coachId: string, evaluationDate: string | null) => void;
 }
 
-export const EvaluationResultsForm: React.FC<EvaluationResultsFormProps> = ({
+const EvaluationResultsForm: React.FC<EvaluationResultsFormProps> = ({
   coaches,
   isLoadingCoaches,
   isLoadingResult,
@@ -148,3 +148,5 @@ export const EvaluationResultsForm: React.FC<EvaluationResultsFormProps> = ({
     </div>
   );
 };
+
+export default EvaluationResultsForm;
