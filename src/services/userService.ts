@@ -1,15 +1,7 @@
 
 import { executeSql } from './apiService';
 import { ENV } from '@/config/env';
-
-export interface User {
-  id?: number;
-  username: string;
-  password: string; // Note: In a production app, never store plain text passwords
-  role: 'super_admin' | 'admin' | 'coach';
-  email: string;
-  created_at?: string;
-}
+import { User } from '@/types/auth';
 
 // Initialize user tables
 export const initializeUserTables = async (): Promise<{ success: boolean; message: string }> => {
