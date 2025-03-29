@@ -22,9 +22,9 @@ interface EvaluationResult {
 
 export const useEvaluationResults = () => {
   const { toast } = useToast();
-  const [memberName, setMemberName] = useState('');
   const [memberCode, setMemberCode] = useState('');
   const [coachId, setCoachId] = useState('');
+  const [evaluationDate, setEvaluationDate] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   
   // Fetch coaches for the dropdown
@@ -57,29 +57,36 @@ export const useEvaluationResults = () => {
     isLoading: isLoadingResult,
     error
   } = useQuery({
-    queryKey: ['memberEvaluation', memberName, memberCode, coachId, submitted],
+    queryKey: ['memberEvaluation', memberCode, coachId, evaluationDate, submitted],
     queryFn: async () => {
       if (!submitted) return null;
       
-      if (!memberName || !memberCode || !coachId) {
-        throw new Error('Please fill in all fields');
+      if (!memberCode || !coachId) {
+        throw new Error('Please fill in the required fields');
       }
       
-      console.log('Fetching evaluation results for:', { memberName, memberCode, coachId });
+      console.log('Fetching evaluation results for:', { memberCode, coachId, evaluationDate });
       
-      const result = await executeSql(`
+      // Build the SQL query based on whether evaluationDate is provided
+      let query = `
         SELECT e.id, e.status, e.nominated_at, e.evaluation_date, e.evaluation_result,
                m.name as member_name, m.member_id as member_code,
                u.name as coach_name
         FROM evaluations e
         JOIN members m ON e.member_id = m.id
         JOIN users u ON e.coach_id = u.id
-        WHERE LOWER(m.name) = LOWER('${memberName.trim()}')
-        AND LOWER(m.member_id) = LOWER('${memberCode.trim()}')
-        AND e.coach_id = ${coachId}
-        ORDER BY e.evaluation_date DESC
-        LIMIT 1
-      `, { isPublicQuery: true });
+        WHERE LOWER(m.member_id) = LOWER('${memberCode.trim()}')
+        AND e.coach_id = ${coachId}`;
+      
+      // Add date filter if provided
+      if (evaluationDate) {
+        query += ` AND e.evaluation_date = '${evaluationDate}'`;
+      }
+      
+      // Complete the query with ordering
+      query += ` ORDER BY e.evaluation_date DESC LIMIT 1`;
+      
+      const result = await executeSql(query, { isPublicQuery: true });
       
       if (!result.success) {
         console.error('Error fetching evaluation:', result.message);
@@ -87,7 +94,7 @@ export const useEvaluationResults = () => {
       }
       
       if (!result.rows || result.rows.length === 0) {
-        console.warn('No evaluation found for:', { memberName, memberCode, coachId });
+        console.warn('No evaluation found for:', { memberCode, coachId, evaluationDate });
         throw new Error('No evaluation found with the provided details. Please check your information and try again.');
       }
       
@@ -120,17 +127,17 @@ export const useEvaluationResults = () => {
     }
   }, [error, toast]);
   
-  const handleSubmit = (formMemberName: string, formMemberCode: string, formCoachId: string) => {
-    setMemberName(formMemberName);
+  const handleSubmit = (formMemberCode: string, formCoachId: string, formEvaluationDate: string | null) => {
     setMemberCode(formMemberCode);
     setCoachId(formCoachId);
+    setEvaluationDate(formEvaluationDate);
     setSubmitted(true);
   };
   
   const resetForm = () => {
-    setMemberName('');
     setMemberCode('');
     setCoachId('');
+    setEvaluationDate(null);
     setSubmitted(false);
   };
 

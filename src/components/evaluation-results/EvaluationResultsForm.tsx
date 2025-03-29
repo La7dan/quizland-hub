@@ -1,11 +1,15 @@
 
 import React, { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 interface Coach {
   id: number;
@@ -16,7 +20,7 @@ interface EvaluationResultsFormProps {
   coaches: Coach[] | undefined;
   isLoadingCoaches: boolean;
   isLoadingResult: boolean;
-  onSubmit: (memberName: string, memberCode: string, coachId: string) => void;
+  onSubmit: (memberCode: string, coachId: string, evaluationDate: string | null) => void;
 }
 
 const EvaluationResultsForm: React.FC<EvaluationResultsFormProps> = ({
@@ -25,13 +29,14 @@ const EvaluationResultsForm: React.FC<EvaluationResultsFormProps> = ({
   isLoadingResult,
   onSubmit
 }) => {
-  const [memberName, setMemberName] = useState('');
   const [memberCode, setMemberCode] = useState('');
   const [coachId, setCoachId] = useState('');
+  const [date, setDate] = useState<Date | undefined>(undefined);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(memberName, memberCode, coachId);
+    const formattedDate = date ? format(date, 'yyyy-MM-dd') : null;
+    onSubmit(memberCode, coachId, formattedDate);
   };
 
   return (
@@ -39,24 +44,13 @@ const EvaluationResultsForm: React.FC<EvaluationResultsFormProps> = ({
       <CardHeader>
         <CardTitle>Enter Your Details</CardTitle>
         <CardDescription>
-          Please enter your exact name and membership number as they appear in our records,
-          and select your coach to check your evaluation status.
+          Please enter your membership number, select your coach, and optionally the evaluation date
+          to check your evaluation status.
         </CardDescription>
       </CardHeader>
       
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="memberName">Your Full Name</Label>
-            <Input 
-              id="memberName"
-              value={memberName}
-              onChange={(e) => setMemberName(e.target.value)}
-              placeholder="Enter your exact full name"
-              required
-            />
-          </div>
-          
           <div className="space-y-2">
             <Label htmlFor="memberCode">Your Membership Number</Label>
             <Input 
@@ -97,6 +91,32 @@ const EvaluationResultsForm: React.FC<EvaluationResultsFormProps> = ({
                 )}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="date">Evaluation Date (Optional)</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {date ? format(date, "PP") : "Select date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           
           <Button type="submit" className="w-full mt-4" disabled={isLoadingResult}>
