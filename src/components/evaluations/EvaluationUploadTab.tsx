@@ -235,7 +235,7 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
             <SelectValue placeholder="Filter by Level" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Levels</SelectItem>
+            <SelectItem value="all_levels">All Levels</SelectItem>
             {levelsData?.map((level: any) => (
               <SelectItem key={level.name} value={level.name}>
                 {level.name}
@@ -249,7 +249,7 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
             <SelectValue placeholder="Filter by Coach" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Coaches</SelectItem>
+            <SelectItem value="all_coaches">All Coaches</SelectItem>
             {coachesData?.map((coach: any) => (
               <SelectItem key={coach.id} value={coach.id.toString()}>
                 {coach.username}

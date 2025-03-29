@@ -206,7 +206,7 @@ const BulkEvaluationTab: React.FC<BulkEvaluationTabProps> = ({ onSuccess }) => {
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem value="no_coaches">No coaches found</SelectItem>
+                    <SelectItem value="no_coaches" disabled>No coaches found</SelectItem>
                   )}
                 </SelectContent>
               </Select>
