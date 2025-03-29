@@ -21,6 +21,7 @@ interface EvaluationFiltersProps {
     statuses: string[];
     levels: string[];
     coaches: { id: number; username: string }[];
+    results?: string[];
   } | undefined;
   onClearFilters: () => void;
   onExportCSV: () => void;
@@ -114,6 +115,24 @@ const EvaluationFilters: React.FC<EvaluationFiltersProps> = ({
                     {coach.username}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Result filter */}
+          <div className="flex items-center">
+            <Select 
+              value={filters.result || 'all'} 
+              onValueChange={(value) => setFilters({...filters, result: value === 'all' ? undefined : value})}
+            >
+              <SelectTrigger className="w-[130px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <span>Result</span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Results</SelectItem>
+                <SelectItem value="passed">Passed</SelectItem>
+                <SelectItem value="not_ready">Not Ready</SelectItem>
               </SelectContent>
             </Select>
           </div>

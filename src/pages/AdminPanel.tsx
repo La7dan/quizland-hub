@@ -48,27 +48,30 @@ export default function AdminPanel() {
           </p>
         </div>
 
-        <div className="flex justify-end mb-2">
-          <DatabaseSetupButton />
-          <button
-            onClick={() => setIsSQLViewerOpen(true)}
-            className="text-sm bg-primary hover:bg-primary/80 text-primary-foreground px-3 py-1 rounded-md transition-colors flex items-center gap-2 ml-2"
-          >
-            <span className="hidden sm:inline">View SQL Setup File</span>
-            <span className="sm:hidden">SQL Setup</span>
-          </button>
-        </div>
+        {/* Only show database setup buttons to super admins */}
+        {isSuperAdmin && (
+          <div className="flex justify-end mb-2">
+            <DatabaseSetupButton />
+            <button
+              onClick={() => setIsSQLViewerOpen(true)}
+              className="text-sm bg-primary hover:bg-primary/80 text-primary-foreground px-3 py-1 rounded-md transition-colors flex items-center gap-2 ml-2"
+            >
+              <span className="hidden sm:inline">View SQL Setup File</span>
+              <span className="sm:hidden">SQL Setup</span>
+            </button>
+          </div>
+        )}
 
         <div className="mt-2">
           <Tabs defaultValue={isSuperAdmin ? "users" : "quizzes"} className="w-full">
-            <TabsList className="grid w-full" style={{ gridTemplateColumns: isSuperAdmin ? "repeat(5, 1fr)" : "repeat(2, 1fr)" }}>
+            <TabsList className="grid w-full" style={{ gridTemplateColumns: isSuperAdmin ? "repeat(5, 1fr)" : "repeat(3, 1fr)" }}>
               {isSuperAdmin && (
                 <>
                   <TabsTrigger value="users">User Management</TabsTrigger>
                   <TabsTrigger value="members">Members</TabsTrigger>
-                  <TabsTrigger value="evaluations">Evaluations</TabsTrigger>
                 </>
               )}
+              <TabsTrigger value="evaluations">Evaluations</TabsTrigger>
               <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
               <TabsTrigger value="attempts">Quiz Attempts</TabsTrigger>
             </TabsList>
@@ -83,12 +86,12 @@ export default function AdminPanel() {
                   <MembersTable onRefresh={handleRefresh} />
                   <MemberManagement onRefresh={handleRefresh} />
                 </TabsContent>
-                
-                <TabsContent value="evaluations">
-                  <EvaluationManagement onRefresh={handleRefresh} />
-                </TabsContent>
               </>
             )}
+            
+            <TabsContent value="evaluations">
+              <EvaluationManagement onRefresh={handleRefresh} />
+            </TabsContent>
 
             <TabsContent value="quizzes">
               <QuizManagement onRefresh={handleRefresh} />

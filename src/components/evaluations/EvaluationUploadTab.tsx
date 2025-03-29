@@ -6,7 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UploadCloud } from 'lucide-react';
+import { UploadCloud, Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EvaluationUploadFormData } from './types';
 import { getSelectedMemberCode } from './utils';
@@ -26,20 +26,67 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
   });
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [levelFilter, setLevelFilter] = useState<string>('');
+  const [coachFilter, setCoachFilter] = useState<string>('');
   const { toast } = useToast();
 
   // Get members without pending evaluations
   const { data: membersData } = useQuery({
-    queryKey: ['members-dropdown'],
+    queryKey: ['members-dropdown', searchTerm, levelFilter, coachFilter],
     queryFn: async () => {
-      const result = await executeSql(`
-        SELECT m.id, m.name, m.member_id 
+      let query = `
+        SELECT m.id, m.name, m.member_id, m.level as member_level,
+               u.id as coach_id, u.username as coach_name
         FROM members m
+        LEFT JOIN users u ON m.coach_id = u.id
         WHERE NOT EXISTS (
           SELECT 1 FROM evaluations e 
           WHERE e.member_id = m.id AND e.status = 'pending'
         )
-        ORDER BY m.name
+      `;
+      
+      // Add filters to the query
+      if (searchTerm) {
+        query += ` AND (m.name ILIKE '%${searchTerm}%' OR m.member_id ILIKE '%${searchTerm}%')`;
+      }
+      
+      if (levelFilter) {
+        query += ` AND m.level = '${levelFilter}'`;
+      }
+      
+      if (coachFilter) {
+        query += ` AND m.coach_id = ${coachFilter}`;
+      }
+      
+      query += ` ORDER BY m.name`;
+      
+      console.log("Executing members query:", query);
+      const result = await executeSql(query);
+      console.log("Members data result:", result);
+      return result.rows || [];
+    }
+  });
+
+  // Get available levels
+  const { data: levelsData } = useQuery({
+    queryKey: ['member-levels'],
+    queryFn: async () => {
+      const result = await executeSql(`
+        SELECT DISTINCT level FROM members WHERE level IS NOT NULL ORDER BY level
+      `);
+      return result.rows || [];
+    }
+  });
+
+  // Get coaches
+  const { data: coachesData } = useQuery({
+    queryKey: ['coaches'],
+    queryFn: async () => {
+      const result = await executeSql(`
+        SELECT id, username FROM users 
+        WHERE role = 'coach' OR role = 'admin' OR role = 'super_admin'
+        ORDER BY username
       `);
       return result.rows || [];
     }
@@ -162,8 +209,72 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
     }
   };
 
+  // Add filter section for members
+  const memberFilterSection = (
+    <div className="mb-6 bg-muted/50 p-4 rounded-lg">
+      <h3 className="text-sm font-medium mb-3">Filter Members</h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or ID"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8 w-full"
+          />
+        </div>
+        
+        <Select value={levelFilter} onValueChange={setLevelFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder="Filter by Level" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Levels</SelectItem>
+            {levelsData?.map((level: any) => (
+              <SelectItem key={level.level} value={level.level}>
+                {level.level}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        <Select value={coachFilter} onValueChange={setCoachFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder="Filter by Coach" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Coaches</SelectItem>
+            {coachesData?.map((coach: any) => (
+              <SelectItem key={coach.id} value={coach.id.toString()}>
+                {coach.username}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      {(searchTerm || levelFilter || coachFilter) && (
+        <div className="mt-2 flex justify-end">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              setSearchTerm('');
+              setLevelFilter('');
+              setCoachFilter('');
+            }}
+          >
+            Clear Filters
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-4">
+      {memberFilterSection}
+      
       <div className="grid gap-4 py-4">
         <div className="grid grid-cols-4 items-center gap-4">
           <Label htmlFor="member" className="text-right">
@@ -180,7 +291,9 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
               {membersData?.length > 0 ? (
                 membersData.map((member: any) => (
                   <SelectItem key={member.id} value={member.id.toString()}>
-                    {member.name} ({member.member_id})
+                    {member.name} ({member.member_id}) 
+                    {member.member_level ? ` - ${member.member_level}` : ''} 
+                    {member.coach_name ? ` - Coach: ${member.coach_name}` : ''}
                   </SelectItem>
                 ))
               ) : (

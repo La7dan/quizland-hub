@@ -9,7 +9,7 @@ export interface FilterOptions {
   status?: string;
   level?: string;
   coach?: string;
-  result?: string; // Adding result filter
+  result?: string;
 }
 
 export const useEvaluationFilters = (evaluations: EvaluationDisplayItem[] | undefined, refreshTrigger?: number) => {
