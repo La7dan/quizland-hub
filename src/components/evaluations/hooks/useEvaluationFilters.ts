@@ -2,19 +2,22 @@
 import { useState, useMemo } from 'react';
 import { EvaluationDisplayItem } from '../types';
 
-export type SortField = 'nominated_at' | 'evaluation_date' | 'member_name' | 'status' | 'coach_name';
+export type SortField = 'nominated_at' | 'evaluation_date' | 'member_name' | 'status' | 'coach_name' | 'evaluation_result';
 export type SortOrder = 'asc' | 'desc';
+
+// Add the missing FilterOptions type
+export interface FilterOptions {
+  status?: string;
+  level?: string;
+  coach?: string;
+  result?: string;
+}
 
 export const useEvaluationFilters = (evaluations: EvaluationDisplayItem[]) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('nominated_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const [filters, setFilters] = useState<{
-    status?: string;
-    level?: string;
-    coach?: string;
-    result?: string;
-  }>({});
+  const [filters, setFilters] = useState<FilterOptions>({});
 
   // Filter evaluations based on search term and filters
   const filteredEvaluations = useMemo(() => {
