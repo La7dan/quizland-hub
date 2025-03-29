@@ -1,6 +1,6 @@
 
 import authRoutes from './auth.js';
-import databaseRoutes from './database.js';
+import databaseRoutes from './database/index.js';
 import membersRoutes from './members.js';
 import evaluationsRoutes from './evaluations.js';
 
