@@ -4,13 +4,14 @@ import { Table, TableBody } from '@/components/ui/table';
 import { EvaluationDisplayItem } from '../types';
 import EvaluationTableHeader from './EvaluationTableHeader';
 import EvaluationTableRow from '../EvaluationTableRow';
+import { SortField, SortOrder } from '../hooks/useEvaluationFilters';
 
 interface EvaluationTableProps {
   evaluations: EvaluationDisplayItem[];
   isAdmin: boolean;
-  sortField: string;
-  sortOrder: string;
-  toggleSort: (field: any) => void;
+  sortField: SortField;
+  sortOrder: SortOrder;
+  toggleSort: (field: SortField) => void;
   selectedIds: number[];
   handleSelectOne: (id: number, checked: boolean) => void;
   handleSelectAll: (checked: boolean) => void;

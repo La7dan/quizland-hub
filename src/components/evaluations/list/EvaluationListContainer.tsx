@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { exportToCSV } from '../utils';
 import { EvaluationDisplayItem } from '../types';
+import { SortField, SortOrder } from '../hooks/useEvaluationFilters';
 
 // Components
 import FilterToolbar from './FilterToolbar';
@@ -22,12 +23,12 @@ interface EvaluationListContainerProps {
   // Extracted from hooks
   searchTerm: string;
   setSearchTerm: (term: string) => void;
-  sortField: string;
-  sortOrder: string;
+  sortField: SortField;
+  sortOrder: SortOrder;
   filters: any;
   setFilters: (filters: any) => void;
   filteredEvaluations: EvaluationDisplayItem[];
-  toggleSort: (field: any) => void;
+  toggleSort: (field: SortField) => void;
   clearFilters: () => void;
   
   selectedIds: number[];
