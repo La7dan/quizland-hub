@@ -11,12 +11,19 @@ import { getQuizzes } from '@/services/quiz';
 import { toast } from 'sonner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { checkConnection } from '@/services/apiService';
+import { checkConnection } from '@/services/api/connectionService';
+import { logEnvironment } from '@/config/env';
+import { ApiStatus } from '@/components/ui/api-status';
 
 export default function Index() {
   const { isAuthenticated, user } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  
+  // Log environment settings on page load for debugging
+  useEffect(() => {
+    logEnvironment();
+  }, []);
   
   // First load quizzes from database when app loads with improved error handling
   const { data: quizzesData, isLoading: quizzesLoading, error: quizzesError, refetch: refetchQuizzes } = useQuery({
@@ -75,7 +82,7 @@ export default function Index() {
   const hasQuizzes = quizzesData?.quizzes && quizzesData.quizzes.length > 0;
   const hasConnectionIssue = !hasQuizzes && (connectionError || (connectionData && !connectionData.success));
   const hasAuthIssue = quizzesError && quizzesError instanceof Error && 
-                       quizzesError.message.includes('Authentication required');
+                     quizzesError.message.includes('Authentication required');
   
   // Debug logs
   console.log("Index page rendering:", { 
@@ -91,6 +98,9 @@ export default function Index() {
       <Navigation />
       
       <div className="container mx-auto p-4 max-w-6xl">
+        {/* Display API status at the top when needed */}
+        <ApiStatus />
+        
         <div className="my-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
@@ -122,6 +132,7 @@ export default function Index() {
                   <li>The server is currently down or restarting</li>
                   <li>Network connectivity issues</li>
                   <li>Firewall restrictions</li>
+                  <li>Server configuration issues</li>
                 </ul>
                 <Button 
                   variant="outline" 

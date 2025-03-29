@@ -34,6 +34,12 @@ export const callApi = async <T>(
       const response = await fetch(url, options);
       clearTimeout(timeoutId);
       
+      // Check for connection issues like 404 (API not found)
+      if (response.status === 404) {
+        console.error(`API endpoint not found: ${url}`);
+        throw new Error(`API endpoint not found: ${url}. The server might not be properly configured.`);
+      }
+      
       if (!response.ok) {
         // Check for authentication errors
         if (response.status === 401) {
@@ -48,10 +54,23 @@ export const callApi = async <T>(
         throw new Error(`Server responded with ${response.status}: ${errorText || response.statusText}`);
       }
       
+      // Check if the response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("Server returned non-JSON response:", await response.clone().text());
+        throw new Error("Received non-JSON response from server");
+      }
+      
       const data = await response.json();
       return data;
     } catch (error) {
       clearTimeout(timeoutId);
+      
+      // Enhance error for timeout cases
+      if (error.name === 'AbortError') {
+        throw new Error(`Request timeout after 10 seconds. The server might be overloaded or unreachable.`);
+      }
+      
       throw error;
     }
   } catch (error) {

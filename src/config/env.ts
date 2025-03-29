@@ -27,5 +27,12 @@ export const logEnvironment = () => {
     API_BASE_URL: ENV.API_BASE_URL,
     NODE_ENV: ENV.NODE_ENV,
     DEBUG: ENV.DEBUG,
+    CURRENT_URL: typeof window !== 'undefined' ? window.location.href : 'unknown',
+    BASE_PATH: typeof window !== 'undefined' ? window.location.origin : 'unknown',
   });
 };
+
+// Call logEnvironment when importing env.ts to debug connection issues
+if (typeof window !== 'undefined' && ENV.DEBUG) {
+  console.log('API requests will be sent to:', ENV.API_BASE_URL);
+}
