@@ -125,11 +125,5 @@ VALUES
   ('A3', 'Advanced 3', 'Third step in advanced level')
 ON CONFLICT (code) DO NOTHING;
 
--- Insert default super admin user if none exists
-INSERT INTO users (username, password, email, role)
-SELECT 'admin', 'admin123', 'admin@example.com', 'super_admin'
-WHERE NOT EXISTS (SELECT 1 FROM users WHERE role = 'super_admin')
-ON CONFLICT DO NOTHING;
-
 -- Note: All dummy data for members, quizzes, questions, answers, and attempts have been removed
--- Only the essential schema and default admin user are kept
+-- Only the essential schema and quiz levels are kept
