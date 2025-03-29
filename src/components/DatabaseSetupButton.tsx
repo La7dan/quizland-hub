@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Database, RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { executeSql } from '@/services/apiService';
+import { initializeDatabase } from '@/server/utils/databaseInit';
 
 const DatabaseSetupButton = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,6 +14,18 @@ const DatabaseSetupButton = () => {
     try {
       setIsLoading(true);
       console.log('Setting up database tables...');
+      
+      // First initialize the database structure (add missing columns)
+      const initResult = await initializeDatabase();
+      
+      if (!initResult.success) {
+        toast({
+          title: "Warning",
+          description: `Database initialization encountered an issue: ${initResult.message}`,
+          variant: "destructive"
+        });
+        return;
+      }
       
       // Use the same path as in useDatabaseSetup
       const response = await fetch('/db-setup.sql');

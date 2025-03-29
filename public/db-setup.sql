@@ -94,18 +94,20 @@ CREATE TABLE IF NOT EXISTS members (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create evaluations table
+-- Create evaluations table with evaluation_result column
 CREATE TABLE IF NOT EXISTS evaluations (
   id SERIAL PRIMARY KEY,
   member_id INTEGER REFERENCES members(id) ON DELETE CASCADE,
-  status VARCHAR(20) NOT NULL CHECK (status IN ('pending', 'approved', 'disapproved')),
+  status VARCHAR(20) NOT NULL CHECK (status IN ('pending', 'approved', 'disapproved', 'completed')),
   nominated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   approved_at TIMESTAMP,
   disapproved_at TIMESTAMP,
   disapproval_reason TEXT,
   coach_id INTEGER REFERENCES users(id),
   evaluation_date TIMESTAMP,
-  evaluation_pdf TEXT
+  evaluation_pdf TEXT,
+  evaluation_result VARCHAR(20) CHECK (evaluation_result IN ('passed', 'not_ready')),
+  updated_at TIMESTAMP
 );
 
 -- Insert quiz levels

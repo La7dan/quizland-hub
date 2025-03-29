@@ -7,7 +7,7 @@ export async function initializeDatabase() {
     const { isConnected } = getConnectionStatus();
     if (isConnected) {
       console.log('Database already connected, skipping connection test');
-      return;
+      return { success: true, message: 'Database already connected' };
     }
     
     const client = await pool.connect();
@@ -32,9 +32,9 @@ export async function initializeDatabase() {
     }
     
     client.release();
-    return true;
+    return { success: true, message: 'Database initialization completed successfully' };
   } catch (error) {
     console.error('Error initializing database schema:', error);
-    return false;
+    return { success: false, message: `Database initialization error: ${error.message}` };
   }
 }

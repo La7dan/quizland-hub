@@ -1,10 +1,11 @@
 
 import { useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { executeSql, initializeDatabase, checkConnection } from '@/services/dbService';
+import { executeSql } from '@/services/apiService';
 import { toast } from 'sonner';
 import { ENV } from '@/config/env';
 import { useQueryClient } from '@tanstack/react-query';
+import { initializeDatabase } from '@/server/utils/databaseInit';
 
 export const useDatabaseSetup = () => {
   const { toast: uiToast } = useToast();
@@ -16,14 +17,14 @@ export const useDatabaseSetup = () => {
       try {
         setIsConnecting(true);
         
-        // First check if the database is already connected
-        const connectionResult = await checkConnection();
+        // Try to initialize the database
+        const initResult = await initializeDatabase();
         
-        if (!connectionResult.success) {
-          console.warn('Database connection check failed during setup');
-          // Don't abort - try to continue with setup
+        if (!initResult.success) {
+          console.warn('Database initialization warning:', initResult.message);
+          // Continue despite the error - we'll try to use the database anyway
         } else {
-          console.log('Database connection confirmed during setup');
+          console.log('Database initialized successfully');
         }
         
         // Try to fetch the SQL file, but don't throw an error if it fails
@@ -56,31 +57,20 @@ export const useDatabaseSetup = () => {
           // Continue despite the error
         }
         
-        // Try to initialize the database and prefetch quiz data
-        try {
-          const initResult = await initializeDatabase();
-          if (initResult.success) {
-            // Prefetch quizzes data
-            queryClient.prefetchQuery({
-              queryKey: ['quizzes'],
-              queryFn: async () => {
-                try {
-                  const { getQuizzes } = await import('@/services/quiz');
-                  return getQuizzes();
-                } catch (error) {
-                  console.error('Error prefetching quizzes:', error);
-                  return { success: false, message: 'Failed to fetch quizzes' };
-                }
-              },
-              retry: 1
-            });
-            
-            console.log('Quiz data initialized and prefetched');
-          }
-        } catch (initError) {
-          console.warn('Database initialization warning:', initError);
-          // Continue despite the error
-        }
+        // Prefetch quizzes data
+        queryClient.prefetchQuery({
+          queryKey: ['quizzes'],
+          queryFn: async () => {
+            try {
+              const { getQuizzes } = await import('@/services/quiz');
+              return getQuizzes();
+            } catch (error) {
+              console.error('Error prefetching quizzes:', error);
+              return { success: false, message: 'Failed to fetch quizzes' };
+            }
+          },
+          retry: 1
+        });
       } catch (error) {
         console.error('Error setting up database:', error);
         // We won't show an error toast during initialization to avoid confusion
