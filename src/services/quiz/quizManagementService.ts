@@ -1,5 +1,6 @@
 
-import { executeSql, sqlEscape } from '../apiService';
+import { executeSql } from '../apiService';
+import { sqlEscape } from '../api/sqlService'; // Fixed import path for sqlEscape
 import { ServiceResponse, Quiz } from './quizTypes';
 
 // Function to create a new quiz
