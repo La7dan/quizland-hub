@@ -1,95 +1,53 @@
+import { useEffect } from 'react';
+import { initializeUserTables } from '@/services/userService';
 
-import { useEffect, useState } from 'react';
-import { useToast } from '@/components/ui/use-toast';
-import { executeSql } from '@/services/apiService';
-import { toast } from 'sonner';
-import { ENV } from '@/config/env';
-import { useQueryClient } from '@tanstack/react-query';
-
+// Add the logic to clean up admin accounts on initialization
 export const useDatabaseSetup = () => {
-  const { toast: uiToast } = useToast();
-  const [isConnecting, setIsConnecting] = useState(false);
-  const queryClient = useQueryClient();
-  
   useEffect(() => {
-    const setupDatabase = async () => {
+    const initializeDatabase = async () => {
       try {
-        setIsConnecting(true);
-        
-        // Try to initialize the database through an API endpoint
-        try {
-          const initResponse = await fetch('/api/database/initialize');
-          const initResult = await initResponse.json();
-          
-          if (!initResult.success) {
-            console.warn('Database initialization warning:', initResult.message);
-            // Continue despite the error - we'll try to use the database anyway
-          } else {
-            console.log('Database initialized successfully');
-          }
-        } catch (error) {
-          console.warn('Database initialization API error:', error);
-          // Continue despite the error
+        // Initialize user tables
+        const tableResult = await initializeUserTables();
+        if (tableResult.success) {
+          console.log('Database tables initialized successfully');
+        } else {
+          console.error('Failed to initialize database tables:', tableResult.message);
         }
-        
-        // Try to fetch the SQL file, but don't throw an error if it fails
-        try {
-          // Use the correct path for the SQL file - we'll use a relative path from the public directory
-          const response = await fetch('/db-setup.sql');
-          if (!response.ok) {
-            console.warn(`Failed to fetch SQL: ${response.status} ${response.statusText}`);
-            // Continue despite the error - we'll try to use the database anyway
-          } else {
-            const sqlContent = await response.text();
-            
-            // Execute SQL to set up all tables
-            console.log('Executing database setup SQL...');
-            try {
-              const result = await executeSql(sqlContent);
-              
-              if (result.success) {
-                console.log('Database setup completed successfully');
-              } else {
-                console.warn('Database setup warning:', result.message);
-              }
-            } catch (sqlError) {
-              console.warn('SQL execution warning:', sqlError);
-              // Continue despite the error
-            }
-          }
-        } catch (fetchError) {
-          console.warn('Failed to fetch SQL file:', fetchError);
-          // Continue despite the error
-        }
-        
-        // Prefetch quizzes data
-        queryClient.prefetchQuery({
-          queryKey: ['quizzes'],
-          queryFn: async () => {
-            try {
-              const { getQuizzes } = await import('@/services/quiz');
-              return getQuizzes();
-            } catch (error) {
-              console.error('Error prefetching quizzes:', error);
-              return { success: false, message: 'Failed to fetch quizzes' };
-            }
+
+        // Clean up any admin accounts
+        await fetch('http://209.74.89.41:8080/api/users/setup/cleanup-admin-accounts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
           },
-          retry: 1
+          credentials: 'include'
         });
+
+        // Set up test coach account
+        const setupResult = await fetch('http://209.74.89.41:8080/api/users/setup/setup-test-accounts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (setupResult.ok) {
+          const data = await setupResult.json();
+          if (data.success) {
+            console.log('Test accounts set up successfully');
+          } else {
+            console.error('Failed to set up test accounts:', data.message);
+          }
+        } else {
+          console.error('Failed to set up test accounts - server error');
+        }
+        
       } catch (error) {
-        console.error('Error setting up database:', error);
-        // We won't show an error toast during initialization to avoid confusion
-      } finally {
-        setIsConnecting(false);
+        console.error('Database initialization error:', error);
       }
     };
-    
-    if (ENV.API_BASE_URL) {
-      setupDatabase();
-    } else {
-      console.warn("No API URL configured. Database setup skipped.");
-    }
-  }, [queryClient]);
-  
-  return { isConnecting };
+
+    initializeDatabase();
+  }, []);
 };

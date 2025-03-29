@@ -18,7 +18,6 @@ interface LoginFormProps {
   rememberMe: boolean;
   setRememberMe: (value: boolean) => void;
   onSubmit: React.FormEventHandler<HTMLFormElement>;
-  loginWithAdminCredentials?: () => Promise<void>;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({
@@ -29,8 +28,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   isLoggingIn,
   rememberMe,
   setRememberMe,
-  onSubmit,
-  loginWithAdminCredentials
+  onSubmit
 }) => {
   return (
     <form onSubmit={onSubmit} className="space-y-5">
@@ -125,21 +123,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
           </div>
         )}
       </Button>
-      
-      {loginWithAdminCredentials && (
-        <Button 
-          type="button" 
-          variant="outline"
-          className="w-full py-2 h-11 mt-2"
-          onClick={() => loginWithAdminCredentials()}
-          disabled={isLoggingIn || lockoutTime !== null}
-        >
-          <div className="flex items-center justify-center">
-            <LogIn className="mr-2 h-5 w-5" />
-            <span>Quick Login (admin)</span>
-          </div>
-        </Button>
-      )}
     </form>
   );
 };

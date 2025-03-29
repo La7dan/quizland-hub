@@ -28,23 +28,6 @@ router.post('/setup-test-accounts', async (req, res) => {
       console.log('Test coach account already exists');
     }
     
-    // Create test admin account if it doesn't exist
-    const adminExists = await client.query('SELECT id FROM users WHERE username = $1', ['admin']);
-    
-    if (adminExists.rows.length === 0) {
-      // Hash the password
-      const hashedPassword = await bcrypt.hash('admin123', 10);
-      
-      await client.query(
-        `INSERT INTO users (username, password, email, role) 
-         VALUES ($1, $2, $3, $4)`,
-        ['admin', hashedPassword, 'admin@example.com', 'super_admin']
-      );
-      console.log('Test admin account created');
-    } else {
-      console.log('Test admin account already exists');
-    }
-    
     // Get all users for debugging
     const allUsers = await client.query('SELECT id, username, email, role FROM users');
     console.log('All users in database:', allUsers.rows);
@@ -81,6 +64,40 @@ router.get('/list-all', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: `Error listing users: ${error.message}` 
+    });
+  }
+});
+
+// Add a route to delete admin accounts if they exist
+router.post('/cleanup-admin-accounts', async (req, res) => {
+  try {
+    const client = await pool.connect();
+    
+    // Delete any admin or super_admin accounts
+    const deleteResult = await client.query(
+      `DELETE FROM users WHERE role = 'super_admin' OR username = 'admin' RETURNING username, role`
+    );
+    
+    client.release();
+    
+    if (deleteResult.rows.length > 0) {
+      console.log('Deleted admin accounts:', deleteResult.rows);
+      res.json({
+        success: true,
+        message: 'Admin accounts deleted successfully',
+        deletedAccounts: deleteResult.rows
+      });
+    } else {
+      res.json({
+        success: true,
+        message: 'No admin accounts found to delete'
+      });
+    }
+  } catch (error) {
+    console.error('Error deleting admin accounts:', error);
+    res.status(500).json({
+      success: false,
+      message: `Error deleting admin accounts: ${error.message}`
     });
   }
 });

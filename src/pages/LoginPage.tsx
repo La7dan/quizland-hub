@@ -22,8 +22,7 @@ const LoginPage = () => {
     isSuperAdmin,
     isAdmin,
     user,
-    from,
-    loginWithAdminCredentials
+    from
   } = useLoginForm();
   
   const isMobile = useIsMobile();
@@ -67,7 +66,6 @@ const LoginPage = () => {
             rememberMe={rememberMe}
             setRememberMe={setRememberMe}
             onSubmit={handleSubmit(onSubmit)}
-            loginWithAdminCredentials={loginWithAdminCredentials}
           />
         </div>
       </div>
