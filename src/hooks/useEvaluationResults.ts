@@ -68,6 +68,7 @@ export const useEvaluationResults = () => {
       console.log('Fetching evaluation results for:', { memberCode, coachId, evaluationDate });
       
       // Build the SQL query based on whether evaluationDate is provided
+      // Make sure all column references use table aliases
       let query = `
         SELECT e.id, e.status, e.nominated_at, e.evaluation_date, e.evaluation_result,
                m.name as member_name, m.member_id as member_code,
@@ -75,18 +76,25 @@ export const useEvaluationResults = () => {
         FROM evaluations e
         JOIN members m ON e.member_id = m.id
         JOIN users u ON e.coach_id = u.id
-        WHERE LOWER(m.member_id) = LOWER('${memberCode.trim()}')
-        AND e.coach_id = ${coachId}`;
+        WHERE LOWER(m.member_id) = LOWER($1)
+        AND e.coach_id = $2`;
+      
+      // Parameters to be passed to the query
+      const params = [memberCode.trim(), coachId];
       
       // Add date filter if provided
       if (evaluationDate) {
-        query += ` AND e.evaluation_date = '${evaluationDate}'`;
+        query += ` AND e.evaluation_date = $3`;
+        params.push(evaluationDate);
       }
       
       // Complete the query with ordering
       query += ` ORDER BY e.evaluation_date DESC LIMIT 1`;
       
-      const result = await executeSql(query, { isPublicQuery: true });
+      const result = await executeSql(query, { 
+        params: params,
+        isPublicQuery: true 
+      });
       
       if (!result.success) {
         console.error('Error fetching evaluation:', result.message);
