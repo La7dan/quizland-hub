@@ -32,11 +32,14 @@ router.post('/login', async (req, res) => {
         if (adminResult.rows.length === 0) {
           console.log('Creating default admin account...');
           
+          // Hash the password for the admin account
+          const hashedPassword = await bcrypt.hash('admin123', 10);
+          
           const insertResult = await client.query(
             `INSERT INTO users (username, password, email, role) 
              VALUES ($1, $2, $3, $4) 
              RETURNING id, username, email, role`,
-            ['admin', 'admin123', 'admin@example.com', 'super_admin']
+            ['admin', hashedPassword, 'admin@example.com', 'super_admin']
           );
           
           adminUser = insertResult.rows[0];
@@ -87,45 +90,45 @@ router.post('/login', async (req, res) => {
     // Check if password matches
     let passwordMatch = false;
     
-    // For bcrypt passwords (using try-catch to handle potential errors with bcrypt)
-    if (bcrypt.compareSync) {
-      try {
-        // Try using bcrypt for password that might be hashed
+    try {
+      // First try using bcrypt to compare
+      if (bcrypt.compareSync) {
         passwordMatch = await bcrypt.compare(password, userData.password);
-      } catch (err) {
-        console.warn('Error comparing passwords with bcrypt, falling back to direct comparison:', err);
-        // Fallback to direct comparison
+      }
+      
+      // If bcrypt fails or doesn't match, try direct comparison for backward compatibility
+      if (!passwordMatch) {
         passwordMatch = userData.password === password;
       }
-    } else {
-      // Direct comparison as fallback
-      passwordMatch = userData.password === password;
+      
+      if (!passwordMatch) {
+        console.log(`Failed login attempt for user: ${username}`);
+        return res.status(401).json({ success: false, message: 'Invalid password' });
+      }
+      
+      // Set user ID in session
+      req.session.userId = userData.id;
+      
+      // If "Remember Me" is checked, extend the session/cookie lifetime
+      if (rememberMe) {
+        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+        console.log(`Extended session lifetime to 30 days for user ${username}`);
+      }
+      
+      // Create a clean user object without the password
+      const cleanUserData = {
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        role: userData.role
+      };
+      
+      console.log(`Successful login for user: ${username}, role: ${userData.role}`);
+      res.json({ success: true, user: cleanUserData });
+    } catch (err) {
+      console.error('Error comparing passwords:', err);
+      return res.status(500).json({ success: false, message: 'Server error during password verification' });
     }
-    
-    if (!passwordMatch) {
-      console.log(`Failed login attempt for user: ${username}`);
-      return res.status(401).json({ success: false, message: 'Invalid password' });
-    }
-    
-    // Set user ID in session
-    req.session.userId = userData.id;
-    
-    // If "Remember Me" is checked, extend the session/cookie lifetime
-    if (rememberMe) {
-      req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
-      console.log(`Extended session lifetime to 30 days for user ${username}`);
-    }
-    
-    // Create a clean user object without the password
-    const cleanUserData = {
-      id: userData.id,
-      username: userData.username,
-      email: userData.email,
-      role: userData.role
-    };
-    
-    console.log(`Successful login for user: ${username}, role: ${userData.role}`);
-    res.json({ success: true, user: cleanUserData });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ success: false, message: 'Server error during login' });
@@ -234,39 +237,44 @@ router.post('/debug-login', async (req, res) => {
     // Check if password matches
     let passwordMatch = false;
     
-    // For bcrypt passwords (using try-catch to handle potential errors with bcrypt)
-    if (bcrypt.compareSync) {
-      try {
+    try {
+      // Try using bcrypt for password that might be hashed
+      if (bcrypt.compareSync) {
         passwordMatch = await bcrypt.compare(password, userData.password);
-      } catch (err) {
-        console.warn('Error comparing passwords with bcrypt, falling back to direct comparison:', err);
+      }
+      
+      // If bcrypt doesn't match, try direct comparison for legacy accounts
+      if (!passwordMatch) {
         passwordMatch = userData.password === password;
       }
-    } else {
-      // Direct comparison as fallback
-      passwordMatch = userData.password === password;
-    }
-    
-    if (!passwordMatch) {
-      return res.status(401).json({ 
+      
+      if (!passwordMatch) {
+        return res.status(401).json({ 
+          success: false, 
+          message: `Password mismatch for user '${username}'` 
+        });
+      }
+      
+      // Create a clean user object without the password
+      const cleanUserData = {
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        role: userData.role
+      };
+      
+      res.json({ 
+        success: true, 
+        user: cleanUserData,
+        message: 'User verified successfully'
+      });
+    } catch (err) {
+      console.error('Error comparing passwords:', err);
+      return res.status(500).json({ 
         success: false, 
-        message: `Password mismatch for user '${username}'` 
+        message: `Error verifying password: ${err.message}` 
       });
     }
-    
-    // Create a clean user object without the password
-    const cleanUserData = {
-      id: userData.id,
-      username: userData.username,
-      email: userData.email,
-      role: userData.role
-    };
-    
-    res.json({ 
-      success: true, 
-      user: cleanUserData,
-      message: 'User verified successfully'
-    });
   } catch (error) {
     console.error('Login debug error:', error);
     res.status(500).json({ 

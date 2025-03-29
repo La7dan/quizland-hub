@@ -8,7 +8,6 @@ export const AUTH_API_URL = `${ENV.API_BASE_URL}/auth`;
 export const checkAuthStatus = async (): Promise<{ authenticated: boolean; user: User | null }> => {
   try {
     console.log('Checking authentication status...');
-    console.log('Using auth API URL:', AUTH_API_URL);
     
     const response = await fetch(`${AUTH_API_URL}/check`, {
       credentials: 'include', // Important for cookies
@@ -23,15 +22,8 @@ export const checkAuthStatus = async (): Promise<{ authenticated: boolean; user:
     
     // Check if the request was successful
     if (response.status === 401 || response.status === 403) {
-      console.log('User is not authenticated (401/403 response)', response.status);
+      console.log('User is not authenticated (401/403 response)');
       return { authenticated: false, user: null };
-    }
-    
-    try {
-      // Try to get headers
-      console.log('Auth check response headers:', [...response.headers.entries()]);
-    } catch (e) {
-      console.warn('Could not log response headers:', e);
     }
     
     // Check the content type to avoid parsing HTML as JSON
@@ -42,13 +34,9 @@ export const checkAuthStatus = async (): Promise<{ authenticated: boolean; user:
       
       if (data.authenticated && data.user) {
         return { authenticated: true, user: data.user };
-      } else if (data.success === false && data.message === "Authentication required") {
-        // This is the specific response we're getting from the server
-        console.log('Auth check received "Authentication required" message');
-        return { authenticated: false, user: null };
       }
     } else {
-      console.warn('Server returned non-JSON response for auth check. This usually means the server is not running or incorrect API URL configuration.');
+      console.warn('Server returned non-JSON response for auth check');
     }
   } catch (error) {
     console.error('Error checking authentication:', error);
@@ -64,7 +52,6 @@ export const loginUser = async (
 ): Promise<{ success: boolean; user: User | null; message?: string }> => {
   try {
     console.log('Login attempt for user:', username, 'Remember me:', rememberMe);
-    console.log('Using auth API URL:', AUTH_API_URL);
     
     // Call the server's login API endpoint
     const response = await fetch(`${AUTH_API_URL}/login`, {
@@ -80,22 +67,15 @@ export const loginUser = async (
     // Log complete response for debugging
     console.log('Login response status:', response.status);
     
-    try {
-      // Try to get headers
-      console.log('Login response headers:', [...response.headers.entries()]);
-    } catch (e) {
-      console.warn('Could not log response headers:', e);
-    }
-    
     // Check the content type to avoid parsing HTML as JSON
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
-      console.error('Server returned non-JSON response. This usually means the server is not running or incorrect API URL configuration.');
+      console.error('Server returned non-JSON response');
       console.log('Response body:', await response.text());
       return { 
         success: false, 
         user: null, 
-        message: "Server error: Received non-JSON response. Please check server connection at " + AUTH_API_URL
+        message: "Server error: Received non-JSON response"
       };
     }
     
@@ -112,16 +92,6 @@ export const loginUser = async (
       }
       
       console.error('Login failed with status:', response.status, errorMessage);
-      
-      // Provide more helpful message for default admin account
-      if (username === 'admin' && response.status === 401) {
-        return { 
-          success: false, 
-          user: null, 
-          message: "Login failed. For the default admin account, ensure the username is 'admin' and password is 'admin123'"
-        };
-      }
-      
       return { success: false, user: null, message: errorMessage };
     }
     
@@ -137,7 +107,7 @@ export const loginUser = async (
     }
   } catch (error) {
     console.error('Login error:', error);
-    const errorMessage = "An error occurred during login. Please verify the server is running at " + AUTH_API_URL;
+    const errorMessage = "An error occurred during login. Please verify the server is running.";
     return { success: false, user: null, message: errorMessage };
   }
 };

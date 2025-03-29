@@ -23,9 +23,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (authenticated && user) {
           setUser(user);
           console.log('User authenticated on app load:', user);
+        } else {
+          console.log('No authenticated user found on app load');
+          setUser(null);
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -48,6 +52,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let welcomeMsg = `Welcome back, ${result.user.username}`;
         if (result.user.role === 'super_admin' || result.user.role === 'admin') {
           welcomeMsg += ". You've been redirected to the admin panel.";
+        } else if (result.user.role === 'coach') {
+          welcomeMsg += ". You've been redirected to the coach dashboard.";
         }
         
         toast({
@@ -78,7 +84,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      // We removed the call to cleanDummyData to preserve quiz data
       const result = await logoutUser();
       
       // Regardless of API result, clear the user state
@@ -103,6 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Fix the isAdmin and isSuperAdmin calculations
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
   const isSuperAdmin = user?.role === 'super_admin';
+  const isCoach = user?.role === 'coach';
 
   const value = {
     user,
@@ -111,7 +117,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     isAuthenticated: !!user,
     isSuperAdmin,
-    isAdmin
+    isAdmin,
+    isCoach
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
