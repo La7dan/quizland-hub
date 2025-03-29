@@ -1,9 +1,18 @@
 
-import { MemberResponse } from '@/services/members/memberService';
+import { useQuery } from '@tanstack/react-query';
+import { getMembers } from '@/services/members/memberService';
+import { format } from 'date-fns';
 
 export const useMemberExport = () => {
-  const exportMembersToCSV = (membersData?: MemberResponse) => {
-    if (!membersData?.members || membersData.members.length === 0) {
+  const { data } = useQuery({
+    queryKey: ['members'],
+    queryFn: getMembers
+  });
+
+  const exportMembersToCSV = () => {
+    const members = data?.members || [];
+    
+    if (members.length === 0) {
       console.log('No members to export');
       return;
     }
@@ -15,17 +24,19 @@ export const useMemberExport = () => {
       'Level Code',
       'Level Name',
       'Classes Count',
-      'Coach'
+      'Coach',
+      'Evaluation Date'
     ];
     
     // Map the data
-    const csvData = membersData.members.map((member) => [
+    const csvData = members.map((member) => [
       member.member_id || '',
       member.name || '',
       member.level_code || '',
       member.level_name || '',
       member.classes_count?.toString() || '0',
-      member.coach_name || ''
+      member.coach_name || '',
+      member.evaluation_date ? format(new Date(member.evaluation_date), 'yyyy-MM-dd') : ''
     ]);
     
     // Combine headers and data
@@ -44,6 +55,7 @@ export const useMemberExport = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return { exportMembersToCSV };
