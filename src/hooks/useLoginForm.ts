@@ -28,6 +28,7 @@ export interface UseLoginFormReturn {
   lockoutTime: number | null;
   isAuthenticated: boolean;
   isSuperAdmin: boolean;
+  isAdmin: boolean;
   user: User | null;
   from: string;
   loginWithAdminCredentials: () => Promise<void>;
@@ -41,28 +42,24 @@ export const useLoginForm = (): UseLoginFormReturn => {
   const [rememberMe, setRememberMe] = useState<boolean>(false);
   const [loginAttempts, setLoginAttempts] = useState<number>(0);
   const [lockoutTime, setLockoutTime] = useState<number | null>(null);
-  const { login, isAuthenticated, isSuperAdmin, user } = useAuth();
+  const { login, isAuthenticated, isSuperAdmin, isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get the redirect path from location state or default based on user role
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || 
-               (isSuperAdmin ? '/admin' : 
+               (isSuperAdmin || isAdmin ? '/admin' : 
                (user?.role === 'coach' ? '/coach' : '/'));
+
+  console.log('LoginPage - Auth status:', { isAuthenticated, userRole: user?.role, isAdmin, isSuperAdmin, from });
   
-  console.log('LoginPage - Auth status:', { isAuthenticated, userRole: user?.role, from });
-  
-  // Load login history and attempt data from localStorage
   useEffect(() => {
     try {
-      // Fetch last login info
       const storedLoginHistory = localStorage.getItem('loginHistory');
       if (storedLoginHistory) {
         const parsedHistory = JSON.parse(storedLoginHistory) as LoginHistory;
         setLastLogin(parsedHistory);
       }
       
-      // Get stored login attempts
       const storedAttempts = localStorage.getItem('loginAttempts');
       if (storedAttempts) {
         const attempts = parseInt(storedAttempts, 10);
@@ -71,7 +68,6 @@ export const useLoginForm = (): UseLoginFormReturn => {
         }
       }
       
-      // Check lockout status
       const storedLockoutTime = localStorage.getItem('lockoutUntil');
       if (storedLockoutTime) {
         const lockoutUntil = parseInt(storedLockoutTime, 10);
@@ -79,11 +75,9 @@ export const useLoginForm = (): UseLoginFormReturn => {
           const now = Date.now();
           
           if (lockoutUntil > now) {
-            // Still in lockout period
             const remainingTime = Math.ceil((lockoutUntil - now) / 1000);
             setLockoutTime(remainingTime);
             
-            // Set timer to update remaining lockout time
             const timer = setInterval(() => {
               setLockoutTime(prev => {
                 if (prev && prev > 1) {
@@ -98,14 +92,12 @@ export const useLoginForm = (): UseLoginFormReturn => {
             
             return () => clearInterval(timer);
           } else {
-            // Lockout period has expired
             localStorage.removeItem('lockoutUntil');
           }
         }
       }
     } catch (error) {
       console.error('Error loading login data from localStorage:', error);
-      // Clear potentially corrupted data
       localStorage.removeItem('loginHistory');
       localStorage.removeItem('loginAttempts');
       localStorage.removeItem('lockoutUntil');
@@ -113,14 +105,11 @@ export const useLoginForm = (): UseLoginFormReturn => {
   }, []);
 
   const handleLoginSuccess = (): void => {
-    // Reset login attempts on successful login
     setLoginAttempts(0);
     localStorage.removeItem('loginAttempts');
     
     try {
-      // Store login time and approximate location on successful login
       const now = new Date().toLocaleString();
-      // In a real app, you might use a geolocation API here
       const loginInfo: LoginHistory = {
         time: now,
         location: 'Your current location'
@@ -134,14 +123,12 @@ export const useLoginForm = (): UseLoginFormReturn => {
 
   const handleLoginFailure = (): void => {
     try {
-      // Increment failed login attempts
       const newAttempts = loginAttempts + 1;
       setLoginAttempts(newAttempts);
       localStorage.setItem('loginAttempts', newAttempts.toString());
       
-      // Check if we should lock the account (after 3 failed attempts)
       if (newAttempts >= 3) {
-        const lockoutDuration = 30; // seconds
+        const lockoutDuration = 30;
         const lockoutUntil = Date.now() + (lockoutDuration * 1000);
         
         localStorage.setItem('lockoutUntil', lockoutUntil.toString());
@@ -161,7 +148,6 @@ export const useLoginForm = (): UseLoginFormReturn => {
     try {
       setLoginError(null);
       
-      // Check if account is locked out
       if (lockoutTime !== null) {
         setLoginError(`Account is temporarily locked. Please try again in ${lockoutTime} seconds.`);
         return;
@@ -171,7 +157,7 @@ export const useLoginForm = (): UseLoginFormReturn => {
       
       console.log('Login form submitted:', {
         username: data.username,
-        password: '********', // Don't log the actual password
+        password: '********',
         rememberMe
       });
       
@@ -181,8 +167,6 @@ export const useLoginForm = (): UseLoginFormReturn => {
       
       if (success) {
         handleLoginSuccess();
-        // Login was successful - the redirect will happen automatically 
-        // when the AuthContext sets the user state
       } else {
         handleLoginFailure();
       }
@@ -198,7 +182,6 @@ export const useLoginForm = (): UseLoginFormReturn => {
     try {
       setLoginError(null);
       
-      // Check if account is locked out
       if (lockoutTime !== null) {
         setLoginError(`Account is temporarily locked. Please try again in ${lockoutTime} seconds.`);
         return;
@@ -214,8 +197,6 @@ export const useLoginForm = (): UseLoginFormReturn => {
       
       if (success) {
         handleLoginSuccess();
-        // Login was successful - the redirect will happen automatically 
-        // when the AuthContext sets the user state
       } else {
         handleLoginFailure();
       }
@@ -240,6 +221,7 @@ export const useLoginForm = (): UseLoginFormReturn => {
     lockoutTime,
     isAuthenticated,
     isSuperAdmin,
+    isAdmin,
     user,
     from,
     loginWithAdminCredentials

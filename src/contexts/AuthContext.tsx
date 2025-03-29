@@ -22,6 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { authenticated, user } = await checkAuthStatus();
         if (authenticated && user) {
           setUser(user);
+          console.log('User authenticated on app load:', user);
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
@@ -40,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const result = await loginUser(username, password, rememberMe);
       
       if (result.success && result.user) {
+        console.log('Login successful, user data:', result.user);
         setUser(result.user);
         
         // Show different message based on user role
@@ -98,7 +100,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const isAdmin = user?.role === 'super_admin' || user?.role === 'admin';
+  // Fix the isAdmin and isSuperAdmin calculations
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
   const isSuperAdmin = user?.role === 'super_admin';
 
   const value = {

@@ -1,4 +1,3 @@
-
 import express from 'express';
 import pool from '../config/database.js';
 import bcrypt from 'bcrypt';
@@ -31,31 +30,12 @@ router.post('/login', async (req, res) => {
     const userData = result.rows[0];
     
     // Check if this is the default admin account (unsafe for production but useful for demo)
-    if (username === 'admin' && password === 'admin123' && userData.username === 'admin') {
-      // Set user ID in session
-      req.session.userId = userData.id;
-      
-      // If "Remember Me" is checked, extend the session/cookie lifetime
-      if (rememberMe) {
-        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
-        console.log(`Extended session lifetime to 30 days for user ${username}`);
-      }
-      
-      // Create a clean user object without the password
-      const cleanUserData = {
-        id: userData.id,
-        username: userData.username,
-        email: userData.email,
-        role: userData.role
-      };
-      
-      return res.json({ success: true, user: cleanUserData });
-    }
+    const isDefaultAdmin = username === 'admin' && password === 'admin123' && userData.username === 'admin';
     
-    // For all other users, verify the password using proper password comparison
-    let passwordMatch = false;
+    // For all users, verify the password
+    let passwordMatch = isDefaultAdmin; // Default admin bypasses normal password check
     
-    if (bcrypt.compareSync) {
+    if (!isDefaultAdmin && bcrypt.compareSync) {
       // If bcrypt is properly installed, use it to compare
       try {
         passwordMatch = await bcrypt.compare(password, userData.password);
@@ -64,7 +44,7 @@ router.post('/login', async (req, res) => {
         // Fallback to direct comparison if bcrypt fails
         passwordMatch = userData.password === password;
       }
-    } else {
+    } else if (!isDefaultAdmin) {
       // Direct comparison as fallback (not secure but allows testing)
       passwordMatch = userData.password === password;
     }

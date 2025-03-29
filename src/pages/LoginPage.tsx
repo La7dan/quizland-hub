@@ -20,6 +20,7 @@ const LoginPage = () => {
     lockoutTime,
     isAuthenticated,
     isSuperAdmin,
+    isAdmin,
     user,
     from
   } = useLoginForm();
@@ -27,14 +28,14 @@ const LoginPage = () => {
   const isMobile = useIsMobile();
   
   // If already authenticated and trying to access admin panel
-  if (isAuthenticated && from.includes('/admin') && !isSuperAdmin) {
+  if (isAuthenticated && from.includes('/admin') && !isAdmin) {
     return <Navigate to="/" replace />;
   }
   
   // If already authenticated, redirect to the appropriate page
   if (isAuthenticated) {
-    // If super admin, redirect to admin panel
-    if (isSuperAdmin) {
+    // If super admin or admin, redirect to admin panel
+    if (isSuperAdmin || (user?.role === 'admin')) {
       return <Navigate to="/admin" replace />;
     }
     // If coach, redirect to coach dashboard
