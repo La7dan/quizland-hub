@@ -13,7 +13,8 @@ export const useBulkDeleteUsers = ({ onRefresh, onSuccess }: UseBulkDeleteUsersO
 
   const bulkDeleteUsersMutation = useMutation({
     mutationFn: async (ids: number[]) => {
-      const response = await fetch('/api/users/bulk-delete', {
+      // Fixed API URL to include port 8080
+      const response = await fetch('http://209.74.89.41:8080/api/users/bulk-delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
