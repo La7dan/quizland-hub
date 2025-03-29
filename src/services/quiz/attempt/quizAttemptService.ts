@@ -36,7 +36,7 @@ export const saveQuizAttempt = async (attemptData: Partial<QuizAttempt>): Promis
         NOW()
       )
       RETURNING id;
-    `);
+    `, { isPublicQuery: true });
 
     console.log('Save quiz attempt result:', result);
 
@@ -70,7 +70,7 @@ export const getQuizAttemptsByMember = async (memberId: string): Promise<Service
       JOIN quizzes q ON a.quiz_id = q.id
       WHERE a.member_id = ${sqlEscape.string(memberId)}
       ORDER BY a.attempt_date DESC;
-    `);
+    `, { isPublicQuery: true });
     
     console.log('Member attempts result:', result);
     
@@ -103,7 +103,7 @@ export const getQuizAttemptsByQuiz = async (quizId: number): Promise<ServiceResp
       FROM quiz_attempts a
       WHERE a.quiz_id = ${sqlEscape.number(quizId)}
       ORDER BY a.attempt_date DESC;
-    `);
+    `, { isPublicQuery: true });
     
     console.log('Quiz attempts result:', result);
     
@@ -139,7 +139,7 @@ export const getQuizAttempts = async (): Promise<ServiceResponse<{ attempts: Qui
       LEFT JOIN quizzes q ON a.quiz_id = q.id
       LEFT JOIN members m ON a.member_id = m.member_id
       ORDER BY a.attempt_date DESC;
-    `);
+    `, { isPublicQuery: true });
     
     console.log('All attempts result:', result);
     
