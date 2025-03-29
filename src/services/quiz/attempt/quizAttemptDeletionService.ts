@@ -2,23 +2,17 @@
 import { executeSql, sqlEscape } from '../../apiService';
 import { ServiceResponse } from '../quizTypes';
 
-/**
- * Delete a single quiz attempt by ID
- */
-export const deleteQuizAttempt = async (attemptId: number): Promise<ServiceResponse> => {
+// Function to delete a quiz attempt by ID
+export const deleteQuizAttempt = async (id: number): Promise<ServiceResponse> => {
   try {
-    if (!attemptId) {
-      return {
-        success: false,
-        message: 'Attempt ID is required'
-      };
-    }
-
+    console.log('Deleting quiz attempt:', id);
     const result = await executeSql(`
-      DELETE FROM quiz_attempts 
-      WHERE id = ${sqlEscape.number(attemptId)}
+      DELETE FROM quiz_attempts
+      WHERE id = ${sqlEscape.number(id)}
       RETURNING id;
-    `);
+    `, { isPublicQuery: true });
+    
+    console.log('Delete quiz attempt result:', result);
     
     if (result.success && result.rows && result.rows.length > 0) {
       return {
@@ -28,7 +22,7 @@ export const deleteQuizAttempt = async (attemptId: number): Promise<ServiceRespo
     } else {
       return {
         success: false,
-        message: 'Failed to delete quiz attempt or attempt not found'
+        message: result.message || 'Failed to delete quiz attempt'
       };
     }
   } catch (error) {
@@ -40,32 +34,34 @@ export const deleteQuizAttempt = async (attemptId: number): Promise<ServiceRespo
   }
 };
 
-/**
- * Delete multiple quiz attempts by IDs
- */
-export const bulkDeleteQuizAttempts = async (attemptIds: number[]): Promise<ServiceResponse> => {
+// Function to delete multiple quiz attempts
+export const bulkDeleteQuizAttempts = async (ids: number[]): Promise<ServiceResponse> => {
   try {
-    if (!attemptIds || !attemptIds.length) {
+    if (!ids || ids.length === 0) {
       return {
         success: false,
-        message: 'No attempt IDs provided'
+        message: 'No attempt IDs provided for deletion'
       };
     }
-
-    // Format IDs for SQL query
-    const formattedIds = attemptIds.join(', ');
-
+    
+    console.log('Deleting multiple quiz attempts:', ids);
+    
+    // Convert array to SQL-friendly format
+    const idList = ids.map(id => sqlEscape.number(id)).join(', ');
+    
     const result = await executeSql(`
-      DELETE FROM quiz_attempts 
-      WHERE id IN (${formattedIds})
+      DELETE FROM quiz_attempts
+      WHERE id IN (${idList})
       RETURNING id;
-    `);
+    `, { isPublicQuery: true });
+    
+    console.log('Bulk delete quiz attempts result:', result);
     
     if (result.success) {
       return {
         success: true,
-        message: `${result.rowCount || 0} quiz attempts deleted successfully`,
-        count: result.rowCount || 0
+        count: result.rows ? result.rows.length : 0,
+        message: `${result.rows ? result.rows.length : 0} quiz attempts deleted successfully`
       };
     } else {
       return {

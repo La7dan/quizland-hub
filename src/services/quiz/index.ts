@@ -4,3 +4,4 @@ export * from './quizManagementService';
 export * from './quizAttemptService';
 export * from './question';
 export * from './quizService';
+export * from './attempt';
