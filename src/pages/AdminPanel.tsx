@@ -2,9 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
-import DBHeader from '@/components/DBHeader';
-import CreateTableDialog from '@/components/CreateTableDialog';
-import DatabaseActions from '@/components/DatabaseActions';
+import DatabaseSetupButton from '@/components/DatabaseSetupButton';
 import SQLExecuteDialog from '@/components/SQLExecuteDialog';
 import UserManagement from '@/components/UserManagement';
 import SQLViewerDialog from '@/components/SQLViewerDialog';
@@ -13,12 +11,10 @@ import QuizAttempts from '@/components/QuizAttempts';
 import MemberManagement from '@/components/MemberManagement';
 import MembersTable from '@/components/MembersTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import DatabaseSetupButton from '@/components/DatabaseSetupButton';
 import EvaluationManagement from '@/components/evaluations/EvaluationManagement';
 
 export default function AdminPanel() {
   const { user, isAdmin, isSuperAdmin } = useAuth();
-  const [isCreateTableDialogOpen, setIsCreateTableDialogOpen] = useState(false);
   const [isSQLDialogOpen, setIsSQLDialogOpen] = useState(false);
   const [isSQLViewerOpen, setIsSQLViewerOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -52,18 +48,11 @@ export default function AdminPanel() {
           </p>
         </div>
 
-        <div className="flex justify-between items-center mb-4">
-          <DBHeader 
-            onOpenCreateTable={() => setIsCreateTableDialogOpen(true)}
-            onOpenSQLDialog={() => setIsSQLDialogOpen(true)}
-          />
-          <DatabaseSetupButton />
-        </div>
-
         <div className="flex justify-end mb-2">
+          <DatabaseSetupButton />
           <button
             onClick={() => setIsSQLViewerOpen(true)}
-            className="text-sm bg-primary hover:bg-primary/80 text-primary-foreground px-3 py-1 rounded-md transition-colors flex items-center gap-2"
+            className="text-sm bg-primary hover:bg-primary/80 text-primary-foreground px-3 py-1 rounded-md transition-colors flex items-center gap-2 ml-2"
           >
             <span className="hidden sm:inline">View SQL Setup File</span>
             <span className="sm:hidden">SQL Setup</span>
@@ -110,12 +99,6 @@ export default function AdminPanel() {
             </TabsContent>
           </Tabs>
         </div>
-
-        <CreateTableDialog
-          open={isCreateTableDialogOpen}
-          onOpenChange={setIsCreateTableDialogOpen}
-          onTableCreated={handleRefresh}
-        />
         
         <SQLExecuteDialog
           open={isSQLDialogOpen}
