@@ -1,9 +1,6 @@
 
 import { ENV } from '@/config/env';
 
-// Get API base URL from environment config
-const API_BASE_URL = ENV.API_BASE_URL;
-
 // Base API call function
 export const callApi = async <T>(
   endpoint: string, 
@@ -24,7 +21,9 @@ export const callApi = async <T>(
     // Ensure endpoint doesn't start with a slash to avoid double slashes
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
     
-    console.log(`Making ${method} request to: ${API_BASE_URL}/${cleanEndpoint}`);
+    // Use relative URL to avoid port issues
+    const url = `/api/${cleanEndpoint}`;
+    console.log(`Making ${method} request to: ${url}`);
     
     // Add timeout to fetch request
     const controller = new AbortController();
@@ -32,7 +31,7 @@ export const callApi = async <T>(
     options.signal = controller.signal;
     
     try {
-      const response = await fetch(`${API_BASE_URL}/${cleanEndpoint}`, options);
+      const response = await fetch(url, options);
       clearTimeout(timeoutId);
       
       if (!response.ok) {
