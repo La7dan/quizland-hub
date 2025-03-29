@@ -11,7 +11,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, AlertCircle, User, Trash, UserMinus, Search, ArrowDown, ArrowUp, CircleDot } from 'lucide-react';
+import { RefreshCw, AlertCircle, User, Trash, UserMinus, Search, ArrowDown, ArrowUp, CircleDot, Download } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -171,6 +171,46 @@ const MembersTable: React.FC<MembersTableProps> = ({ onRefresh }) => {
     }
   };
 
+  const handleExportCSV = () => {
+    if (!members || members.length === 0) return;
+    
+    const headers = [
+      'Member ID',
+      'Name',
+      'Level Code',
+      'Level Name',
+      'Classes Count',
+      'Coach',
+      'Evaluation Date'
+    ];
+    
+    const csvData = members.map((member) => [
+      member.member_id || '',
+      member.name || '',
+      member.level_code || '',
+      member.level_name || '',
+      member.classes_count?.toString() || '0',
+      member.coach_name || '',
+      member.evaluation_date ? format(new Date(member.evaluation_date), 'yyyy-MM-dd') : ''
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => row.join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `members_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <TooltipProvider>
       <div className="space-y-4">
@@ -199,6 +239,16 @@ const MembersTable: React.FC<MembersTableProps> = ({ onRefresh }) => {
             >
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
+            </Button>
+            <Button
+              onClick={handleExportCSV}
+              className="flex items-center gap-1"
+              disabled={members.length === 0}
+              variant="outline"
+              size="sm"
+            >
+              <Download className="h-4 w-4" />
+              Export CSV
             </Button>
           </div>
         </div>
