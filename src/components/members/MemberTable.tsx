@@ -1,3 +1,4 @@
+
 import { Trash, CircleDot, Download } from 'lucide-react';
 import { 
   Table, 
@@ -68,7 +69,7 @@ export const MemberTable = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => exportMembersToCSV(membersData)}
+            onClick={() => exportMembersToCSV()}
             disabled={!membersData?.members || membersData.members.length === 0}
             className="flex items-center gap-1"
           >
