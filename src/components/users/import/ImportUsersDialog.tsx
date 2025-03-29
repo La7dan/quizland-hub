@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User } from '@/services/userService';
+import { User, createManyUsers } from '@/services/userService';
 import { parseExcelFile, generateSampleExcel } from './importUtils';
 
 interface ImportUsersDialogProps {
@@ -88,19 +88,28 @@ export const ImportUsersDialog = ({
     setIsProcessing(true);
     setUploadProgress(50);
     
-    // Here we would call the API to import the users
-    // For now, we'll just simulate a successful import
-    setTimeout(() => {
-      setIsProcessing(false);
-      setUploadProgress(100);
-      toast({
-        title: 'Success',
-        description: `Successfully imported ${importedUsers.length} users`,
-      });
+    try {
+      // Actually call the API to import users
+      const result = await createManyUsers(importedUsers);
       
-      onImportComplete();
-      closeDialog();
-    }, 1500);
+      if (result.success) {
+        setUploadProgress(100);
+        toast({
+          title: 'Success',
+          description: `Successfully imported ${result.count || importedUsers.length} users`,
+        });
+        onImportComplete();
+        closeDialog();
+      } else {
+        throw new Error(result.message || 'Failed to import users');
+      }
+    } catch (error) {
+      console.error('Error importing users:', error);
+      setError(`Failed to import users: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setUploadProgress(0);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const closeDialog = () => {

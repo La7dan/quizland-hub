@@ -1,13 +1,13 @@
 
 import express from 'express';
 import pool from '../../config/database.js';
-import { requireAuth } from '../../middleware/auth.js';
+import { requireAuth, requireAdmin } from '../../middleware/auth.js';
 import bcrypt from 'bcrypt';
 
 const router = express.Router();
 
 // Import multiple users at once
-router.post('/import', requireAuth, async (req, res) => {
+router.post('/import', requireAuth, requireAdmin, async (req, res) => {
   const { users } = req.body;
   
   if (!users || !Array.isArray(users) || users.length === 0) {
