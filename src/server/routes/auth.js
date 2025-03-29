@@ -1,3 +1,4 @@
+
 import express from 'express';
 import pool from '../config/database.js';
 import bcrypt from 'bcrypt';
@@ -78,6 +79,11 @@ router.post('/login', async (req, res) => {
       [username]
     );
     
+    // Print all users for debugging
+    console.log('Checking all users in the database:');
+    const allUsers = await client.query('SELECT id, username, email, role FROM users');
+    console.log(allUsers.rows);
+    
     client.release();
     
     if (result.rows.length === 0) {
@@ -86,23 +92,29 @@ router.post('/login', async (req, res) => {
     }
     
     const userData = result.rows[0];
+    console.log(`User found: ${userData.username}, role: ${userData.role}`);
     
     // Check if password matches
     let passwordMatch = false;
     
     try {
+      // Log the stored password for debugging (remove in production)
+      console.log(`Stored password for ${username}: ${userData.password.substring(0, 10)}...`);
+      console.log(`Password type: ${typeof userData.password}`);
+      
       // First try using bcrypt to compare
-      if (bcrypt.compareSync) {
+      if (userData.password.startsWith('$2')) {
+        // It's a bcrypt hash
         passwordMatch = await bcrypt.compare(password, userData.password);
-      }
-      
-      // If bcrypt fails or doesn't match, try direct comparison for backward compatibility
-      if (!passwordMatch) {
+        console.log(`bcrypt comparison result: ${passwordMatch}`);
+      } else {
+        // Plain text comparison for backward compatibility
         passwordMatch = userData.password === password;
+        console.log(`Plain text comparison result: ${passwordMatch}`);
       }
       
       if (!passwordMatch) {
-        console.log(`Failed login attempt for user: ${username}`);
+        console.log(`Failed login attempt for user: ${username} - Password mismatch`);
         return res.status(401).json({ success: false, message: 'Invalid password' });
       }
       
