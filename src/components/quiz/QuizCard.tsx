@@ -10,10 +10,11 @@ import { Badge } from '@/components/ui/badge';
 interface QuizCardProps {
   quiz: any;
   levelCodes: {[key: number]: string};
-  onDeleteClick: (quizId: number) => void;
+  onDeleteClick?: (quizId: number) => void;
+  isAdmin?: boolean;
 }
 
-export function QuizCard({ quiz, levelCodes, onDeleteClick }: QuizCardProps) {
+export function QuizCard({ quiz, levelCodes, onDeleteClick, isAdmin }: QuizCardProps) {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   
@@ -25,15 +26,12 @@ export function QuizCard({ quiz, levelCodes, onDeleteClick }: QuizCardProps) {
     navigate(`/quiz/preview/${quizId}`);
   };
 
-  // Check if user has admin privileges (super_admin or admin)
-  const isAdmin = isAuthenticated && user && (user.role === 'super_admin' || user.role === 'admin');
-
   return (
     <Card key={quiz.id} className="overflow-hidden">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <CardTitle>{quiz.title}</CardTitle>
-          {isAdmin && (
+          {isAdmin && onDeleteClick && (
             <Button 
               variant="ghost" 
               size="icon" 
