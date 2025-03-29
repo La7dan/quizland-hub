@@ -1,28 +1,19 @@
 
-import React, { useState, useEffect } from 'react';
-import { Table, TableBody } from '@/components/ui/table';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { format } from 'date-fns';
-import { exportToCSV } from './utils';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { EvaluationDisplayItem } from './types';
 
 // Components
-import EvaluationTableHeader from './EvaluationTableHeader';
-import EvaluationTableRow from './EvaluationTableRow';
-import EvaluationFilters from './EvaluationFilters';
-import BulkMarkAsPassedButton from './BulkMarkAsPassedButton';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
-import EmptyEvaluationState from './EmptyEvaluationState';
-import LoadingEvaluationState from './LoadingEvaluationState';
 import EditEvaluationDialog from './EditEvaluationDialog';
+import AuthRedirect from './list/AuthRedirect';
+import EvaluationListContainer from './list/EvaluationListContainer';
 
 // Hooks
 import { useEvaluationData, useFilterOptions } from './hooks/useEvaluationData';
 import { useEvaluationFilters } from './hooks/useEvaluationFilters';
 import { useEvaluationSelection } from './hooks/useEvaluationSelection';
 import { useEvaluationDeletion } from './hooks/useEvaluationDeletion';
-import { EvaluationDisplayItem } from './types';
 
 interface EvaluationListTabProps {
   refreshTrigger?: number;
@@ -30,20 +21,6 @@ interface EvaluationListTabProps {
 
 const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger }) => {
   const { user, isAdmin } = useAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  
-  // Redirect non-admin users
-  useEffect(() => {
-    if (!isAdmin) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to view evaluations.",
-        variant: "destructive"
-      });
-      navigate('/');
-    }
-  }, [isAdmin, navigate, toast]);
   
   // State for editing evaluations
   const [editingEvaluation, setEditingEvaluation] = useState<EvaluationDisplayItem | null>(null);
@@ -85,116 +62,38 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
     confirmDelete
   } = useEvaluationDeletion(resetSelection);
   
-  // Handle CSV export
-  const handleExportCSV = () => {
-    if (!filteredEvaluations || filteredEvaluations.length === 0) return;
-    
-    const exportData = filteredEvaluations.map((item) => ({
-      'Member Name': item.member_name || 'N/A',
-      'Member ID': item.member_code || 'N/A',
-      'Level': item.member_level || 'N/A',
-      'Status': item.status || 'N/A',
-      'Result': item.evaluation_result || 'N/A',
-      'Coach': item.coach_name || 'N/A',
-      'Nominated Date': item.nominated_at ? format(new Date(item.nominated_at), 'PP') : 'N/A',
-      'Evaluation Date': item.evaluation_date ? format(new Date(item.evaluation_date), 'PP') : 'N/A'
-    }));
-    
-    exportToCSV(exportData, `evaluations_export_${new Date().toISOString().split('T')[0]}.csv`);
-  };
-  
   // Handle editing an evaluation
   const handleEditEvaluation = (evaluation: EvaluationDisplayItem) => {
     setEditingEvaluation(evaluation);
     setIsEditDialogOpen(true);
   };
 
-  // If user isn't admin, don't render anything (they'll be redirected)
-  if (!isAdmin) {
-    return <LoadingEvaluationState />;
-  }
-
-  if (isLoading) {
-    return <LoadingEvaluationState />;
-  }
-
-  if (!data || data.length === 0) {
-    return <EmptyEvaluationState hasData={false} hasFilters={false} onClearFilters={clearFilters} />;
-  }
-
-  if (filteredEvaluations.length === 0) {
-    return (
-      <EmptyEvaluationState 
-        hasData={true} 
-        hasFilters={Object.keys(filters).length > 0} 
-        onClearFilters={clearFilters} 
-      />
-    );
-  }
-
-  const hasLevels = (filterOptions?.levels?.length || 0) > 0;
-  const hasCoaches = (filterOptions?.coaches?.length || 0) > 0;
-
   return (
-    <div>
-      <div className="mb-6 flex flex-col md:flex-row gap-4 justify-between">
-        <EvaluationFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          filters={filters}
-          setFilters={setFilters}
-          filterOptions={filterOptions}
-          onClearFilters={clearFilters}
-          onExportCSV={handleExportCSV}
-          exportDisabled={filteredEvaluations.length === 0}
-          selectedIds={selectedIds}
-          onDeleteSelected={isAdmin ? handleBulkDelete : undefined}
-        />
-      </div>
-
-      {isAdmin && selectedIds.length > 0 && (
-        <div className="flex justify-end mb-4">
-          <BulkMarkAsPassedButton 
-            selectedIds={selectedIds} 
-            onReset={resetSelection} 
-          />
-        </div>
-      )}
-      
-      <div className="rounded-md border">
-        <div className="overflow-x-auto">
-          <Table>
-            <EvaluationTableHeader
-              isAdmin={isAdmin}
-              sortField={sortField}
-              sortOrder={sortOrder}
-              toggleSort={toggleSort}
-              onSelectAll={handleSelectAll}
-              hasLevels={hasLevels}
-              hasCoaches={hasCoaches}
-              allSelected={allSelected}
-            />
-            
-            <TableBody>
-              {filteredEvaluations.map(evaluation => (
-                <EvaluationTableRow
-                  key={evaluation.id}
-                  evaluation={evaluation}
-                  isAdmin={isAdmin}
-                  isSelected={isSelected(evaluation.id)}
-                  onSelectOne={handleSelectOne}
-                  hasLevels={hasLevels}
-                  hasCoaches={hasCoaches}
-                  onEdit={isAdmin ? () => handleEditEvaluation(evaluation) : undefined}
-                  onDelete={isAdmin ? () => {
-                    deleteMutation.mutate([evaluation.id]);
-                  } : undefined}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+    <AuthRedirect isAdmin={isAdmin}>
+      <EvaluationListContainer
+        data={data}
+        isLoading={isLoading}
+        isAdmin={isAdmin}
+        filterOptions={filterOptions}
+        refreshTrigger={refreshTrigger}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        sortField={sortField}
+        sortOrder={sortOrder}
+        filters={filters}
+        setFilters={setFilters}
+        filteredEvaluations={filteredEvaluations}
+        toggleSort={toggleSort}
+        clearFilters={clearFilters}
+        selectedIds={selectedIds}
+        handleSelectAll={handleSelectAll}
+        handleSelectOne={handleSelectOne}
+        resetSelection={resetSelection}
+        isSelected={isSelected}
+        allSelected={allSelected}
+        handleBulkDelete={handleBulkDelete}
+        onEdit={handleEditEvaluation}
+      />
 
       <DeleteConfirmDialog
         isOpen={isDeleteDialogOpen}
@@ -209,7 +108,7 @@ const EvaluationListTab: React.FC<EvaluationListTabProps> = ({ refreshTrigger })
         onOpenChange={setIsEditDialogOpen}
         evaluation={editingEvaluation}
       />
-    </div>
+    </AuthRedirect>
   );
 };
 
