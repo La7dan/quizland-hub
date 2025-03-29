@@ -5,7 +5,7 @@ import { EvaluationDisplayItem } from '../types';
 export type SortField = 'nominated_at' | 'evaluation_date' | 'member_name' | 'status' | 'coach_name' | 'evaluation_result';
 export type SortOrder = 'asc' | 'desc';
 
-// Add the missing FilterOptions type
+// Add the FilterOptions type
 export interface FilterOptions {
   status?: string;
   level?: string;

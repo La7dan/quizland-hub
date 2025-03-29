@@ -39,7 +39,7 @@ export const useFilterOptions = () => {
       `);
       
       const levelsResult = await executeSql(`
-        SELECT DISTINCT l.name as level
+        SELECT DISTINCT l.name as level_name
         FROM members m 
         JOIN evaluations e ON m.id = e.member_id
         JOIN quiz_levels l ON m.level_id = l.id
@@ -52,7 +52,7 @@ export const useFilterOptions = () => {
       
       return {
         coaches: coachesResult.rows || [],
-        levels: levelsResult.rows.map(row => row.level).filter(Boolean) || [],
+        levels: levelsResult.rows.map(row => row.level_name).filter(Boolean) || [],
         statuses: statusesResult.rows.map(row => row.status) || []
       };
     }
