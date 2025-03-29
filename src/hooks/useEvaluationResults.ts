@@ -36,9 +36,9 @@ export const useEvaluationResults = () => {
     queryFn: async () => {
       console.log('Fetching coaches from database');
       const result = await executeSql(`
-        SELECT id, name FROM users 
+        SELECT id, username as name FROM users 
         WHERE role = 'coach' OR role = 'admin' OR role = 'super_admin'
-        ORDER BY name ASC
+        ORDER BY username ASC
       `, { isPublicQuery: true });
       
       if (!result.success) {

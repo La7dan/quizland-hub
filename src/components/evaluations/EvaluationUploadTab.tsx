@@ -36,9 +36,11 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
     queryKey: ['members-dropdown', searchTerm, levelFilter, coachFilter],
     queryFn: async () => {
       let query = `
-        SELECT m.id, m.name, m.member_id, m.level as member_level,
+        SELECT m.id, m.name, m.member_id, 
+               l.name AS member_level,
                u.id as coach_id, u.username as coach_name
         FROM members m
+        LEFT JOIN quiz_levels l ON m.level_id = l.id
         LEFT JOIN users u ON m.coach_id = u.id
         WHERE NOT EXISTS (
           SELECT 1 FROM evaluations e 
@@ -52,7 +54,7 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
       }
       
       if (levelFilter) {
-        query += ` AND m.level = '${levelFilter}'`;
+        query += ` AND l.name = '${levelFilter}'`;
       }
       
       if (coachFilter) {
@@ -73,7 +75,11 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
     queryKey: ['member-levels'],
     queryFn: async () => {
       const result = await executeSql(`
-        SELECT DISTINCT level FROM members WHERE level IS NOT NULL ORDER BY level
+        SELECT DISTINCT l.name 
+        FROM members m
+        JOIN quiz_levels l ON m.level_id = l.id
+        WHERE l.name IS NOT NULL 
+        ORDER BY l.name
       `);
       return result.rows || [];
     }
@@ -231,8 +237,8 @@ const EvaluationUploadTab: React.FC<EvaluationUploadTabProps> = ({ onUploadSucce
           <SelectContent>
             <SelectItem value="">All Levels</SelectItem>
             {levelsData?.map((level: any) => (
-              <SelectItem key={level.level} value={level.level}>
-                {level.level}
+              <SelectItem key={level.name} value={level.name}>
+                {level.name}
               </SelectItem>
             ))}
           </SelectContent>

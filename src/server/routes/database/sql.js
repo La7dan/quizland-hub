@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Run custom SQL - For public queries vs admin queries
 router.post('/execute-sql', async (req, res) => {
-  const { sql, isPublicQuery } = req.body;
+  const { sql, isPublicQuery, params } = req.body;
   
   if (!sql) {
     return res.status(400).json({ success: false, message: 'SQL query is required' });
@@ -50,7 +50,7 @@ router.post('/execute-sql', async (req, res) => {
   // Execute the SQL query
   try {
     const client = await pool.connect();
-    const result = await client.query(sql);
+    const result = await client.query(sql, params || []);
     client.release();
     
     res.json({ 
@@ -61,10 +61,21 @@ router.post('/execute-sql', async (req, res) => {
     });
   } catch (error) {
     console.error('Error executing SQL:', error);
+    
+    // Provide more helpful error messages for common SQL errors
+    let errorMessage = error.message;
+    
+    if (error.code === '42703') { // Column does not exist
+      const columnMatch = error.message.match(/column "(.*?)" does not exist/);
+      const columnName = columnMatch ? columnMatch[1] : 'unknown';
+      errorMessage = `Column '${columnName}' does not exist in the table. Please check your query and the database schema.`;
+    }
+    
     res.status(500).json({ 
       success: false, 
       message: 'Failed to execute SQL', 
-      error: error.message 
+      error: errorMessage,
+      details: error.code ? `Error code: ${error.code}` : undefined
     });
   }
 });
